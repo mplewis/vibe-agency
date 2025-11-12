@@ -1,0 +1,190 @@
+# =================================================================
+# ORCHESTRATION_data_contracts.yaml
+# Definiert die JSON-Schemas für alle Artefakte, die zwischen
+# den Workflow-Zuständen übergeben werden.
+# Basiert auf der Analyse in Teil 2 dieses Berichts.
+# =================================================================
+version: 1.0.0
+kind: SchemaCollection
+
+# 1. Governance-Regeln für die Schema-Evolution
+# Basierend auf [4, 10, 11, 12]
+schema_evolution_rules:
+ - type: "ADD_OPTIONAL_FIELD"
+   compatibility: "BACKWARD_COMPATIBLE"
+   version_bump: "MINOR"
+   allowed: true
+ - type: "ADD_FIELD_WITH_DEFAULT"
+   compatibility: "BACKWARD_COMPATIBLE"
+   version_bump: "MINOR"
+   allowed: true
+ - type: "ADD_REQUIRED_FIELD"
+   compatibility: "BREAKING_CHANGE"
+   version_bump: "MAJOR"
+   allowed: false # (Muss für v1.0 vermieden werden)
+ - type: "REMOVE_FIELD"
+   compatibility: "BREAKING_CHANGE"
+   version_bump: "MAJOR"
+   allowed: false # (Muss für v1.0 vermieden werden)
+ - type: "RENAME_FIELD"
+   compatibility: "BREAKING_CHANGE"
+   version_bump: "MAJOR"
+   allowed: false # (Verwende "Expand/Contract"-Pattern )
+ - type: "CHANGE_FIELD_TYPE"
+   compatibility: "BREAKING_CHANGE"
+   version_bump: "MAJOR"
+   allowed: false
+
+# 2. Schema-Definitionen (Auszüge der wichtigsten Felder)
+schemas:
+
+ - name: "project_manifest.schema.json"
+   version: "1.0.0"
+   $id: "https://api.example.com/schemas/project_manifest.v1.0.0.json"
+   description: "Der zentrale Vertrag, der den Zustand des Workflows und die Links zu Artefakten enthält."
+   fields:
+     - name: "project_id"
+       type: "string(uuid)"
+       required: true
+     - name: "current_state"
+       type: "enum"
+       required: true
+       values:
+     - name: "links"
+       type: "object"
+       required: true
+       properties:
+         - { name: "code_gen_spec", type: "string(uri)" }
+         - { name: "test_plan", type: "string(uri)" }
+         - { name: "qa_report", type: "string(uri)" }
+         - { name: "deploy_receipt", type: "string(uri)" }
+
+ - name: "code_gen_spec.schema.json"
+   version: "1.0.0"
+   $id: "https://api.example.com/schemas/code_gen_spec.v1.0.0.json"
+   description: "Input für den CODING-Zustand. Definiert den L1-L4-Kontext für die KI."
+   fields:
+     - name: "structured_specification" # L1
+       type: "object"
+       required: true
+       properties:
+         - { name: "architecture_ref", type: "string(uri)" }
+     - name: "database_context" # L2
+       type: "object"
+       required: true
+       properties:
+         - { name: "db_schema_ref", type: "string(uri)" }
+     - name: "task_context" # L3
+       type: "object"
+       required: true
+       properties:
+         - { name: "intent", type: "string" }
+         - { name: "scope", type: "object" }
+         - { name: "acceptance_criteria", type: "array" }
+     - name: "system_context" # L4
+       type: "object"
+       required: true
+       properties:
+         - { name: "knowledge_graph_query", type: "string" }
+
+ - name: "test_plan.schema.json"
+   version: "1.0.0"
+   $id: "https://api.example.com/schemas/test_plan.v1.0.0.json"
+   description: "Input für den TESTING-Zustand. Definiert den Test-Scope."
+   fields:
+     - name: "test_pyramid_config"
+       type: "object"
+       required: true
+       properties:
+         - { name: "unit_tests", type: "object" }
+         - { name: "integration_tests", type: "object" }
+         - { name: "e2e_tests", type: "object" }
+     - name: "deferred_tests_v1"
+       type: "array"
+       required: true
+       items: "string" # z.B. "Load", "Penetration" 
+     - name: "hitl_requirements"
+       type: "object"
+       required: true
+       properties:
+         - { name: "usability_acceptance_criteria", type: "string" }
+
+ - name: "qa_report.schema.json"
+   version: "1.0.0"
+   $id: "https://api.example.com/schemas/qa_report.v1.0.0.json"
+   description: "Output des TESTING-Zustands. Dient als "Exit-Gate" für die HITL-Genehmigung."
+   fields:
+     - name: "status"
+       type: "enum"
+       required: true
+       values:
+     - name: "critical_path_pass_rate"
+       type: "number"
+       required: true
+     - name: "blocker_bugs_open"
+       type: "integer"
+       required: true
+     - name: "coverage_on_new_code"
+       type: "number"
+       required: true
+     - name: "manual_ux_review_completed"
+       type: "boolean"
+       required: true
+     - name: "sast_check_passed"
+       type: "boolean"
+       required: true
+     - name: "sca_check_passed"
+       type: "boolean"
+       required: true
+
+ - name: "deploy_receipt.schema.json"
+   version: "1.0.0"
+   $id: "https://api.example.com/schemas/deploy_receipt.v1.0.0.json"
+   description: "Output des DEPLOYMENT-Zustands. Dient als "Beweis" des Deployments."
+   fields:
+     - name: "status"
+       type: "enum"
+       required: true
+       values:
+     - name: "artifact_version_deployed"
+       type: "string"
+       required: true
+     - name: "db_migration_status"
+       type: "enum"
+       required: true
+       values:
+     - name: "health_check_status"
+       type: "enum"
+       required: true
+       values:
+     - name: "golden_signal_values" # Gemessen während "Soak Time" 
+       type: "object"
+       required: true
+       properties:
+         - { name: "latency_p95_ms", type: "integer" }
+         - { name: "error_rate_percent", type: "number" }
+
+ - name: "bug_report.schema.json"
+   version: "1.0.0"
+   $id: "https://api.example.com/schemas/bug_report.v1.0.0.json"
+   description: "Input für den MAINTENANCE-Zustand. Löst den Triage-Workflow aus."
+   fields:
+     - name: "severity"
+       type: "enum"
+       required: true
+       values: ["P1_Critical", "P2_High", "P3_Medium", "P4_Low", "P5_Cosmetic"]
+     - name: "category"
+       type: "enum"
+       required: true
+       values:
+     - name: "context"
+       type: "object"
+       required: true
+       properties:
+         - { name: "PII_impact", type: "boolean", default: false }
+     - name: "reproducible"
+       type: "boolean"
+       required: true
+     - name: "correlated_trace_id"
+       type: "string" # Kritisch für Observability 
+       required: false
