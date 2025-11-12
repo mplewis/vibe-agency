@@ -1,1 +1,21 @@
-{"apiVersion":"agency.os/v1alpha1","kind":"Project","metadata":{"projectId":"F5319AF6-5D57-462A-B852-9702F010FA36","name":"vibe-agency","description":"The root project for the Vibe Agency OS.","owner":"agent@vibe.agency","createdAt":"2025-11-12T12:44:46Z","lastUpdatedAt":"2025-11-12T12:44:46Z"},"spec":{"vibe":{},"genesis":{}},"status":{"projectPhase":"PLANNING","lastUpdate":"2025-11-12T12:44:46Z","message":"Project initialized. Ready to begin planning phase."},"artifacts":{"planning":{},"code":{"mainRepository":{"url": "https://github.com/kimeisele/vibe-agency.git","branch":"main","lastCommit":""}},"test":{},"deployment":{}}}
+{"apiVersion":"agency.os/v1alpha1","kind":"Project","metadata":{"projectId":"F5319AF6-5D57-462A-B852-9702F010FA36","name":"vibe-agency","description":"The root project for the Vibe Agency OS.","owner":"agent@vibe.agency","createdAt":"2025-11-12T12:44:46Z","lastUpdatedAt":"2025-11-12T12:44:46Z"},"spec":{"vibe":{},"genesis":{}},"status": {
+    "projectPhase": "DESIGN",
+    "lastUpdate": "2025-11-12T13:05:00Z",
+    "message": "Architecture artifact created. Project is now in the design and coding phase."
+  },"artifacts": {
+    "planning": {
+      "architecture": {
+        "ref": "41d7726735cb8f7c188b7a7860941d629d95f937",
+        "path": "/artifacts/planning/architecture.v1.json"
+      }
+    },
+    "code": {
+      "mainRepository": {
+        "url": "https://github.com/kimeisele/vibe-agency.git",
+        "branch": "main",
+        "lastCommit": ""
+      }
+    },
+    "test": {},
+    "deployment": {}
+  }
