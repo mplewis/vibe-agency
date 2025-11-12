@@ -4,8 +4,8 @@
 **Document ID:** CONTEXT_SUMMARY_FOR_LEAD_ARCHITECT
 **Date:** 2025-11-12
 **Phase:** 1 (Governance Foundation)
-**Status:** ✅ VALIDATION COMPLETE | ⚠️ AWAITING INTEGRATION DECISIONS
-**Version:** 1.2
+**Status:** ✅ REFACTORED | ⚠️ CRITICAL GAP IDENTIFIED (Client Flow)
+**Version:** 1.3
 
 ---
 
@@ -43,10 +43,10 @@ Phase 1 Governance Foundation artifacts:
 
 ### Critical Gaps Identified (2025-11-12)
 
-1. **System Steward NOT refactored** - Still uses old monolithic prompt structure (NOT v0.2 pattern)
-   - ❌ No `_composition.yaml`
-   - ❌ No task decomposition
-   - ❌ Broken references (`steward_knowledge/` → should be `knowledge/`)
+1. ~~**System Steward NOT refactored**~~ - ✅ **RESOLVED** (2025-11-12 Session 2)
+   - ✅ Refactored to v0.2 pattern (agents/ with _composition.yaml, _knowledge_deps.yaml)
+   - ✅ Fixed broken path references (steward_knowledge/ → knowledge/)
+   - ✅ Aligned with agency_os structure (Orchestrator Layer paradigm)
 
 2. **KB Content Quality UNKNOWN** - Syntax validated, semantic content NOT verified
    - ⚠️ No citations (where do rules come from?)
@@ -54,6 +54,14 @@ Phase 1 Governance Foundation artifacts:
    - ⚠️ Runtime-tested: NO
 
 3. **Research Results NOT integrated** - Deep Research Report exists but findings not applied to governance
+
+4. **Client Onboarding Flow MISSING** - ⚠️ **NEW CRITICAL GAP** (2025-11-12 Session 2)
+   - ❌ No SOP for creating client workspaces
+   - ❌ No workspace context switching mechanism
+   - ❌ No agent scoping to workspace-specific manifests
+   - ❌ No client deliverable packaging/handoff process
+   - **Impact:** System cannot onboard real clients (agency business model broken)
+   - **Research Request:** RESEARCH-002 created (docs/research/RESEARCH_REQUEST_client_onboarding_flow.md)
 
 ---
 
@@ -71,7 +79,7 @@ vibe-agency/
 │   ├── 04_deploy_framework/
 │   └── 05_maintenance_framework/
 ├── system_steward_framework/
-│   ├── prompts/ (SSF_SHELL, SSF_CORE_PERSONALITY, AUDITOR, LEAD_ARCHITECT)
+│   ├── agents/ (SSF_ROUTER, AUDITOR, LEAD_ARCHITECT) [✅ REFACTORED v0.2]
 │   └── knowledge/
 │       ├── sops/ (SOP_001-006)
 │       └── architecture/ (00-06 framework docs)
@@ -111,15 +119,24 @@ vibe-agency/
 - Claimed "curator assignments ready" → Reality: all TBD
 - Root cause: AI-generated content not fact-checked
 
-**Issue 2: System Steward Structure Mismatch**
-- agency_os uses v0.2 pattern (composition.yaml, task decomposition)
-- system_steward_framework uses OLD pattern (monolithic markdown prompts)
-- Inconsistency creates maintenance burden
+~~**Issue 2: System Steward Structure Mismatch**~~ - ✅ **RESOLVED** (2025-11-12)
+- ~~agency_os uses v0.2 pattern (composition.yaml, task decomposition)~~
+- ~~system_steward_framework uses OLD pattern (monolithic markdown prompts)~~
+- **Resolution:** Refactored to v0.2 pattern (commit ba473b9)
+  - Created agents/ structure: SSF_ROUTER, AUDITOR, LEAD_ARCHITECT
+  - Added _composition.yaml and _knowledge_deps.yaml for each agent
+  - Paradigm: Orchestrator Layer (NO tasks/gates - different from Worker agents)
 
-**Issue 3: Broken Path References**
-- SSF references `steward_knowledge/` (WRONG)
-- Actual path: `knowledge/`
-- Found in: 3 files, 6 occurrences
+~~**Issue 3: Broken Path References**~~ - ✅ **RESOLVED** (2025-11-12)
+- ~~SSF references `steward_knowledge/` (WRONG)~~
+- ~~Actual path: `knowledge/`~~
+- **Resolution:** Fixed 6 occurrences across 3 files (commit ba473b9)
+
+**Issue 4: Client Onboarding Flow Missing** - ⚠️ **NEW CRITICAL** (2025-11-12)
+- Workspace infrastructure EXISTS (workspaces/.workspace_index.yaml)
+- BUT: No process to onboard client → create workspace → execute AOS
+- **Details:** See "Critical Gaps #4" above
+- **Research:** RESEARCH-002 created
 
 ---
 
@@ -146,12 +163,18 @@ vibe-agency/
 
 ### CRITICAL (DO FIRST)
 
-1. **Fix System Steward Structure** ⚠️ IN PROGRESS
-   - Create `_composition.yaml` for SSF agents
-   - Fix broken `steward_knowledge/` references
-   - Align with agency_os v0.2 pattern
+1. ~~**Fix System Steward Structure**~~ ✅ **COMPLETED** (2025-11-12)
+   - ✅ Created agents/ structure with v0.2 pattern
+   - ✅ Fixed broken path references
+   - ✅ Committed and pushed (ba473b9)
 
-2. **Assign Curators** ⏳ BLOCKED (user decision required)
+2. **Design Client Onboarding Flow** ⚠️ **URGENT - BLOCKING BUSINESS MODEL**
+   - ⏳ Research request created: RESEARCH-002
+   - Questions: Workspace lifecycle, context switching, agent scoping, deliverable handoff
+   - File: `docs/research/RESEARCH_REQUEST_client_onboarding_flow.md`
+   - Next: Send to claude.ai for architectural design
+
+3. **Assign Curators** ⏳ BLOCKED (user decision required)
    - Planning (01): TBD
    - Code Gen (02): TBD
    - QA (03): TBD
@@ -193,13 +216,13 @@ vibe-agency/
 ## GIT STATUS
 
 **Current Branch:** `claude/context-dump-handover-011CV4mzUDkRdwUeRzpb2Zcx`
-**Working Tree:** MODIFIED (System Steward refactor in progress)
+**Working Tree:** MODIFIED (research request created)
 **Recent Commits:**
+- `ba473b9` - Refactor System Steward to v0.2 + fix CONTEXT_SUMMARY
 - `dff2dc7` - Research blueprint (YAML)
 - `960a6d9` - Research results (Deep Research Report)
 - `aa24eaf` - Merge PR #8 (error handling)
 - `dde659d` - Lead Architect prompt + Deep Research Plan
-- `161be53` - Fix semantic_audit.py (multi-doc YAML)
 
 ---
 
@@ -210,6 +233,7 @@ vibe-agency/
 | 1.0 | 2025-11-12 | Initial context summary (AI-generated, not validated) |
 | 1.1 | 2025-11-12 | Updated with semantic_audit.py fix |
 | 1.2 | 2025-11-12 | **MAJOR REVISION:** Removed speculation, kept ONLY verified facts. Added warnings about AI-generated content. Documented real gaps (System Steward structure, KB content quality). |
+| 1.3 | 2025-11-12 | **SESSION 2:** System Steward refactored ✅. CRITICAL GAP identified: Client Onboarding Flow missing. Research request RESEARCH-002 created. Updated status to reflect completed refactoring. |
 
 ---
 
