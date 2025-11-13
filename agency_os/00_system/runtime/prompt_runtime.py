@@ -140,7 +140,7 @@ class PromptRuntime:
         return TaskMetadata(
             task_id=data["task_id"],
             phase=data["phase"],
-            description=data["description"],
+            description=data.get("description", data.get("notes", "No description")),
             dependencies=data.get("dependencies", []),
             inputs=data.get("inputs", []),
             outputs=data.get("outputs", []),
@@ -166,13 +166,16 @@ class PromptRuntime:
         # Load required knowledge
         for req in deps.get("required_knowledge", []):
             # Check if this task uses this knowledge file
-            if task_meta.task_id in req.get("used_by_tasks", []):
+            # Note: YAMLs use 'used_in_tasks', not 'used_by_tasks'
+            used_tasks = req.get("used_in_tasks", req.get("used_by_tasks", []))
+            if task_meta.task_id in used_tasks:
                 content = self._load_knowledge_file(req["path"])
                 knowledge_files.append(f"# {req['purpose']}\n{content}")
 
         # Load optional knowledge (if conditions met)
         for opt in deps.get("optional_knowledge", []):
-            if task_meta.task_id in opt.get("used_by_tasks", []):
+            used_tasks = opt.get("used_in_tasks", opt.get("used_by_tasks", []))
+            if task_meta.task_id in used_tasks:
                 content = self._load_knowledge_file(opt["path"])
                 knowledge_files.append(f"# {opt['purpose']}\n{content}")
 
@@ -267,13 +270,28 @@ class PromptRuntime:
 
     def _get_agent_path(self, agent_id: str) -> Path:
         """Get the path to an agent's directory"""
-        # GENESIS_BLUEPRINT -> agency_os/01_planning_framework/agents/GENESIS_BLUEPRINT
-        # This is hardcoded for demo - production would use a registry
+        # Dynamic agent registry - supports all 11 agents
+        AGENT_REGISTRY = {
+            "VIBE_ALIGNER": "agency_os/01_planning_framework/agents/VIBE_ALIGNER",
+            "GENESIS_BLUEPRINT": "agency_os/01_planning_framework/agents/GENESIS_BLUEPRINT",
+            "GENESIS_UPDATE": "agency_os/01_planning_framework/agents/GENESIS_UPDATE",
+            "CODE_GENERATOR": "agency_os/02_code_gen_framework/agents/CODE_GENERATOR",
+            "QA_VALIDATOR": "agency_os/03_qa_framework/agents/QA_VALIDATOR",
+            "DEPLOY_MANAGER": "agency_os/04_deploy_framework/agents/DEPLOY_MANAGER",
+            "BUG_TRIAGE": "agency_os/05_maintenance_framework/agents/BUG_TRIAGE",
+            "SSF_ROUTER": "system_steward_framework/agents/SSF_ROUTER",
+            "AUDITOR": "system_steward_framework/agents/AUDITOR",
+            "LEAD_ARCHITECT": "system_steward_framework/agents/LEAD_ARCHITECT",
+            "AGENCY_OS_ORCHESTRATOR": "agency_os/00_system/agents/AGENCY_OS_ORCHESTRATOR",
+        }
 
-        if agent_id == "GENESIS_BLUEPRINT":
-            return self.base_path / "agency_os/01_planning_framework/agents/GENESIS_BLUEPRINT"
+        if agent_id not in AGENT_REGISTRY:
+            raise ValueError(
+                f"Unknown agent_id: {agent_id}. "
+                f"Available agents: {', '.join(AGENT_REGISTRY.keys())}"
+            )
 
-        raise ValueError(f"Unknown agent_id: {agent_id}")
+        return self.base_path / AGENT_REGISTRY[agent_id]
 
     def _load_file(self, path: Path) -> str:
         """Load a file's contents"""

@@ -1,0 +1,715 @@
+# =================================================================
+# CRITICAL PATH ANALYSIS
+# =================================================================
+# VERSION: 1.0.0
+# PURPOSE: Prioritized implementation roadmap for Vibe Agency OS
+# USAGE: Defines WHAT to build FIRST to achieve key milestones
+# AUDIENCE: Development team, project managers, stakeholders
+# =================================================================
+
+version: "1.0.0"
+kind: "CriticalPathAnalysis"
+metadata:
+  description: "Prioritized roadmap from current state to production-ready system"
+  created: "2025-11-12"
+  maintained_by: "Lead Architect"
+  based_on:
+    - "SYSTEM_DATA_FLOW_MAP.yaml"
+    - "ARCHITECTURE_GAP_ANALYSIS.md"
+  scope: "MVP to First Client Delivery"
+
+# =================================================================
+# CURRENT STATE ASSESSMENT
+# =================================================================
+current_state:
+  date: "2025-11-12"
+  completion_percentage: 40
+
+  completed:
+    - name: "Governance Foundation"
+      items:
+        - "SSF agents structured (v0.2 pattern)"
+        - "SOPs 001-009 defined"
+        - "Workspace management designed"
+        - "Knowledge bases created (17 files, 6090 lines)"
+        - "Data contracts defined (9 artifacts)"
+        - "State machine specified (7 states, 6 transitions, 4 loops)"
+        - "Agent prompts written (11 agents)"
+        - "Composition pattern defined (_composition.yaml)"
+
+  in_progress:
+    - name: "Client Onboarding Flow"
+      status: "Designed, not implemented"
+      files: ["SOP_007", "SOP_008", "SOP_009", "workspace_utils.py"]
+
+  not_started:
+    - "PromptRuntime (agent execution)"
+    - "Knowledge base loading mechanism"
+    - "State machine executor"
+    - "Agent invocation protocol"
+    - "Artifact validation"
+    - "Integration testing"
+    - "Error handling implementation"
+
+  blockers:
+    - blocker_id: "B1"
+      name: "No Execution Runtime"
+      severity: "CRITICAL"
+      impact: "System cannot execute any agent"
+      blocks: ["All agent operations", "All flows", "All testing"]
+
+    - blocker_id: "B2"
+      name: "Unclear Integration Protocol"
+      severity: "HIGH"
+      impact: "SSF and AOS cannot interoperate"
+      blocks: ["SOP_001 execution", "End-to-end flows"]
+
+    - blocker_id: "B3"
+      name: "Missing Architectural Decisions"
+      severity: "HIGH"
+      impact: "Cannot start implementation without decisions"
+      blocks: ["Runtime design", "KB loading design"]
+
+# =================================================================
+# MILESTONES: Key deliverables on path to production
+# =================================================================
+milestones:
+  - milestone_id: "M0"
+    name: "Architectural Decisions Finalized"
+    description: "Make critical design decisions that unblock implementation"
+    target_date: "Week 1"
+    priority: "P0"
+    status: "NOT_STARTED"
+
+    deliverables:
+      - name: "Runtime Architecture Decision"
+        decision: "AD-001"
+        question: "Claude Code Skill vs Python Service vs Hybrid?"
+        options:
+          - "Option A: Claude Code Skills (minimal infra)"
+          - "Option B: Python Service (full control)"
+          - "Option C: Hybrid (SSF in Claude Code, AOS in service)"
+        required_for: "M1, M2, M3"
+
+      - name: "Knowledge Loading Strategy"
+        decision: "AD-002"
+        question: "Full injection vs RAG vs Hybrid?"
+        options:
+          - "Option A: Always full-injection"
+          - "Option B: Always RAG"
+          - "Option C: Hybrid (small=inject, large=RAG)"
+        required_for: "M1"
+
+      - name: "State Persistence Strategy"
+        decision: "AD-003"
+        question: "File-based vs Database vs Hybrid?"
+        options:
+          - "Option A: File-based (manifest only)"
+          - "Option B: Database (SQLite/Postgres)"
+          - "Option C: Hybrid (manifest in files, history in DB)"
+        required_for: "M3"
+
+      - name: "Agent Invocation Protocol"
+        decision: "NEW"
+        question: "How does SSF_ROUTER invoke AOS agents?"
+        requires: "Define runtime_context schema"
+        required_for: "M1, M2"
+
+    success_criteria:
+      - "All 4 architectural decisions documented"
+      - "Design docs approved by stakeholders"
+      - "No ambiguity in integration points"
+
+    estimated_effort: "1-2 days (meetings + documentation)"
+
+  # -------------------------------------------------------------------------
+
+  - milestone_id: "M1"
+    name: "Single Agent Executable"
+    description: "Can execute one agent (VIBE_ALIGNER) end-to-end with mocked Claude"
+    target_date: "Week 2-3"
+    priority: "P0"
+    status: "NOT_STARTED"
+    depends_on: ["M0"]
+
+    deliverables:
+      - name: "PromptRuntime v0.1"
+        gap: "GAP-001"
+        description: "Script/service that assembles agent prompts"
+        features:
+          - "Read _composition.yaml"
+          - "Load _prompt_core.md"
+          - "Inject variables from runtime_context"
+          - "Output: final prompt string"
+        files:
+          - "scripts/prompt_runtime.py (or skill)"
+        test: "Can assemble VIBE_ALIGNER prompt"
+
+      - name: "Knowledge Base Loader v0.1"
+        gap: "GAP-002"
+        description: "Load YAML KB files and inject into prompts"
+        features:
+          - "Read _knowledge_deps.yaml"
+          - "Load required KB files (FAE, FDG, APCE)"
+          - "Format as markdown sections"
+          - "Inject into prompt"
+        files:
+          - "scripts/kb_loader.py"
+        test: "FAE constraints appear in assembled prompt"
+
+      - name: "Artifact Validator v0.1"
+        gap: "GAP-005"
+        description: "Validate artifacts against data contracts"
+        features:
+          - "JSON Schema validation"
+          - "Validate against ORCHESTRATION_data_contracts.yaml"
+          - "Clear error messages"
+        files:
+          - "scripts/validate_artifact.py"
+        test: "Can validate feature_spec.json schema"
+
+      - name: "Mock Agent Executor"
+        description: "Test harness that simulates agent execution"
+        features:
+          - "Assemble VIBE_ALIGNER prompt"
+          - "Return mock feature_spec.json"
+          - "Validate output"
+        files:
+          - "tests/mock_agent_executor.py"
+        test: "End-to-end VIBE_ALIGNER execution (mocked)"
+
+    success_criteria:
+      - "✅ VIBE_ALIGNER prompt assembles correctly"
+      - "✅ KB files (FAE, FDG, APCE) injected"
+      - "✅ Mock output validates against schema"
+      - "✅ Process can be repeated reliably"
+
+    estimated_effort: "5-7 days"
+
+    blockers_resolved:
+      - "B1: Execution runtime (partially - one agent only)"
+
+  # -------------------------------------------------------------------------
+
+  - milestone_id: "M2"
+    name: "SSF → AOS Integration Working"
+    description: "Can execute SOP_001 (Start New Project) end-to-end"
+    target_date: "Week 4"
+    priority: "P0"
+    status: "NOT_STARTED"
+    depends_on: ["M1"]
+
+    deliverables:
+      - name: "Agent Invocation Interface v0.1"
+        gap: "GAP-004"
+        description: "SSF can invoke AOS agents programmatically"
+        features:
+          - "Define runtime_context JSON schema"
+          - "SSF_ROUTER calls PromptRuntime with context"
+          - "Agent output returned to SSF"
+        files:
+          - "docs/contracts/runtime_context_schema.json"
+          - "system_steward_framework/invoke_agent.py"
+        test: "SSF_ROUTER invokes VIBE_ALIGNER successfully"
+
+      - name: "SSF → AOS Handoff Implementation"
+        gap: "GAP-006"
+        description: "Complete SOP_001 Step 3 (Load VIBE_ALIGNER)"
+        features:
+          - "SOP_001 loads VIBE_ALIGNER via PromptRuntime"
+          - "Workspace context propagated correctly"
+          - "feature_spec.json written to workspace"
+        test: "Execute SOP_001, verify artifact created"
+
+      - name: "Workspace Context Propagation"
+        gap: "GAP-007"
+        description: "$ACTIVE_WORKSPACE flows to agents"
+        features:
+          - "Pass workspace in runtime_context"
+          - "Agents use workspace_utils to resolve paths"
+          - "Artifacts written to correct workspace"
+        files:
+          - "Update: scripts/prompt_runtime.py"
+        test: "Agent writes to workspaces/test_client/artifacts/"
+
+      - name: "Integration Test: SOP_001"
+        description: "Automated test of full SOP_001 flow"
+        features:
+          - "Mock user input"
+          - "Execute SOP_001"
+          - "Verify feature_spec.json created"
+          - "Verify manifest updated"
+        files:
+          - "tests/integration/test_sop_001.py"
+        test: "Pass: SOP_001 integration test"
+
+    success_criteria:
+      - "✅ User can run: 'Start new project' command"
+      - "✅ VIBE_ALIGNER executes in workspace context"
+      - "✅ feature_spec.json created in correct workspace"
+      - "✅ Manifest updated (state → PLANNING)"
+
+    estimated_effort: "5-7 days"
+
+    blockers_resolved:
+      - "B2: SSF/AOS integration"
+
+  # -------------------------------------------------------------------------
+
+  - milestone_id: "M3"
+    name: "Multi-Agent Flow (PLANNING → CODING)"
+    description: "Can execute VIBE_ALIGNER → GENESIS_BLUEPRINT sequence"
+    target_date: "Week 5-6"
+    priority: "P1"
+    status: "NOT_STARTED"
+    depends_on: ["M2"]
+
+    deliverables:
+      - name: "PromptRuntime v0.2 (Multi-Agent)"
+        description: "Extend runtime to support all agents"
+        features:
+          - "Support task-based agents (GENESIS_BLUEPRINT)"
+          - "Load task prompts from tasks/ directory"
+          - "Handle validation gates"
+        files:
+          - "Update: scripts/prompt_runtime.py"
+        test: "Can assemble GENESIS_BLUEPRINT prompts"
+
+      - name: "State Machine Executor v0.1 (Manual)"
+        gap: "GAP-003"
+        description: "Manual orchestrator for state transitions"
+        features:
+          - "Read ORCHESTRATION_workflow_design.yaml"
+          - "User triggers state transitions manually"
+          - "Invoke correct agent for each state"
+        files:
+          - "scripts/orchestrate.py"
+        command: "python orchestrate.py --project test_client --transition T1_StartCoding"
+        test: "Transition PLANNING → CODING invokes CODE_GENERATOR"
+
+      - name: "Error Handling v0.1"
+        gap: "GAP-008"
+        description: "Basic error handling and retry logic"
+        features:
+          - "Retry on transient failures (3x)"
+          - "Log errors to file"
+          - "Graceful degradation"
+        files:
+          - "scripts/error_handler.py"
+        test: "Retry test: Simulate failure, verify 3 retries"
+
+      - name: "Integration Test: PLANNING → CODING"
+        description: "Full flow from feature spec to architecture"
+        features:
+          - "Execute VIBE_ALIGNER"
+          - "Execute GENESIS_BLUEPRINT"
+          - "Verify architecture.json created"
+        files:
+          - "tests/integration/test_planning_to_coding.py"
+        test: "Pass: Multi-agent integration test"
+
+    success_criteria:
+      - "✅ GENESIS_BLUEPRINT executes successfully"
+      - "✅ architecture.json created from feature_spec.json"
+      - "✅ State transitions from PLANNING → CODING"
+      - "✅ Errors logged and retried"
+
+    estimated_effort: "7-10 days"
+
+  # -------------------------------------------------------------------------
+
+  - milestone_id: "M4"
+    name: "Complete SDLC Flow (PLANNING → PRODUCTION)"
+    description: "Can execute full workflow with all agents"
+    target_date: "Week 7-8"
+    priority: "P1"
+    status: "NOT_STARTED"
+    depends_on: ["M3"]
+
+    deliverables:
+      - name: "All Agent Executors"
+        description: "Implement remaining agents"
+        agents:
+          - "CODE_GENERATOR (02_code_gen_framework)"
+          - "QA_VALIDATOR (03_qa_framework)"
+          - "DEPLOY_MANAGER (04_deploy_framework)"
+        note: "Reuse PromptRuntime v0.2, just add KB deps"
+
+      - name: "HITL Checkpoint Implementation"
+        gap: "GAP-010"
+        description: "SOP_003 execution for QA approval"
+        features:
+          - "System pauses at AWAITING_QA_APPROVAL"
+          - "User runs SOP_003 manually"
+          - "Approval signal triggers next transition"
+        test: "Manual test: Approve/reject QA report"
+
+      - name: "End-to-End Test: Full SDLC"
+        description: "Complete flow from user request to deployment"
+        features:
+          - "Execute all 8 steps (F1_CLIENT_TO_DELIVERY)"
+          - "Mock Claude API responses"
+          - "Verify all artifacts created"
+        files:
+          - "tests/integration/test_full_sdlc.py"
+        test: "Pass: Full SDLC integration test"
+
+    success_criteria:
+      - "✅ All agents executable"
+      - "✅ All state transitions work"
+      - "✅ HITL checkpoint functional"
+      - "✅ deploy_receipt.json created"
+
+    estimated_effort: "10-14 days"
+
+  # -------------------------------------------------------------------------
+
+  - milestone_id: "M5"
+    name: "First Real Client (Pilot)"
+    description: "Onboard and deliver one real client project"
+    target_date: "Week 9-10"
+    priority: "P1"
+    status: "NOT_STARTED"
+    depends_on: ["M4"]
+
+    deliverables:
+      - name: "Observability & Logging"
+        gap: "GAP-012"
+        description: "Log all operations for debugging"
+        features:
+          - "Python logging framework"
+          - "Log agent invocations, state transitions, errors"
+          - "Log to file: logs/aos.log"
+        files:
+          - "scripts/logger.py"
+        test: "All operations logged"
+
+      - name: "Comprehensive Testing"
+        gap: "GAP-009"
+        description: "Full test suite"
+        features:
+          - "Unit tests (workspace_utils, validation, etc.)"
+          - "Integration tests (all SOPs)"
+          - "Error scenario tests"
+        files:
+          - "tests/unit/"
+          - "tests/integration/"
+          - "tests/error_scenarios/"
+        coverage_target: ">70%"
+
+      - name: "Pilot Client Onboarding"
+        description: "Use system for real client"
+        steps:
+          - "Execute SOP_007 (Create Workspace)"
+          - "Execute SOP_001 (Start Project)"
+          - "Execute full SDLC"
+          - "Execute SOP_009 (Package Deliverables)"
+        deliverable: "Real project delivered to client"
+
+      - name: "Post-Pilot Review"
+        description: "Document lessons learned"
+        files:
+          - "docs/retrospectives/pilot_client_retrospective.md"
+        covers:
+          - "What worked"
+          - "What broke"
+          - "Performance metrics"
+          - "Token costs"
+
+    success_criteria:
+      - "✅ Client workspace created"
+      - "✅ Project completed PLANNING → PRODUCTION"
+      - "✅ Deliverables packaged and handed off"
+      - "✅ Client satisfied (NPS survey)"
+      - "✅ No critical bugs"
+
+    estimated_effort: "10-15 days (includes real project work)"
+
+  # -------------------------------------------------------------------------
+
+  - milestone_id: "M6"
+    name: "Production Readiness"
+    description: "System stable for multiple clients"
+    target_date: "Week 11-12"
+    priority: "P2"
+    status: "NOT_STARTED"
+    depends_on: ["M5"]
+
+    deliverables:
+      - name: "KB Versioning"
+        gap: "GAP-011"
+        description: "Version control for knowledge bases"
+        features:
+          - "Snapshot KB at project start"
+          - "Store KB version in manifest"
+          - "Reproduce project with correct KB version"
+        files:
+          - "scripts/kb_snapshot.py"
+        test: "Old project uses old KB, new uses new KB"
+
+      - name: "State Machine Executor v0.2 (Automated)"
+        gap: "GAP-003"
+        description: "Fully automated orchestrator (optional)"
+        features:
+          - "File watch on project_manifest.json"
+          - "Auto-trigger state transitions"
+          - "Email notifications on HITL checkpoints"
+        note: "Optional - manual version sufficient for v1.0"
+
+      - name: "Performance Optimization"
+        description: "Reduce token usage and latency"
+        features:
+          - "Implement KB chunking for large files (FDG)"
+          - "Cache assembled prompts"
+          - "Parallel agent execution where possible"
+
+      - name: "Documentation & Runbooks"
+        description: "Operational documentation"
+        files:
+          - "docs/operations/runbook_deploy.md"
+          - "docs/operations/runbook_troubleshooting.md"
+          - "docs/operations/runbook_backup_restore.md"
+
+    success_criteria:
+      - "✅ Can onboard 3+ clients concurrently"
+      - "✅ KB changes don't break existing projects"
+      - "✅ Token costs <$X per project (define threshold)"
+      - "✅ Operations team trained"
+
+    estimated_effort: "7-10 days"
+
+# =================================================================
+# DEPENDENCY GRAPH (Milestone Dependencies)
+# =================================================================
+dependency_graph: |
+  M0 (Decisions)
+    ↓
+  M1 (Single Agent) ────────┐
+    ↓                       │
+  M2 (SSF Integration) ─────┤
+    ↓                       │ (All depend on M0)
+  M3 (Multi-Agent Flow) ────┤
+    ↓                       │
+  M4 (Full SDLC) ───────────┘
+    ↓
+  M5 (First Client)
+    ↓
+  M6 (Production)
+
+# =================================================================
+# RESOURCE REQUIREMENTS
+# =================================================================
+resources:
+  development:
+    - role: "Lead Architect"
+      allocation: "Full-time (decisions, design, code review)"
+      required_for: ["M0", "M1", "M2", "M3"]
+
+    - role: "Backend Engineer"
+      allocation: "Full-time (PromptRuntime, State Machine)"
+      required_for: ["M1", "M2", "M3", "M4"]
+
+    - role: "QA Engineer"
+      allocation: "Part-time (testing, validation)"
+      required_for: ["M2", "M3", "M4", "M5"]
+
+  infrastructure:
+    - resource: "Claude API Access"
+      required_for: "All milestones"
+      cost: "$TBD per month (depends on token usage)"
+
+    - resource: "Development Environment"
+      required_for: "M1-M6"
+      specs: "Python 3.11+, Git, Docker (optional)"
+
+    - resource: "CI/CD Pipeline (optional)"
+      required_for: "M4-M6"
+      tool: "GitHub Actions or GitLab CI"
+
+  external:
+    - need: "Pilot Client Identified"
+      required_for: "M5"
+      criteria: "Small project, tolerant of MVP limitations"
+
+# =================================================================
+# RISK ANALYSIS
+# =================================================================
+risks:
+  - risk_id: "R1"
+    name: "Architectural Decision Paralysis"
+    probability: "MEDIUM"
+    impact: "HIGH"
+    description: "M0 decisions take too long, block M1-M3"
+    mitigation:
+      - "Time-box decisions (1 week max)"
+      - "Start with simplest option, iterate later"
+      - "Document trade-offs, make informed guess if needed"
+
+  - risk_id: "R2"
+    name: "Token Cost Explosion"
+    probability: "MEDIUM"
+    impact: "MEDIUM"
+    description: "Large KB files (FDG 133KB) cause token costs to skyrocket"
+    mitigation:
+      - "Implement KB chunking in M1"
+      - "Monitor token usage per agent"
+      - "Set cost thresholds, alert if exceeded"
+
+  - risk_id: "R3"
+    name: "Integration Complexity Underestimated"
+    probability: "HIGH"
+    impact: "HIGH"
+    description: "SSF → AOS handoff more complex than expected"
+    mitigation:
+      - "Build prototype in M1 to validate approach"
+      - "Allocate buffer time in M2 (50% extra)"
+      - "Have fallback: Manual execution if automation fails"
+
+  - risk_id: "R4"
+    name: "First Client Uncovers Showstopper Bug"
+    probability: "MEDIUM"
+    impact: "HIGH"
+    description: "Real-world usage reveals critical gap"
+    mitigation:
+      - "Comprehensive testing in M4"
+      - "Choose tolerant pilot client"
+      - "Have manual workaround processes ready"
+
+  - risk_id: "R5"
+    name: "Scope Creep"
+    probability: "HIGH"
+    impact: "MEDIUM"
+    description: "New features added, timeline slips"
+    mitigation:
+      - "Strict prioritization (P0/P1/P2/P3)"
+      - "Defer P2+ to post-MVP"
+      - "Weekly milestone reviews"
+
+# =================================================================
+# SUCCESS METRICS (How to measure progress)
+# =================================================================
+success_metrics:
+  milestone_completion:
+    metric: "% of milestones on-time"
+    target: ">80%"
+    measurement: "Weekly milestone review"
+
+  code_quality:
+    metric: "Test coverage"
+    target: ">70%"
+    measurement: "pytest --cov"
+
+  system_reliability:
+    metric: "Agent success rate"
+    target: ">95% (no crashes)"
+    measurement: "Log analysis"
+
+  client_satisfaction:
+    metric: "NPS score (pilot client)"
+    target: ">7/10"
+    measurement: "Post-delivery survey"
+
+  cost_efficiency:
+    metric: "Token cost per project"
+    target: "<$100 per project (define threshold)"
+    measurement: "Claude API usage logs"
+
+# =================================================================
+# TIMELINE SUMMARY
+# =================================================================
+timeline_summary:
+  total_duration: "12 weeks (3 months)"
+
+  phase_1_foundation:
+    weeks: "Week 1-3"
+    milestones: ["M0", "M1"]
+    deliverable: "Single agent executable"
+
+  phase_2_integration:
+    weeks: "Week 4-6"
+    milestones: ["M2", "M3"]
+    deliverable: "Multi-agent flow working"
+
+  phase_3_completion:
+    weeks: "Week 7-8"
+    milestones: ["M4"]
+    deliverable: "Full SDLC executable"
+
+  phase_4_production:
+    weeks: "Week 9-12"
+    milestones: ["M5", "M6"]
+    deliverable: "First client delivered, system production-ready"
+
+# =================================================================
+# ACTIONABLE NEXT STEPS (What to do RIGHT NOW)
+# =================================================================
+immediate_next_steps:
+  week_1:
+    - action: "Schedule architectural decision meeting"
+      participants: ["Lead Architect", "CTO", "Product Manager"]
+      agenda: ["Runtime architecture (AD-001)", "KB loading (AD-002)", "State persistence (AD-003)"]
+      deliverable: "Decision docs for M0"
+
+    - action: "Document Agent Invocation Protocol"
+      owner: "Lead Architect"
+      files: ["docs/contracts/runtime_context_schema.json", "docs/architecture/agent_invocation_protocol.md"]
+      deliverable: "Clear integration spec"
+
+    - action: "Create M1 project board"
+      tool: "GitHub Projects or Jira"
+      tasks: ["PromptRuntime v0.1", "KB Loader v0.1", "Artifact Validator v0.1"]
+
+    - action: "Identify pilot client"
+      owner: "Business Development"
+      criteria: ["Small project", "Tolerant of MVP", "Available in ~8 weeks"]
+
+  week_2:
+    - action: "Start M1 implementation"
+      focus: "PromptRuntime prototype"
+      goal: "Assemble VIBE_ALIGNER prompt by end of week"
+
+    - action: "Set up development environment"
+      tasks: ["Python 3.11+ installed", "Repository cloned", "Dependencies installed"]
+
+    - action: "Create test harness"
+      files: ["tests/mock_agent_executor.py"]
+      goal: "Can test agent execution without Claude API"
+
+# =================================================================
+# FLEXIBLE SCOPE (What can be deferred if needed)
+# =================================================================
+deferrable_scope:
+  p2_items:
+    - "Automated State Machine Executor (manual version sufficient)"
+    - "KB Versioning (can snapshot manually)"
+    - "Observability dashboards (logs sufficient for MVP)"
+
+  p3_items:
+    - "RAG for large KBs (use full injection for MVP)"
+    - "Multi-user concurrency (single-user for MVP)"
+    - "Composition validation (manual review sufficient)"
+
+  nice_to_have:
+    - "CI/CD automation (manual testing OK for MVP)"
+    - "Performance optimization (acceptable if <1min per agent)"
+    - "Database persistence (file-based sufficient)"
+
+# =================================================================
+# DOCUMENT METADATA
+# =================================================================
+document_metadata:
+  purpose: "Actionable roadmap from current state to production"
+  scope: "MVP to First Client Delivery (12 weeks)"
+  assumptions:
+    - "Architectural decisions made in Week 1"
+    - "1-2 engineers available full-time"
+    - "Claude API access secured"
+    - "Pilot client identified by Week 4"
+  limitations:
+    - "Estimates are rough (±50%)"
+    - "Assumes no major blockers"
+    - "Does NOT include: post-MVP features, scale-out, multi-region deployment"
+
+# =================================================================
+# END OF CRITICAL PATH ANALYSIS
+# =================================================================
