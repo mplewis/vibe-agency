@@ -47,5 +47,19 @@
     - id: "MAIN-TESTABILITY"
       name: "Testability (Testbarkeit)"
       prompt_question: "Welchen Grad an Testautomatisierung streben Sie an (z.B. 80% Unit-Test-Abdeckung)?"
+    - id: "MAIN-REUSABILITY"
+      name: "Reusability (Wiederverwendbarkeit)"
+      prompt_question: "Wie wichtig ist es, dass Komponenten in anderen Projekten/Frameworks wiederverwendet werden können?"
+      applicability: ["library", "framework", "platform", "design_system"]
+      examples:
+        - "Shared component libraries (React, Vue components)"
+        - "Reusable knowledge bases (NFR catalogs, constraint databases)"
+        - "Template systems (VIBE templates across projects)"
+        - "Microservices (deployed in multiple platforms)"
+      priority_by_abstraction:
+        CONCRETE: "LOW"
+        LIBRARY: "CRITICAL"
+        FRAMEWORK: "CRITICAL"
+        PLATFORM: "HIGH"
 
 #... (Weitere Kategorien: Usability, Compatibility, Portability, Functional Suitability)...
