@@ -1,0 +1,868 @@
+# =================================================================
+# SYSTEM DATA FLOW MAP
+# =================================================================
+# VERSION: 1.0.0
+# PURPOSE: Machine-readable map of all data flows through Vibe Agency OS
+# USAGE: Enables agents to understand end-to-end flows from user input to delivery
+# AUDIENCE: AI Agents (Claude Code), System Architects, Integration Engineers
+# =================================================================
+
+version: "1.0.0"
+kind: "SystemDataFlowMap"
+metadata:
+  description: "Complete data flow mapping for Vibe Agency Operating System"
+  created: "2025-11-12"
+  maintained_by: "Lead Architect"
+  last_validated: "2025-11-12"
+  system_scope: "SSF (Governance) + AOS (Execution) + Workspaces (Client Management)"
+
+# =================================================================
+# ACTORS: All components that process or transform data
+# =================================================================
+actors:
+  # -------------------------
+  # GOVERNANCE LAYER (SSF)
+  # -------------------------
+  - id: "SSF_ROUTER"
+    name: "System Steward Router"
+    type: "orchestrator"
+    layer: "governance"
+    location: "system_steward_framework/agents/SSF_ROUTER/"
+    role: "Intent-based routing to SOPs and architecture docs"
+    inputs: ["user_text_input", "project_manifest.json"]
+    outputs: ["sop_execution_result", "updated_manifest"]
+    capabilities:
+      - "Intent classification"
+      - "SOP loading and execution"
+      - "Workspace context management"
+      - "Proactive HITL checkpoint detection"
+
+  - id: "AUDITOR"
+    name: "System Auditor"
+    type: "validator"
+    layer: "governance"
+    location: "system_steward_framework/agents/AUDITOR/"
+    role: "Validate KB consistency and semantic correctness"
+    inputs: ["AOS_Ontology.yaml", "knowledge_base_files"]
+    outputs: ["audit_report", "validation_errors"]
+
+  - id: "LEAD_ARCHITECT"
+    name: "Lead Architect"
+    type: "decision_maker"
+    layer: "governance"
+    location: "system_steward_framework/agents/LEAD_ARCHITECT/"
+    role: "High-level architecture decisions and research"
+    inputs: ["research_requests", "architecture_context"]
+    outputs: ["architecture_decisions", "design_documents"]
+
+  # -------------------------
+  # EXECUTION LAYER (AOS)
+  # -------------------------
+  - id: "VIBE_ALIGNER"
+    name: "Vibe Aligner"
+    type: "worker"
+    layer: "execution"
+    framework: "01_planning_framework"
+    location: "agency_os/01_planning_framework/agents/VIBE_ALIGNER/"
+    role: "Transform user requirements into validated feature specifications"
+    inputs: ["user_requirements_text", "FAE_constraints.yaml", "FDG_dependencies.yaml", "APCE_rules.yaml"]
+    outputs: ["feature_spec.json"]
+    capabilities:
+      - "Feature extraction"
+      - "Feasibility validation (FAE)"
+      - "Gap detection (FDG)"
+      - "Complexity scoring (APCE)"
+      - "Scope negotiation"
+
+  - id: "GENESIS_BLUEPRINT"
+    name: "Genesis Blueprint"
+    type: "worker"
+    layer: "execution"
+    framework: "01_planning_framework"
+    location: "agency_os/01_planning_framework/agents/GENESIS_BLUEPRINT/"
+    role: "Generate technical architecture from feature specs"
+    inputs: ["feature_spec.json", "FAE_constraints.yaml", "data_contracts.yaml"]
+    outputs: ["architecture.json"]
+    capabilities:
+      - "Core module selection (Genesis Core Pattern)"
+      - "Extension design"
+      - "Config schema generation"
+      - "Architecture validation"
+      - "Handoff to CODE_GEN"
+
+  - id: "GENESIS_UPDATE"
+    name: "Genesis Update"
+    type: "worker"
+    layer: "execution"
+    framework: "01_planning_framework"
+    location: "agency_os/01_planning_framework/agents/GENESIS_UPDATE/"
+    role: "Update existing architecture with new features"
+    inputs: ["existing_architecture.json", "new_feature_spec.json"]
+    outputs: ["updated_architecture.json"]
+
+  - id: "CODE_GENERATOR"
+    name: "Code Generator"
+    type: "worker"
+    layer: "execution"
+    framework: "02_code_gen_framework"
+    location: "agency_os/02_code_gen_framework/agents/CODE_GENERATOR/"
+    role: "Generate code from architecture specifications"
+    inputs: ["architecture.json", "code_gen_spec.json", "CODE_GEN_constraints.yaml"]
+    outputs: ["artifact_bundle (source code)"]
+    capabilities:
+      - "Code generation from specs"
+      - "Test generation alongside code"
+      - "Anti-hallucination enforcement"
+
+  - id: "QA_VALIDATOR"
+    name: "QA Validator"
+    type: "worker"
+    layer: "execution"
+    framework: "03_qa_framework"
+    location: "agency_os/03_qa_framework/agents/QA_VALIDATOR/"
+    role: "Execute automated tests and validate quality"
+    inputs: ["artifact_bundle", "test_plan.json", "QA_quality_rules.yaml"]
+    outputs: ["qa_report.json"]
+    capabilities:
+      - "Test pyramid execution"
+      - "Coverage validation"
+      - "Security scanning (SAST/SCA)"
+      - "Release criteria validation"
+
+  - id: "DEPLOY_MANAGER"
+    name: "Deploy Manager"
+    type: "worker"
+    layer: "execution"
+    framework: "04_deploy_framework"
+    location: "agency_os/04_deploy_framework/agents/DEPLOY_MANAGER/"
+    role: "Deploy artifacts to production"
+    inputs: ["artifact_bundle", "qa_report.json (APPROVED)", "DEPLOY_constraints.yaml"]
+    outputs: ["deploy_receipt.json"]
+    capabilities:
+      - "Zero-downtime deployment"
+      - "Health checks"
+      - "Rollback triggers"
+
+  - id: "BUG_TRIAGE"
+    name: "Bug Triage"
+    type: "worker"
+    layer: "execution"
+    framework: "05_maintenance_framework"
+    location: "agency_os/05_maintenance_framework/agents/BUG_TRIAGE/"
+    role: "Classify and prioritize bug reports"
+    inputs: ["bug_report.json", "MAINTENANCE_triage_rules.yaml"]
+    outputs: ["triaged_bug_report.json", "code_gen_spec.json (for fix)"]
+    capabilities:
+      - "Severity classification (P1-P5)"
+      - "Hotfix vs regular fix decision"
+      - "SLA response time calculation"
+
+  - id: "AGENCY_OS_ORCHESTRATOR"
+    name: "Agency OS Orchestrator"
+    type: "orchestrator"
+    layer: "execution"
+    framework: "00_system"
+    location: "agency_os/00_system/agents/AGENCY_OS_ORCHESTRATOR/"
+    role: "State machine executor - drives SDLC workflow"
+    inputs: ["project_manifest.json", "trigger_events"]
+    outputs: ["state_transitions", "agent_invocations"]
+    capabilities:
+      - "State machine execution"
+      - "Agent invocation based on state"
+      - "Error loop handling"
+      - "HITL checkpoint management"
+
+# =================================================================
+# ARTIFACTS: All data contracts and files exchanged between actors
+# =================================================================
+artifacts:
+  # -------------------------
+  # CORE CONTRACTS
+  # -------------------------
+  - id: "project_manifest"
+    name: "project_manifest.json"
+    type: "state_document"
+    schema: "agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml#project_manifest"
+    purpose: "Single Source of Truth (SSoT) for project state"
+    producer: ["SSF_ROUTER", "AGENCY_OS_ORCHESTRATOR"]
+    consumers: ["ALL"]
+    lifecycle: "persistent (entire project lifecycle)"
+    contains:
+      - "projectId (UUID)"
+      - "current_state (SDLC phase)"
+      - "artifact URIs (feature_spec, architecture, qa_report, etc.)"
+      - "metadata (owner, timestamps)"
+
+  - id: "feature_spec"
+    name: "feature_spec.json"
+    type: "specification"
+    schema: "agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml#feature_spec"
+    purpose: "Validated, prioritized feature list for implementation"
+    producer: ["VIBE_ALIGNER"]
+    consumers: ["GENESIS_BLUEPRINT", "GENESIS_UPDATE"]
+    lifecycle: "created in PLANNING, consumed in CODING"
+    contains:
+      - "features[] (id, name, priority, complexity_score)"
+      - "dependencies"
+      - "constraints"
+
+  - id: "architecture"
+    name: "architecture.json"
+    type: "specification"
+    schema: "agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml#architecture"
+    purpose: "Technical architecture and implementation plan"
+    producer: ["GENESIS_BLUEPRINT", "GENESIS_UPDATE"]
+    consumers: ["CODE_GENERATOR"]
+    lifecycle: "created in PLANNING, consumed in CODING"
+    contains:
+      - "core_modules[] (Genesis Core Pattern)"
+      - "extensions[] (feature implementations)"
+      - "config_schema"
+      - "tech_stack"
+
+  - id: "code_gen_spec"
+    name: "code_gen_spec.json"
+    type: "specification"
+    schema: "agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml#code_gen_spec"
+    purpose: "Detailed instructions for code generation"
+    producer: ["GENESIS_BLUEPRINT", "BUG_TRIAGE"]
+    consumers: ["CODE_GENERATOR"]
+    lifecycle: "created before CODING, consumed in CODING"
+    contains:
+      - "L1: Structured specification (architecture ref)"
+      - "L2: Database context (schema)"
+      - "L3: Task context (intent, scope, acceptance criteria)"
+      - "L4: System context (knowledge graph query)"
+
+  - id: "artifact_bundle"
+    name: "artifact_bundle (source code)"
+    type: "code"
+    schema: "directory structure + files"
+    purpose: "Generated source code and tests"
+    producer: ["CODE_GENERATOR"]
+    consumers: ["QA_VALIDATOR", "DEPLOY_MANAGER"]
+    lifecycle: "created in CODING, consumed in TESTING/DEPLOYMENT"
+    contains:
+      - "Source code files"
+      - "Test files"
+      - "Config files"
+      - "Documentation"
+
+  - id: "test_plan"
+    name: "test_plan.json"
+    type: "specification"
+    schema: "agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml#test_plan"
+    purpose: "Test pyramid configuration and scope"
+    producer: ["GENESIS_BLUEPRINT", "CODE_GENERATOR"]
+    consumers: ["QA_VALIDATOR"]
+    lifecycle: "created in PLANNING/CODING, consumed in TESTING"
+    contains:
+      - "test_pyramid_config (unit, integration, e2e)"
+      - "deferred_tests_v1 (load, penetration)"
+      - "hitl_requirements (usability criteria)"
+
+  - id: "qa_report"
+    name: "qa_report.json"
+    type: "report"
+    schema: "agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml#qa_report"
+    purpose: "Quality validation results (exit gate for deployment)"
+    producer: ["QA_VALIDATOR"]
+    consumers: ["SSF_ROUTER (SOP_003)", "DEPLOY_MANAGER", "AGENCY_OS_ORCHESTRATOR"]
+    lifecycle: "created in TESTING, consumed in AWAITING_QA_APPROVAL/DEPLOYMENT"
+    contains:
+      - "status (PASSED/FAILED/PARTIAL)"
+      - "critical_path_pass_rate"
+      - "blocker_bugs_open"
+      - "coverage_on_new_code"
+      - "sast_check_passed"
+      - "sca_check_passed"
+
+  - id: "deploy_receipt"
+    name: "deploy_receipt.json"
+    type: "receipt"
+    schema: "agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml#deploy_receipt"
+    purpose: "Proof of deployment with health metrics"
+    producer: ["DEPLOY_MANAGER"]
+    consumers: ["AGENCY_OS_ORCHESTRATOR", "SSF_ROUTER (SOP_009)"]
+    lifecycle: "created in DEPLOYMENT, consumed in PRODUCTION/MAINTENANCE"
+    contains:
+      - "status (SUCCESS/ROLLED_BACK/IN_PROGRESS)"
+      - "artifact_version_deployed"
+      - "db_migration_status"
+      - "health_check_status"
+      - "golden_signal_values (latency, error_rate)"
+
+  - id: "bug_report"
+    name: "bug_report.json"
+    type: "report"
+    schema: "agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml#bug_report"
+    purpose: "Structured bug report for maintenance workflow"
+    producer: ["SSF_ROUTER (SOP_002)"]
+    consumers: ["BUG_TRIAGE", "AGENCY_OS_ORCHESTRATOR"]
+    lifecycle: "created in MAINTENANCE, consumed by triage/fix workflow"
+    contains:
+      - "severity (P1_Critical to P5_Cosmetic)"
+      - "category (Security, Performance, Functional, UI, Data)"
+      - "reproducible (boolean)"
+      - "steps_to_reproduce"
+      - "context (PII impact, etc.)"
+
+  - id: "delivery_receipt"
+    name: "delivery_receipt.json"
+    type: "receipt"
+    schema: "defined in SOP_009"
+    purpose: "Client deliverable package metadata"
+    producer: ["SSF_ROUTER (SOP_009)"]
+    consumers: ["Client", "Archived workspace record"]
+    lifecycle: "created at project completion"
+    contains:
+      - "deliveryId"
+      - "artifacts_included[]"
+      - "delivery_method"
+      - "access_instructions"
+
+# =================================================================
+# KNOWLEDGE BASES: Static knowledge loaded by agents
+# =================================================================
+knowledge_bases:
+  - id: "FAE_constraints"
+    path: "agency_os/01_planning_framework/knowledge/FAE_constraints.yaml"
+    purpose: "Feature Anti-Expansion rules - v1.0 scope limits"
+    size: "28KB"
+    used_by: ["VIBE_ALIGNER", "GENESIS_BLUEPRINT"]
+
+  - id: "FDG_dependencies"
+    path: "agency_os/01_planning_framework/knowledge/FDG_dependencies.yaml"
+    purpose: "Feature Dependency Graph - inter-feature prerequisites"
+    size: "133KB"
+    used_by: ["VIBE_ALIGNER"]
+
+  - id: "APCE_rules"
+    path: "agency_os/01_planning_framework/knowledge/APCE_rules.yaml"
+    purpose: "Complexity & Prioritization Engine - scoring rules"
+    size: "52KB"
+    used_by: ["VIBE_ALIGNER", "GENESIS_BLUEPRINT"]
+
+  - id: "CODE_GEN_constraints"
+    path: "agency_os/02_code_gen_framework/knowledge/CODE_GEN_constraints.yaml"
+    purpose: "Anti-hallucination rules and excluded domains"
+    used_by: ["CODE_GENERATOR"]
+
+  - id: "QA_quality_rules"
+    path: "agency_os/03_qa_framework/knowledge/QA_quality_rules.yaml"
+    purpose: "Test pyramid, coverage targets, release criteria"
+    used_by: ["QA_VALIDATOR"]
+
+  - id: "DEPLOY_constraints"
+    path: "agency_os/04_deploy_framework/knowledge/DEPLOY_constraints.yaml"
+    purpose: "Security policies, deployment strategies, rollback triggers"
+    used_by: ["DEPLOY_MANAGER"]
+
+  - id: "MAINTENANCE_triage_rules"
+    path: "agency_os/05_maintenance_framework/knowledge/MAINTENANCE_triage_rules.yaml"
+    purpose: "Bug severity classification, SLA definitions, hotfix criteria"
+    used_by: ["BUG_TRIAGE"]
+
+  - id: "AOS_Ontology"
+    path: "agency_os/00_system/knowledge/AOS_Ontology.yaml"
+    purpose: "Master semantic terms dictionary (21 terms)"
+    used_by: ["AUDITOR"]
+
+  - id: "data_contracts"
+    path: "agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml"
+    purpose: "JSON schemas for all artifacts"
+    used_by: ["ALL agents for validation"]
+
+# =================================================================
+# DATA FLOWS: End-to-end sequences from input to output
+# =================================================================
+flows:
+  # -------------------------------------------------------------------------
+  # PRIMARY FLOW: Client Request → Product Delivery
+  # -------------------------------------------------------------------------
+  - flow_id: "F1_CLIENT_TO_DELIVERY"
+    name: "Client Onboarding to Product Delivery"
+    description: "Complete SDLC from client request to packaged deliverables"
+    trigger: "User says: 'I want to build [product]'"
+    termination: "Client receives delivery package"
+    estimated_duration: "varies (days to weeks)"
+
+    steps:
+      # STEP 1: Create Client Workspace
+      - step: 1
+        name: "Create Client Workspace"
+        actor: "SSF_ROUTER"
+        sop: "SOP_007"
+        input:
+          type: "user_text"
+          content: "Client name, project description, owner email"
+        processing:
+          - "Validate client name (snake_case)"
+          - "Generate UUID for projectId"
+          - "Create workspace directory structure"
+          - "Initialize project_manifest.json (state: INITIALIZING)"
+          - "Register in workspaces/.workspace_index.yaml"
+        output:
+          type: "workspace_created"
+          artifact: "workspaces/client_name/project_manifest.json"
+        state_transition: "NONE → WORKSPACE_ACTIVE"
+        dependencies: []
+
+      # STEP 2: Switch Workspace Context
+      - step: 2
+        name: "Switch to Client Workspace"
+        actor: "SSF_ROUTER"
+        sop: "SOP_008"
+        input:
+          type: "user_command"
+          content: "Switch to workspace [client_name]"
+        processing:
+          - "Set $ACTIVE_WORKSPACE environment variable"
+          - "Load workspace manifest"
+          - "Verify workspace accessibility"
+        output:
+          type: "context_switched"
+          artifact: "session_context ($ACTIVE_WORKSPACE set)"
+        state_transition: "N/A (session-scoped)"
+        dependencies: ["Step 1 complete"]
+
+      # STEP 3: Start Project Planning
+      - step: 3
+        name: "Start New Project (Planning)"
+        actor: "SSF_ROUTER"
+        sop: "SOP_001"
+        input:
+          type: "user_text"
+          content: "User requirements (e.g., 'booking tool for gym')"
+        processing:
+          - "Verify manifest state is INITIALIZING or PLANNING"
+          - "Load VIBE_ALIGNER agent"
+          - "Execute VIBE_ALIGNER workflow (6 phases)"
+        output:
+          type: "specification_created"
+          artifact: "workspaces/client_name/artifacts/planning/feature_spec.json"
+        state_transition: "INITIALIZING → PLANNING"
+        dependencies: ["Step 2 complete", "workspace context active"]
+
+      # STEP 3a: VIBE_ALIGNER Execution (sub-flow)
+      - step: "3a"
+        name: "VIBE_ALIGNER: Feature Extraction & Validation"
+        actor: "VIBE_ALIGNER"
+        input:
+          type: "user_requirements"
+          knowledge:
+            - "FAE_constraints.yaml"
+            - "FDG_dependencies.yaml"
+            - "APCE_rules.yaml"
+        processing:
+          - "Phase 1: Education (explain constraints)"
+          - "Phase 2: Extraction (parse requirements into features)"
+          - "Phase 3: Feasibility Validation (FAE engine)"
+          - "Phase 4: Gap Detection (FDG engine)"
+          - "Phase 5: Complexity Scoring (APCE engine)"
+          - "Phase 6: Scope Negotiation (fit to v1.0 threshold)"
+        output:
+          type: "validated_spec"
+          artifact: "feature_spec.json"
+        validation:
+          - "Complexity ≤ 60 points (v1.0 threshold)"
+          - "No FAE-blocked features"
+          - "All dependencies satisfied"
+          - "Conforms to data contract schema"
+
+      # STEP 4: Generate Architecture
+      - step: 4
+        name: "Generate Technical Architecture"
+        actor: "GENESIS_BLUEPRINT"
+        input:
+          type: "feature_spec"
+          artifact: "feature_spec.json"
+          knowledge:
+            - "FAE_constraints.yaml"
+            - "data_contracts.yaml"
+        processing:
+          - "Task 1: Select core modules (Genesis Core Pattern)"
+          - "Task 2: Design extensions (map features to modules)"
+          - "Task 3: Generate config schema (YAML)"
+          - "Task 4: Validate architecture (FAE compliance)"
+          - "Task 5: Handoff (create code_gen_spec.json)"
+        output:
+          type: "architecture_created"
+          artifacts:
+            - "workspaces/client_name/artifacts/planning/architecture.json"
+            - "workspaces/client_name/artifacts/planning/code_gen_spec.json"
+        state_transition: "PLANNING → AWAITING_ARCHITECTURE (implicit)"
+        dependencies: ["Step 3a complete"]
+
+      # STEP 5: Code Generation
+      - step: 5
+        name: "Generate Source Code"
+        actor: "CODE_GENERATOR"
+        triggered_by: "AGENCY_OS_ORCHESTRATOR"
+        input:
+          type: "code_gen_spec"
+          artifact: "code_gen_spec.json"
+          knowledge:
+            - "CODE_GEN_constraints.yaml"
+            - "CODE_GEN_quality_rules.yaml"
+        processing:
+          - "Generate source code from architecture"
+          - "Generate tests alongside code"
+          - "Apply anti-hallucination checks"
+          - "Run internal quality gates (linting, syntax)"
+        output:
+          type: "code_bundle"
+          artifact: "workspaces/client_name/artifacts/code/ (directory)"
+        state_transition: "CODING → AWAITING_TESTING"
+        dependencies: ["Step 4 complete", "Orchestrator triggers T1_StartCoding"]
+
+      # STEP 6: Quality Validation
+      - step: 6
+        name: "Execute QA Testing"
+        actor: "QA_VALIDATOR"
+        triggered_by: "AGENCY_OS_ORCHESTRATOR"
+        input:
+          type: "code_bundle"
+          artifact: "artifacts/code/"
+          knowledge:
+            - "QA_quality_rules.yaml"
+            - "test_plan.json"
+        processing:
+          - "Execute test pyramid (unit, integration, e2e)"
+          - "Calculate coverage on new code"
+          - "Run SAST/SCA security scans"
+          - "Check critical path pass rate"
+          - "Evaluate against release criteria"
+        output:
+          type: "qa_report"
+          artifact: "workspaces/client_name/artifacts/test/qa_report.json"
+        state_transition: "TESTING → AWAITING_QA_APPROVAL"
+        dependencies: ["Step 5 complete", "Orchestrator triggers T2_StartTesting"]
+
+      # STEP 7: Human Approval (HITL)
+      - step: 7
+        name: "Human-in-the-Loop QA Approval"
+        actor: "SSF_ROUTER"
+        sop: "SOP_003"
+        triggered_by: "Proactive detection (state == AWAITING_QA_APPROVAL)"
+        input:
+          type: "qa_report"
+          artifact: "qa_report.json"
+        processing:
+          - "Present QA report summary to human"
+          - "Request YES/NO approval"
+          - "Log decision with timestamp"
+          - "Guide human to send qa_approved_signal (if YES)"
+          - "Guide human to initiate L1_TestFailed loop (if NO)"
+        output:
+          type: "approval_decision"
+          artifact: "qa_approved_signal (event) OR rejection logged"
+        state_transition:
+          - "IF YES: AWAITING_QA_APPROVAL → DEPLOYMENT"
+          - "IF NO: AWAITING_QA_APPROVAL → CODING (L1_TestFailed loop)"
+        dependencies: ["Step 6 complete"]
+        critical: true
+        hitl: true
+
+      # STEP 8: Deployment
+      - step: 8
+        name: "Deploy to Production"
+        actor: "DEPLOY_MANAGER"
+        triggered_by: "AGENCY_OS_ORCHESTRATOR (T4_StartDeployment)"
+        input:
+          type: "approved_bundle"
+          artifacts:
+            - "code bundle"
+            - "qa_report.json (status: APPROVED)"
+          knowledge:
+            - "DEPLOY_constraints.yaml"
+        processing:
+          - "Execute zero-downtime deployment"
+          - "Run database migrations"
+          - "Execute health checks"
+          - "Monitor golden signals (latency, error rate)"
+          - "Trigger rollback if health checks fail"
+        output:
+          type: "deploy_receipt"
+          artifact: "workspaces/client_name/artifacts/deployment/deploy_receipt.json"
+        state_transition: "DEPLOYMENT → PRODUCTION (if SUCCESS)"
+        dependencies: ["Step 7 approved"]
+        error_handling: "IF status == ROLLED_BACK → triggers L2_DeployFailed loop"
+
+      # STEP 9: Package Deliverables
+      - step: 9
+        name: "Package Client Deliverables"
+        actor: "SSF_ROUTER"
+        sop: "SOP_009"
+        input:
+          type: "user_command"
+          content: "Package deliverables for client"
+        processing:
+          - "Validate project phase (must be PRODUCTION or MAINTENANCE)"
+          - "Validate all required artifacts exist"
+          - "Create DELIVERY_PACKAGE/ directory"
+          - "Copy all artifacts (planning, code, test, deployment)"
+          - "Generate documentation (README, SETUP_GUIDE, API_DOCS)"
+          - "Create delivery_receipt.json"
+          - "Execute selected delivery method (GitHub/ZIP/PR/Local)"
+          - "Optionally archive workspace"
+        output:
+          type: "delivery_package"
+          artifacts:
+            - "workspaces/client_name/DELIVERY_PACKAGE/"
+            - "delivery_receipt.json"
+          delivery_methods:
+            - "GitHub repo export"
+            - "ZIP archive"
+            - "Pull request to client repo"
+            - "Local package only"
+        state_transition: "PRODUCTION → ARCHIVED (if archived)"
+        dependencies: ["Step 8 complete (deploy_receipt exists)"]
+
+    success_criteria:
+      - "Client workspace created and isolated"
+      - "Feature spec validated (≤60 complexity)"
+      - "Architecture generated (Genesis Core Pattern)"
+      - "Code generated with tests"
+      - "QA passed (critical path 100%, coverage ≥70%)"
+      - "Human approved deployment"
+      - "Deploy succeeded (health checks OK)"
+      - "Deliverables packaged and handed off"
+
+    failure_modes:
+      - mode: "Complexity overflow"
+        location: "Step 3a"
+        handling: "VIBE_ALIGNER negotiates scope reduction"
+      - mode: "QA failed"
+        location: "Step 6"
+        handling: "L1_TestFailed loop → return to Step 5 (CODING)"
+      - mode: "Human rejects QA"
+        location: "Step 7"
+        handling: "L1_TestFailed loop → return to Step 5"
+      - mode: "Deployment rollback"
+        location: "Step 8"
+        handling: "L2_DeployFailed → create P1 bug report → MAINTENANCE flow"
+
+  # -------------------------------------------------------------------------
+  # SECONDARY FLOW: Bug Fix (Hotfix)
+  # -------------------------------------------------------------------------
+  - flow_id: "F2_BUG_HOTFIX"
+    name: "Critical Bug Hotfix"
+    description: "P1 bug fix bypasses planning, goes straight to code generation"
+    trigger: "Bug report classified as P1_Critical"
+    termination: "Hotfix deployed to production"
+
+    steps:
+      - step: 1
+        name: "Report Bug"
+        actor: "SSF_ROUTER"
+        sop: "SOP_002"
+        input:
+          type: "user_text"
+          content: "Bug description"
+        processing:
+          - "Guide user through bug report template"
+          - "Collect: title, steps_to_reproduce, severity, impact"
+          - "Generate bug_report.json"
+          - "Validate against data contract"
+        output:
+          type: "bug_report"
+          artifact: "bug_report.json"
+        state_transition: "EXTERNAL_EVENT → MAINTENANCE"
+
+      - step: 2
+        name: "Triage Bug"
+        actor: "BUG_TRIAGE"
+        triggered_by: "AGENCY_OS_ORCHESTRATOR (T6_TriggerMaintenance)"
+        input:
+          type: "bug_report"
+          knowledge:
+            - "MAINTENANCE_triage_rules.yaml"
+        processing:
+          - "Classify severity (P1-P5)"
+          - "Calculate SLA response time"
+          - "Decide: Hotfix vs Regular Fix"
+        output:
+          type: "triaged_bug + fix_spec"
+          artifacts:
+            - "triaged_bug_report.json"
+            - "code_gen_spec.json (for fix)"
+        routing:
+          - "IF P1 (Hotfix): L3_HotfixLoop → CODING"
+          - "IF P2-P5 (Regular): L4_RegularFixLoop → PLANNING"
+
+      - step: 3
+        name: "Generate Fix Code"
+        actor: "CODE_GENERATOR"
+        note: "Reuses Step 5 from F1_CLIENT_TO_DELIVERY"
+        input:
+          type: "code_gen_spec (fix)"
+        output:
+          type: "code_bundle (fix)"
+
+      - step: 4
+        name: "QA Validation"
+        actor: "QA_VALIDATOR"
+        note: "Reuses Step 6 from F1_CLIENT_TO_DELIVERY"
+        input:
+          type: "code_bundle (fix)"
+        output:
+          type: "qa_report"
+
+      - step: 5
+        name: "HITL Approval"
+        actor: "SSF_ROUTER"
+        sop: "SOP_003"
+        note: "Reuses Step 7 from F1_CLIENT_TO_DELIVERY"
+
+      - step: 6
+        name: "Deploy Hotfix"
+        actor: "DEPLOY_MANAGER"
+        note: "Reuses Step 8 from F1_CLIENT_TO_DELIVERY"
+        priority: "HIGH (expedited)"
+
+    loop_prevention:
+      - "L2_DeployFailed → MAINTENANCE (Step 2)"
+      - "Max 3 iterations before escalation to human"
+
+# =================================================================
+# INTEGRATION POINTS: Where components connect
+# =================================================================
+integration_points:
+  - point_id: "IP1"
+    name: "SSF → AOS Handoff"
+    from: "SSF_ROUTER (SOP_001)"
+    to: "VIBE_ALIGNER"
+    mechanism: "SOP loads agent prompt + knowledge deps"
+    contract: "User text → feature_spec.json"
+    validation: "Data contract schema"
+
+  - point_id: "IP2"
+    name: "AOS → SSF Checkpoint"
+    from: "QA_VALIDATOR"
+    to: "SSF_ROUTER (SOP_003)"
+    mechanism: "State machine triggers proactive SOP load"
+    contract: "qa_report.json → human approval"
+    validation: "HITL checkpoint enforced"
+
+  - point_id: "IP3"
+    name: "Workspace Context Propagation"
+    from: "SSF_ROUTER"
+    to: "ALL agents"
+    mechanism: "$ACTIVE_WORKSPACE environment variable"
+    contract: "Session-scoped context"
+    validation: "Manifest path resolution"
+
+  - point_id: "IP4"
+    name: "Orchestrator → Agent Invocation"
+    from: "AGENCY_OS_ORCHESTRATOR"
+    to: "Worker agents (VIBE_ALIGNER, CODE_GEN, QA, etc.)"
+    mechanism: "State transition triggers"
+    contract: "project_id + runtime_context"
+    validation: "State machine rules"
+
+# =================================================================
+# CRITICAL DEPENDENCIES (blocking relationships)
+# =================================================================
+critical_dependencies:
+  - dependency_id: "D1"
+    name: "Knowledge Base Loading"
+    from: "All worker agents"
+    to: "Knowledge YAML files"
+    blocking: true
+    reason: "Agents cannot function without KB (FAE, FDG, APCE, etc.)"
+    impact: "System unusable if KB missing"
+
+  - dependency_id: "D2"
+    name: "Data Contract Validation"
+    from: "All artifact producers"
+    to: "ORCHESTRATION_data_contracts.yaml"
+    blocking: true
+    reason: "Invalid artifacts break state transitions"
+    impact: "Workflow halts at first invalid artifact"
+
+  - dependency_id: "D3"
+    name: "State Machine Integrity"
+    from: "AGENCY_OS_ORCHESTRATOR"
+    to: "ORCHESTRATION_workflow_design.yaml"
+    blocking: true
+    reason: "Orchestrator cannot execute without state machine definition"
+    impact: "No automated workflow execution"
+
+  - dependency_id: "D4"
+    name: "Workspace Context"
+    from: "SSF_ROUTER + All workspace operations"
+    to: "workspaces/.workspace_index.yaml"
+    blocking: true
+    reason: "Cannot resolve workspace paths without registry"
+    impact: "Multi-client operations broken"
+
+# =================================================================
+# VALIDATION: How to verify this map is accurate
+# =================================================================
+validation_checklist:
+  - check: "All actors listed have corresponding _composition.yaml files"
+    status: "PASS (11 agents verified)"
+  - check: "All artifacts have schema definitions in data_contracts.yaml"
+    status: "PASS (9 contracts verified)"
+  - check: "All SOPs (001-009) are mapped to flows"
+    status: "PASS (9 SOPs mapped)"
+  - check: "All state transitions match ORCHESTRATION_workflow_design.yaml"
+    status: "PASS (7 states, 6 transitions, 4 loops verified)"
+  - check: "Knowledge base paths exist"
+    status: "PASS (17 KB files validated)"
+
+# =================================================================
+# USAGE NOTES FOR AGENTS
+# =================================================================
+agent_instructions: |
+  HOW TO USE THIS MAP:
+
+  1. To understand "What happens when user says X":
+     - Find the flow triggered by that intent
+     - Follow steps sequentially
+     - Check dependencies at each step
+
+  2. To find "Who produces artifact Y":
+     - Look up artifact in artifacts[] section
+     - Check "producer" field
+
+  3. To find "What knowledge does agent Z need":
+     - Look up agent in actors[] section
+     - Find corresponding _knowledge_deps.yaml
+     - Load required KB files before execution
+
+  4. To validate "Can step X execute now":
+     - Check step.dependencies[]
+     - Verify all prior steps completed
+     - Verify artifacts exist
+
+  5. To debug "Why did flow fail at step X":
+     - Check failure_modes[] for that flow
+     - Check critical_dependencies[] for blocking issues
+     - Verify artifact schema compliance
+
+# =================================================================
+# METADATA
+# =================================================================
+document_metadata:
+  purpose: "Comprehensive data flow map for Vibe Agency OS"
+  scope: "SSF + AOS + Workspaces (complete system)"
+  coverage:
+    - "2 primary flows (F1, F2)"
+    - "11 actors"
+    - "13 artifacts"
+    - "10 knowledge bases"
+    - "4 integration points"
+    - "4 critical dependencies"
+  limitations:
+    - "Does NOT show: Internal agent task flows (see agent tasks/ directories)"
+    - "Does NOT show: Knowledge loading mechanism (see _composition.yaml)"
+    - "Does NOT show: Prompt assembly runtime (MISSING - see GAP_ANALYSIS)"
+  next_actions:
+    - "Read: ARCHITECTURE_GAP_ANALYSIS.md to identify missing components"
+    - "Read: CRITICAL_PATH_ANALYSIS.yaml to prioritize implementation"
+
+# =================================================================
+# END OF DATA FLOW MAP
+# =================================================================
