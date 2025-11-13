@@ -54,6 +54,7 @@ def main():
 
     # Test cases: (agent_id, task_id)
     test_cases = [
+        # Planning Framework
         ("VIBE_ALIGNER", "02_feature_extraction"),
         ("VIBE_ALIGNER", "03_feasibility_validation"),
         ("GENESIS_BLUEPRINT", "01_select_core_modules"),
@@ -61,6 +62,30 @@ def main():
         ("GENESIS_BLUEPRINT", "03_generate_config_schema"),
         ("GENESIS_BLUEPRINT", "04_validate_architecture"),
         ("GENESIS_BLUEPRINT", "05_handoff"),
+
+        # Code Generation Framework
+        ("CODE_GENERATOR", "01_spec_analysis_validation"),
+        ("CODE_GENERATOR", "02_code_generation"),
+        ("CODE_GENERATOR", "03_test_generation"),
+        ("CODE_GENERATOR", "04_documentation_generation"),
+        ("CODE_GENERATOR", "05_quality_assurance_packaging"),
+
+        # QA Framework
+        ("QA_VALIDATOR", "01_setup_environment"),
+        ("QA_VALIDATOR", "02_automated_test_execution"),
+        ("QA_VALIDATOR", "03_static_analysis"),
+        ("QA_VALIDATOR", "04_report_generation"),
+
+        # Deploy Framework
+        ("DEPLOY_MANAGER", "01_pre_deployment_checks"),
+        ("DEPLOY_MANAGER", "02_deployment_execution"),
+        ("DEPLOY_MANAGER", "03_post_deployment_validation"),
+        ("DEPLOY_MANAGER", "04_report_generation"),
+
+        # Maintenance Framework
+        ("BUG_TRIAGE", "01_bug_analysis_classification"),
+        ("BUG_TRIAGE", "02_remediation_path_determination"),
+        ("BUG_TRIAGE", "03_output_generation"),
     ]
 
     results = []
