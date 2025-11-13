@@ -6,17 +6,38 @@ Tests that ALL agents can compose their prompts correctly.
 No LLM calls - just validates that composition works.
 """
 import sys
+import os
 from pathlib import Path
 import importlib.util
 
+# Debug: Print working directory
+print(f"Working directory: {os.getcwd()}")
+print(f"Python path: {sys.path}")
+
+# Check if prompt_runtime file exists
+runtime_path = Path("agency_os/00_system/runtime/prompt_runtime.py")
+if not runtime_path.exists():
+    print(f"❌ ERROR: prompt_runtime.py not found at {runtime_path.absolute()}")
+    print(f"   Current dir contents: {list(Path('.').iterdir())[:10]}")
+    sys.exit(1)
+
+print(f"✓ Found prompt_runtime at {runtime_path.absolute()}")
+
 # Load prompt runtime
-spec = importlib.util.spec_from_file_location(
-    "prompt_runtime",
-    "agency_os/00_system/runtime/prompt_runtime.py"
-)
-prompt_runtime = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(prompt_runtime)
-PromptRuntime = prompt_runtime.PromptRuntime
+try:
+    spec = importlib.util.spec_from_file_location(
+        "prompt_runtime",
+        str(runtime_path)
+    )
+    prompt_runtime = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(prompt_runtime)
+    PromptRuntime = prompt_runtime.PromptRuntime
+    print("✓ Successfully loaded PromptRuntime")
+except Exception as e:
+    print(f"❌ ERROR loading prompt_runtime: {e}")
+    import traceback
+    traceback.print_exc()
+    sys.exit(1)
 
 
 def test_agent_prompt_composition(agent_id: str, task_id: str) -> bool:

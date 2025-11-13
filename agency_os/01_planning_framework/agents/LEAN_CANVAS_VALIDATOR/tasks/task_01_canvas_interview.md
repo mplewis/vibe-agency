@@ -12,10 +12,23 @@
 ### Mode Selection Logic
 
 ```yaml
-if project_type in ["commercial"]:
+# v1.2 UPDATE: Hybrid Mode for Commercial + Vague Requirements
+if project_type == "commercial" AND user_confidence == "HIGH":
   mode: FULL_INTERVIEW (9 fields, user-driven)
+  research: Optional (user-triggered only)
+  duration: 15-20 minutes
+
+elif project_type == "commercial" AND user_confidence in ["MEDIUM", "LOW"]:
+  mode: HYBRID_MODE  # NEW in v1.2
+  structure: Full Interview (9 fields for business rigor)
+  research: Auto-WebSearch for vague answers
+  duration: 25-35 minutes
+
 elif project_type in ["portfolio", "demo", "nonprofit", "personal"]:
   mode: QUICK_RESEARCH (3 core fields, research-driven)
+  research: Mandatory WebSearch
+  duration: 15-25 minutes
+
 else:
   mode: FULL_INTERVIEW (default, backward-compatible)
 ```
@@ -149,7 +162,88 @@ Does this align with your goals for this project?
 
 ---
 
-## AUTO-WEBSEARCH TRIGGER (Both Modes)
+## MODE 3: HYBRID MODE (Commercial + Vague Requirements)
+
+**When:** project_type = "commercial" AND user_confidence in ["MEDIUM", "LOW"]
+**Duration:** 25-35 minutes
+**Data Source:** User answers + Auto-WebSearch for vague responses
+
+### Opening Statement
+
+```
+Welcome! You're building a commercial product. I'll guide you through the full
+Lean Canvas (9 fields) to ensure business rigor.
+
+However, I notice you're uncertain about some technical aspects - no problem!
+I'll automatically research topics where you're unsure, combining business
+validation with research-driven insights.
+
+This will take about 25-35 minutes. Ready to begin?
+```
+
+### Hybrid Process
+
+1. **Ask all 9 Lean Canvas questions** (same as FULL_INTERVIEW)
+2. **Detect confidence level** for each answer using confidence detection
+3. **Auto-trigger WebSearch** when user_confidence is LOW or MEDIUM
+4. **Present research findings** and ask for confirmation
+5. **Continue with next question**
+
+### Confidence Detection Signals
+
+**Explicit indicators (LOW confidence):**
+- "I don't know", "not sure", "question is how to...", "unsure how to..."
+- "keine Ahnung", "weiß nicht", "wie man sowas aufbauen würde"
+
+**Implicit indicators (MEDIUM confidence):**
+- Short answers (< 20 words)
+- Many unknowns or hedging words ("maybe", "probably", "might")
+
+**HIGH confidence:**
+- Detailed answers (> 30 words)
+- Specific examples or prior research mentioned
+
+### Example Hybrid Flow
+
+```
+Agent: "What problem does your product solve?"
+User: "die Frage, wie man sowas aufbauen würde" (translation: "the question is how to build something like this")
+
+Agent detects: LOW confidence (explicit indicator)
+Agent: "No problem! Let me research this domain for you..."
+Agent executes: WebSearch("AI code specification frameworks 2024")
+Agent presents: "Based on research, I found these common problems:
+                 1. Non-technical users struggle with technical specifications
+                 2. Existing tools require coding knowledge
+                 3. Gap between business requirements and technical specs
+                 Does this match what you had in mind?"
+
+User: "Yes, exactly!"
+Agent: "Great! Let's continue with Customer Segments..."
+```
+
+### Output Metadata
+
+Hybrid Mode adds research_quality metadata to track reliability:
+
+```json
+{
+  "mode": "hybrid_mode",
+  "user_confidence": "MEDIUM",
+  "websearch_triggered": 5,
+  "websearch_successful": 3,
+  "websearch_failed": 2,
+  "research_quality": "PARTIAL",
+  "research_gaps": [
+    "Claude Skills architecture (WebSearch unavailable)",
+    "AI specification PRD tools (WebSearch unavailable)"
+  ]
+}
+```
+
+---
+
+## AUTO-WEBSEARCH TRIGGER (All Modes)
 
 **NEW v1.1 Feature:** Auto-detect vague responses and trigger WebSearch
 
@@ -170,25 +264,60 @@ def detect_confidence(user_response):
         return "HIGH"
 ```
 
-### Auto-Research Flow
+### Auto-Research Flow with Fallback (v1.2)
 
-```
-if confidence_level == "LOW":
-    agent: "No problem! Let me research this for you."
-    execute: WebSearch(query=construct_query(field, user_context))
-    present: "Based on research, here's what I found: [...]
-             Does this match what you had in mind?"
+```python
+# v1.2 UPDATE: Graceful degradation when WebSearch fails
+if confidence_level in ["LOW", "MEDIUM"]:
+    agent: "No problem! Let me research this for you..."
+
+    try:
+        results = WebSearch(query=construct_query(field, user_context))
+        research_quality = "HIGH"
+        agent: "Based on research, here's what I found: [...]
+               Does this match what you had in mind?"
+
+    except WebSearchUnavailable:
+        # FALLBACK STRATEGY
+        research_quality = "PARTIAL"
+        research_gaps.append(f"{field}: WebSearch unavailable")
+
+        # Try alternative knowledge sources
+        fallback_response = use_llm_knowledge_cutoff(field, user_context)
+
+        agent: """
+        ⚠️  WebSearch unavailable for this topic.
+        I'll use my training knowledge (cutoff: January 2025) instead.
+
+        Based on general knowledge: [fallback_response]
+
+        ⚠️  RECOMMENDATION: Manually research "{construct_query()}" to validate.
+        Does this help, or shall we continue?
+        """
+
+    except WebSearchPartialFailure as e:
+        # Some searches succeeded, some failed
+        research_quality = "PARTIAL"
+        research_gaps.append(f"{field}: {e.failed_queries}")
+
+        agent: """
+        ✅ Found partial research results.
+        ⚠️  Some searches failed - consider manual validation.
+
+        Based on available research: [partial_results]
+        Continue?
+        """
 ```
 
 ---
 
-## OUTPUTS (Both Modes)
+## OUTPUTS (All Modes)
 
 ### canvas_responses (Structured)
 
 ```json
 {
-  "mode": "full_interview" | "quick_research",
+  "mode": "full_interview" | "quick_research" | "hybrid_mode",
   "canvas_type": "complete" | "simplified",
   "fields": {
     "problem": "...",
@@ -199,9 +328,29 @@ if confidence_level == "LOW":
     "problem": "user" | "websearch",
     "customer_segments": "user" | "inferred",
     "assumptions": "derived" | "llm_generated"
+  },
+  "research_metadata": {
+    "research_quality": "HIGH" | "PARTIAL" | "LOW" | "NONE",
+    "websearch_triggered": 5,
+    "websearch_successful": 3,
+    "websearch_failed": 2,
+    "research_gaps": [
+      "Claude Skills architecture (WebSearch unavailable)",
+      "AI specification tools (WebSearch timeout)"
+    ],
+    "user_action_required": "Manual research recommended for gap topics"
   }
 }
 ```
+
+### Research Quality Levels
+
+| Level | Definition | User Action |
+|-------|------------|-------------|
+| **HIGH** | All WebSearches succeeded | None - proceed with confidence |
+| **PARTIAL** | Some searches failed (< 50%) | Review research_gaps, consider manual validation |
+| **LOW** | Most searches failed (> 50%) | Manual research REQUIRED for quality |
+| **NONE** | No research attempted or all failed | User must provide all domain knowledge |
 
 ---
 
