@@ -87,9 +87,11 @@ def handle_trigger(project_id: str, trigger_event: Dict):
 ### 1. State: `PLANNING`
 - **Trigger:** A new project is created or a bug report triggers a new planning cycle.
 - **Action:**
-    1.  Invoke the `VIBE_ALIGNER` agent (from `agency-os/01_planning_framework/prompts/VIBE_ALIGNER_v3.md`) to process the initial client brief or bug report.
-    2.  Invoke the `GENESIS_BLUEPRINT` agent (from `agency-os/01_planning_framework/prompts/GENESIS_BLUEPRINT_v5.md`) to create the `architecture.json` and `code_gen_spec.json` artifacts.
-    3.  **Transition (T1_StartCoding):** If `code_gen_spec.json` is created successfully:
+    1.  Invoke the `LEAN_CANVAS_VALIDATOR` agent (from `agency-os/01_planning_framework/prompts/LEAN_CANVAS_VALIDATOR.md`) to perform economic validation.
+    2.  Receive `lean_canvas_summary.json` artifact from `LEAN_CANVAS_VALIDATOR`.
+    3.  Invoke the `VIBE_ALIGNER` agent (from `agency-os/01_planning_framework/prompts/VIBE_ALIGNER_v3.md`), passing the `lean_canvas_summary.json` as input, to process the initial client brief or bug report.
+    4.  Invoke the `GENESIS_BLUEPRINT` agent (from `agency-os/01_planning_framework/prompts/GENESIS_BLUEPRINT_v5.md`) to create the `architecture.json` and `code_gen_spec.json` artifacts.
+    5.  **Transition (T1_StartCoding):** If `code_gen_spec.json` is created successfully:
         - Update `project_manifest.json`:
             - Set `status.projectPhase` to `CODING`.
             - Add links to the new artifacts in `artifacts.planning`.

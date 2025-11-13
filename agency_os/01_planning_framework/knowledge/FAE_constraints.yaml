@@ -28,17 +28,36 @@ incompatibilities:
   - id: "FAE-002"
     type: "feature_scope_conflict"
     feature: "real_time_chat_self_hosted"
-    incompatible_with: "scope_v1.0"
-    reason: "Average build time is 10.2 person-months. Requires WebSocket infrastructure, persistence, presence system. Incompatible with standard serverless."
-    required_nfrs:
-      - "low_latency_<500ms"
-      - "persistent_connections"
-      - "high_scalability_concurrent_users"
-    recommended_scope: "v2.0_or_later"
-    alternatives_for_v1:
-      - "use_3rd_party_pusher_ably_firebase"
-      - "use_managed_service_aws_appsync"
-      - "async_message_polling"
+    reason: >
+      Ein 'Build'-Ansatz (Eigenbau) wird aufgrund extremer technischer Komplexität 
+      und prohibitiv hoher 3-Jahres-TCO (Total Cost of Ownership) nicht empfohlen.
+      Die geschätzte initiale Entwicklungszeit (z.B. 10.2 Personenmonate) ist trivial
+      im Vergleich zu den langfristigen Kosten und Risiken für die Wartung einer
+      skalierbaren, zustands-synchronisierten Echtzeit-Infrastruktur.
+    recommendation: >
+      Verwenden Sie eine 'Buy/Blend'-Strategie unter Nutzung einer verwalteten CPaaS-API
+      oder einer etablierten Open-Source-Lösung (z.B. Rocket.Chat, Mattermost).
+      Dies reduziert die Time-to-Market von 8-14 Monaten auf 2-6 Wochen.
+    evidence:
+      - source: "Gartner MQ for CPaaS 2024 / Gartner AIBS 2024"
+        date: "2024-Q3"
+        finding: >
+          Der Markt hat sich von 'Build vs. Buy' zu 'Buy, Build, Blend' entwickelt.[28]
+          90% der Unternehmen werden bis 2028 CPaaS nutzen.
+        url: "https://example.com/gartner-cpaas-2024"
+      - source: "InfoQ Analysis: Challenges of Realtime Chat"
+        date: "2025-Q1"
+        finding: >
+          Technische Komplexität ist extrem hoch: Erfordert getrennte Push- (z.B. Redis)
+          und Persistenz- (z.B. PostgreSQL) Layer, was zu Race Conditions
+          und Synchronisationsproblemen führt.
+        url: "https://example.com/infoq-chat-challenges"
+      - source: "TCO-Analyse 'Build vs. Buy' (Analog: Reporting Layer)"
+        date: "2025-Q2"
+        finding: >
+          3-Jahres-TCO 'Build': $850k - $1.65M (8-14 Monate Entwicklungszeit).
+          3-Jahres-TCO 'Buy' (API): $30k - $150k (2-6 Wochen Entwicklungszeit).
+        url: "https://example.com/tco-build-vs-buy-2025"
 
   - id: "FAE-003"
     type: "feature_scope_conflict"

@@ -62,6 +62,114 @@ schemas:
          - { name: "qa_report", type: "string(uri)" }
          - { name: "deploy_receipt", type: "string(uri)" }
 
+ - name: "feature_spec.schema.json"
+   version: "1.0.0"
+   $id: "https://api.example.com/schemas/feature_spec.v1.0.0.json"
+   description: "Output of the PLANNING state. Defines validated feature specifications."
+   fields:
+     - name: "project"
+       type: "object"
+       required: true
+       properties:
+         - { name: "name", type: "string", description: "Project Name" }
+         - { name: "category", type: "enum", values: ["CLI Tool", "Web App", "Mobile App", "API Service"], description: "Project Category" }
+         - { name: "scale", type: "enum", values: ["Solo User", "Small Team", "Production"], description: "Project Scale" }
+         - { name: "target_scope", type: "enum", values: ["prototype", "mvp", "v1.0"], description: "Target Scope" }
+         - { name: "core_problem", type: "string", description: "1-2 sentence description of what problem this solves" }
+         - { name: "target_users", type: "string", description: "Who will use this" }
+     - name: "lean_canvas_summary"
+       type: "object"
+       required: false # Optional, as LEAN_CANVAS_VALIDATOR might be optional
+       properties:
+         - { name: "riskiest_assumptions", type: "array", items: "string", description: "Identified riskiest assumptions from Lean Canvas" }
+     - name: "features"
+       type: "array"
+       required: true
+       items:
+         type: "object"
+         properties:
+           - { name: "id", type: "string" }
+           - { name: "name", type: "string" }
+           - { name: "priority", type: "enum", values: ["must_have", "should_have", "could_have", "wont_have_v1"] }
+           - { name: "complexity_score", type: "integer" }
+           - { name: "estimated_effort", type: "string" }
+           - name: "input"
+             type: "object"
+             properties:
+               - { name: "format", type: "string" }
+               - { name: "example", type: "string" }
+               - { name: "constraints", type: "string" }
+           - name: "processing"
+             type: "object"
+             properties:
+               - { name: "description", type: "string" }
+               - { name: "external_dependencies", type: "array", items: "string" }
+               - { name: "side_effects", type: "array", items: "string" }
+           - name: "output"
+             type: "object"
+             properties:
+               - { name: "format", type: "string" }
+               - { name: "example", type: "string" }
+               - { name: "success_criteria", type: "string" }
+           - name: "dependencies"
+             type: "object"
+             properties:
+               - name: "required"
+                 type: "array"
+                 items:
+                   type: "object"
+                   properties:
+                     - { name: "component", type: "string" }
+                     - { name: "reason", type: "string" }
+                     - { name: "source", type: "string" }
+               - { name: "optional", type: "array", items: "string" }
+           - name: "fae_validation"
+             type: "object"
+             properties:
+               - { name: "passed", type: "boolean" }
+               - { name: "constraints_checked", type: "array", items: "string" }
+               - { name: "issues", type: "array", items: "string" }
+     - name: "nfr_requirements"
+       type: "array"
+       required: false # Optional, as NFR Triage might be skipped or not fully filled
+       items:
+         type: "object"
+         properties:
+           - { name: "nfr_id", type: "string" }
+           - { name: "category", type: "string" }
+           - { name: "target_level", type: "string" }
+           - { name: "reason", type: "string" }
+     - name: "scope_negotiation"
+       type: "object"
+       required: true
+       properties:
+         - { name: "total_complexity", type: "integer" }
+         - name: "complexity_breakdown"
+           type: "object"
+           properties:
+             - { name: "must_have", type: "integer" }
+             - { name: "should_have", type: "integer" }
+             - { name: "wont_have_v1", type: "integer" }
+         - { name: "timeline_estimate", type: "string" }
+         - { name: "v1_exclusions", type: "array", items: "string" }
+     - name: "validation"
+       type: "object"
+       required: true
+       properties:
+         - { name: "fae_passed", type: "boolean" }
+         - { name: "fdg_passed", type: "boolean" }
+         - { name: "apce_passed", type: "boolean" }
+         - { name: "all_features_complete", type: "boolean" }
+         - { name: "ready_for_genesis", type: "boolean" }
+     - name: "metadata"
+       type: "object"
+       required: true
+       properties:
+         - { name: "vibe_version", type: "string" }
+         - { name: "created_at", type: "string" }
+         - { name: "user_educated", type: "boolean" }
+         - { name: "scope_negotiated", type: "boolean" }
+
  - name: "code_gen_spec.schema.json"
    version: "1.0.0"
    $id: "https://api.example.com/schemas/code_gen_spec.v1.0.0.json"

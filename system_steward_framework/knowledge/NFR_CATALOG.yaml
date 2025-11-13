@@ -1,0 +1,51 @@
+# NFR_CATALOG.yaml
+# Systematischer NFR-Katalog basierend auf ISO 25010.
+# Zweck: Wird vom VIBE_ALIGNER (Phase 4: NFR Triage) als Checkliste geladen, 
+# um die Datenlücke DC-2.2 zu schließen.
+# Dies folgt dem 'SOP_002'-Muster (obligatorische Checkliste).
+
+- category_id: "NFR-PERF"
+  category_name: "Performance Efficiency (Leistung)"
+  prompt_intro: "Wie schnell und effizient muss das System sein?"
+  sub_characteristics:
+    - id: "PERF-LATENCY"
+      name: "Time-Behavior (Latenz)"
+      prompt_question: "Was ist die maximal akzeptable Antwortzeit für Endbenutzer-Aktionen (z.B. <500ms, <2s)?"
+    - id: "PERF-CAPACITY"
+      name: "Capacity (Kapazität)"
+      prompt_question: "Wie viele gleichzeitige Benutzer muss das System in der Spitze (Peak) unterstützen?"
+        
+- category_id: "NFR-SEC"
+  category_name: "Security (Sicherheit)"
+  prompt_intro: "Wie robust muss das System gegen Angriffe und Datenlecks sein?"
+  sub_characteristics:
+    - id: "SEC-CONFIDENTIALITY"
+      name: "Confidentiality (Vertraulichkeit)"
+      prompt_question: "Welches Schutzniveau für Daten ist erforderlich (z.B. keine PII, PII-geschützt, HIPAA-konform)?"
+    - id: "SEC-AUTHENTICITY"
+      name: "Authenticity (Authentizität)"
+      prompt_question: "Welche Authentifizierungs-Methoden sind erforderlich (z.B. E-Mail/Passwort, 2-Faktor-Authentifizierung, SSO)?"
+        
+- category_id: "NFR-REL"
+  category_name: "Reliability (Zuverlässigkeit)"
+  prompt_intro: "Wie ausfallsicher muss das System sein?"
+  sub_characteristics:
+    - id: "REL-AVAILABILITY"
+      name: "Availability (Verfügbarkeit)"
+      prompt_question: "Was ist das Verfügbarkeitsziel (z.B. 99.9% 'three-nines', 99.99% 'four-nines')?"
+    - id: "REL-FAULT-TOLERANCE"
+      name: "Fault Tolerance (Fehlertoleranz)"
+      prompt_question: "Wie soll das System bei einem Teilausfall reagieren (z.B. graceful degradation)?"
+
+- category_id: "NFR-MAIN"
+  category_name: "Maintainability (Wartbarkeit)"
+  prompt_intro: "Wie einfach muss das System zu ändern und zu testen sein?"
+  sub_characteristics:
+    - id: "MAIN-MODULARITY"
+      name: "Modularity (Modularität)"
+      prompt_question: "Wie wichtig ist es, zukünftig neue Module hinzuzufügen, ohne bestehende zu beeinträchtigen?"
+    - id: "MAIN-TESTABILITY"
+      name: "Testability (Testbarkeit)"
+      prompt_question: "Welchen Grad an Testautomatisierung streben Sie an (z.B. 80% Unit-Test-Abdeckung)?"
+
+#... (Weitere Kategorien: Usability, Compatibility, Portability, Functional Suitability)...

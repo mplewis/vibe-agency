@@ -1,0 +1,43 @@
+# PRODUCT_QUALITY_METRICS.yaml
+# Definiert quantifizierbare Metriken zur Kalibrierung von Produkt-Sentiment-Begriffen.
+# Basiert auf Google HEART und Kano-Modell.
+# Zweck: Behebung der "Sentiment Gap" (KB-3.4) und Beseitigung von "SLOP".
+
+- sentiment_term: "lovable"
+  description: >
+    Ein Maß für hohe Benutzerzufriedenheit UND -bindung. 
+    Entspricht der Erfüllung von Basis-Merkmalen plus dem Vorhandensein 
+    von Begeisterungs-Merkmalen (Kano).
+  metrics:
+    - framework: "HEART"
+      dimension: "Happiness"
+      goal: "Hohe Benutzerzufriedenheit (subjektiv)"
+      metric_examples: "Net Promoter Score (NPS) > 9 OR 5-Star-Rating-Average > 4.5"
+    - framework: "HEART"
+      dimension: "Retention"
+      goal: "Hohe Benutzerbindung (verhalten)"
+      metric_examples: "Week-1-Retention > 40% OR Monthly-Churn-Rate < 5%"
+
+- sentiment_term: "shippable"
+  description: >
+    Ein Maß für fundamentale Zuverlässigkeit und Produktreife. 
+    Entspricht der vollständigen Erfüllung aller 'Basis-Merkmale' (Kano).
+  metrics:
+    - framework: "HEART"
+      dimension: "Task Success"
+      goal: "Kern-Workflows sind erfolgreich und effizient."
+      metric_examples: "Task-Completion-Rate > 99% AND Error-Rate < 1%"
+    - framework: "ISO-25010" # Siehe Forschungsbereich 5
+      dimension: "Reliability"
+      goal: "System ist verfügbar."
+      metric_examples: "Uptime > 99.9%"
+
+- sentiment_term: "focused"
+  description: >
+    Ein Maß dafür, wie gut das Produkt das Kernproblem löst, ohne 
+    durch 'unerhebliche Merkmale' (Kano) abgelenkt zu werden.
+  metrics:
+    - framework: "HEART"
+      dimension: "Task Success"
+      goal: "Der primäre 'Happy Path' ist hocheffizient."
+      metric_examples: "Core-Workflow-Completion-Rate > 95% AND Time-to-Complete (Core) < 30s"
