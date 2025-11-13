@@ -503,6 +503,18 @@ templates_extended:
         complexity: 8
         description: "Support /v1, /v2 for backwards compatibility"
 
+      - id: "basic_analytics"
+        name: "Basic Analytics/Reporting Endpoints"
+        priority: "MEDIUM"
+        complexity: 15
+        description: "Aggregation queries (e.g., daily summaries, counts, trends)"
+
+      - id: "pagination"
+        name: "Pagination & Filtering"
+        priority: "MEDIUM"
+        complexity: 10
+        description: "Paginate large result sets, filter/sort endpoints"
+
     typical_dependencies:
       - "Express.js OR FastAPI OR Django REST Framework"
       - "Database (PostgreSQL, MongoDB)"
@@ -522,9 +534,13 @@ templates_extended:
       - "Error handling: Return consistent error formats (RFC 7807)"
       - "Testing: Write contract tests (Pact, OpenAPI validators)"
       - "Rate limiting: Apply per-user AND per-IP"
+      - "Analytics: Pre-aggregate data, don't query raw records (performance)"
+      - "Pagination: Always paginate list endpoints (max 100 items/page)"
 
-    estimated_total_complexity: 65
-    typical_timeline: "3-4 weeks"
+    estimated_total_complexity: 90
+    typical_timeline: "4-5 weeks (with analytics + pagination)"
+
+    notes: "Base API (auth + CRUD + docs) = 65 complexity. Add +25 for analytics & pagination."
 
   # ========================================
   - template_id: "graphql_api"
@@ -987,6 +1003,84 @@ templates_extended:
     typical_timeline: "8-10 weeks"
 
   # ========================================
+  # LEARNING & PRACTICE PROJECTS
+  # ========================================
+  - template_id: "simple_crud_learning"
+    name: "Simple CRUD App (Learning Project)"
+    category: "learning"
+    scale: "small"
+    typical_features:
+      - id: "basic_crud"
+        name: "Create, Read, Update, Delete"
+        priority: "HIGH"
+        complexity: 15
+        description: "Basic CRUD operations for a single entity (tasks, notes, etc.)"
+
+      - id: "simple_ui"
+        name: "Basic UI"
+        priority: "HIGH"
+        complexity: 10
+        description: "Simple, functional UI (not polished design)"
+
+      - id: "local_or_simple_db"
+        name: "Local Storage OR Simple Database"
+        priority: "HIGH"
+        complexity: 8
+        description: "Local storage (browser) OR simple cloud DB (Supabase free)"
+
+      - id: "basic_styling"
+        name: "Basic Styling"
+        priority: "MEDIUM"
+        complexity: 5
+        description: "Tailwind CSS or basic CSS for usable interface"
+
+    typical_dependencies:
+      - "Modern framework (Next.js, React, Vue) for learning"
+      - "Optional: Free database (Supabase, Firebase) OR local storage"
+      - "Hosting: Free tier (Vercel, Netlify)"
+      - "NO authentication required (v1 learning version)"
+
+    tech_stack_recommendations:
+      primary: "Next.js + Local Storage OR Supabase Free + Vercel"
+      alternatives:
+        - "React + Vite + Local Storage + Netlify"
+        - "Vue + Vite + Firebase + Netlify"
+
+    common_pitfalls:
+      - "Don't over-engineer: Skip auth, skip fancy features for v1"
+      - "Focus on learning core concepts first"
+      - "App Router vs Pages Router confusion (Next.js)"
+      - "Trying to learn too many things at once"
+      - "Not following official tutorials first"
+
+    learning_path:
+      week_1: "Tutorial + Framework setup + Hello World"
+      week_2: "Build basic CRUD (create/read)"
+      week_3: "Add update/delete + styling"
+      week_4: "Deploy + optional enhancements"
+
+    estimated_total_complexity: 38
+    typical_timeline: "2-4 weeks (as learning project, not production)"
+
+    project_examples:
+      - "To-Do List App"
+      - "Note-Taking App"
+      - "Simple Blog (read/write posts)"
+      - "Bookmark Manager"
+      - "Recipe Collection"
+
+    learning_resources:
+      - "Official Next.js tutorial: https://nextjs.org/learn"
+      - "React docs: https://react.dev/learn"
+      - "Tailwind CSS: https://tailwindcss.com/docs"
+
+    free_tier_options:
+      hosting: "Vercel Hobby (free) OR Netlify Free"
+      database: "Supabase Free (500MB) OR Firebase Free OR Local Storage"
+      styling: "Tailwind CSS (free)"
+      total_cost: "$0 (100% free for learning)"
+
+  # ========================================
   # EDUCATION & LEARNING
   # ========================================
   - template_id: "lms_elearning"
@@ -1133,3 +1227,14 @@ matching_rules_extended:
       - "video lessons"
       - "quizzes/assessments"
       - "student progress tracking"
+
+  simple_crud_learning:
+    keywords: ["learning project", "practice", "tutorial", "beginner", "simple", "basic", "crud", "to-do", "notes"]
+    indicators:
+      - "want to learn"
+      - "practice project"
+      - "hobby project"
+      - "beginner"
+      - "simple CRUD"
+      - "no authentication mentioned"
+      - "free or low budget"

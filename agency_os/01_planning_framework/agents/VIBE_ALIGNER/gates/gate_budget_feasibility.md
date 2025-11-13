@@ -66,8 +66,8 @@ buffer = (dev_cost + infrastructure_cost + services_cost) * 0.15-0.25
 
 ## Pass Criteria
 
-- ✅ `user_budget` ≥ 100% of estimated cost (ideal)
-- ✅ `user_budget` ≥ 85% of estimated cost (tight but workable)
+- ✅ **Green:** `user_budget` ≥ 120% of estimated cost (comfortable, room for expansion)
+- ✅ **Yellow:** `user_budget` = 85-120% of estimated cost (tight but workable, scope must be locked)
 - ✅ User has contingency funds or can adjust scope
 - ✅ Infrastructure costs sustainable for 6+ months
 
@@ -75,10 +75,12 @@ buffer = (dev_cost + infrastructure_cost + services_cost) * 0.15-0.25
 
 ## Failure Conditions
 
-- ❌ `user_budget` < 80% of estimated cost (insufficient)
+- ❌ **Red:** `user_budget` < 85% of estimated cost (insufficient - cannot deliver full scope)
 - ❌ Infrastructure cost > 30% of monthly revenue (unsustainable)
 - ❌ No budget allocated for infrastructure/services (only dev time)
 - ❌ User expects "free" hosting for production app (unrealistic)
+
+**Note:** Yellow (85-120%) is a PASS with warnings, not a failure. Educate user on tight budget risks but don't block project.
 
 ---
 
