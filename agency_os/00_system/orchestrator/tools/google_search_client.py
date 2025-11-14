@@ -51,6 +51,25 @@ class GoogleSearchClient:
 
             return results
 
+        except requests.HTTPError as e:
+            # Try to get detailed error message from response
+            error_detail = "Unknown error"
+            try:
+                error_json = e.response.json()
+                if 'error' in error_json:
+                    error_detail = error_json['error'].get('message', str(error_json['error']))
+                    error_code = error_json['error'].get('code', 'unknown')
+                    raise RuntimeError(
+                        f"Google Search API error ({error_code}): {error_detail}\n"
+                        f"Possible causes:\n"
+                        f"  - Invalid API key (check GOOGLE_SEARCH_API_KEY)\n"
+                        f"  - Invalid Search Engine ID (check GOOGLE_SEARCH_ENGINE_ID)\n"
+                        f"  - API not enabled in Google Cloud Console\n"
+                        f"  - Billing not enabled for the project"
+                    )
+            except:
+                pass
+            raise RuntimeError(f"Google Search API error: {e}")
         except requests.RequestException as e:
             raise RuntimeError(f"Google Search API error: {e}")
 
