@@ -12,7 +12,7 @@ kind: "WorkspaceRegistry"
 metadata:
   description: "Registry of all active Agency OS project workspaces"
   lastUpdated: "2025-11-14"
-  totalWorkspaces: 5
+  totalWorkspaces: 6
 
 # =================================================================
 # ACTIVE WORKSPACES
@@ -77,6 +77,18 @@ workspaces:
     metadata:
       owner: "agent@vibe.agency"
       tags: ["internal", "research"]
+
+  - id: "temple-companion-001"
+    name: "temple_companion"
+    type: "external"
+    description: "Web app for Hare Krishna devotees - mantras, prayers, Ekadasi calendar"
+    manifestPath: "workspaces/temple_companion/project_manifest.json"
+    status: "active"
+    createdAt: "2025-11-14"
+    lastUpdated: "2025-11-14"
+    metadata:
+      owner: "devotee@vibe.agency"
+      tags: ["client", "nonprofit", "spiritual", "web-app"]
 
   # Example external client workspace (commented out)
   # - id: "client-a-alpha-001"
