@@ -21,9 +21,24 @@ It means your Google Custom Search Engine (CSE) is not properly configured.
    - Check the box: "Search the entire web"
    - Click **"Create"**
 
-3. You'll be redirected to a page showing your **Search Engine ID**
-   - It looks like: `a1b2c3d4e5f6g7h8i`
-   - **Copy this ID!**
+3. **WICHTIG:** Finde deine **Search Engine ID** (es gibt 2 Wege):
+
+   **Weg 1 - Im Setup Code (EINFACHSTE METHODE):**
+   - Nach dem Erstellen siehst du Code wie:
+     ```html
+     <script async src="https://cse.google.com/cse.js?cx=a1b2c3d4e5f6g7h8i">
+     ```
+   - **Der Wert nach `cx=` ist deine Search Engine ID!**
+   - Beispiel: `cx=a1b2c3d4e5f6g7h8i` → deine ID ist `a1b2c3d4e5f6g7h8i`
+
+   **Weg 2 - Im Control Panel:**
+   - Gehe zu: **https://programmablesearchengine.google.com/controlpanel/all**
+   - Klicke auf deine Search Engine
+   - Die ID steht unter "Search engine ID"
+
+4. **Kopiere NUR den Wert nach `cx=`** (OHNE `cx=` selbst!)
+   - ✅ Richtig: `a1b2c3d4e5f6g7h8i`
+   - ❌ Falsch: `cx=a1b2c3d4e5f6g7h8i`
 
 ### Step 2: Get Your API Key
 
@@ -54,8 +69,16 @@ It means your Google Custom Search Engine (CSE) is not properly configured.
 1. Go to: **https://github.com/kimeisele/vibe-agency/settings/secrets/actions**
 
 2. Update or create these secrets:
-   - **GOOGLE_SEARCH_API_KEY:** Your API key from Step 2
-   - **GOOGLE_SEARCH_ENGINE_ID:** Your Search Engine ID from Step 1
+
+   **Secret #1: GOOGLE_SEARCH_API_KEY**
+   - Name: `GOOGLE_SEARCH_API_KEY`
+   - Value: Der API Key aus Step 2 (z.B. `AIzaSyDa...`)
+
+   **Secret #2: GOOGLE_SEARCH_ENGINE_ID**
+   - Name: `GOOGLE_SEARCH_ENGINE_ID`
+   - Value: **NUR der Wert nach `cx=`** aus Step 1
+   - Beispiel: Wenn dein Code ist `cx=a1b2c3d4e5f6g7h8i`, dann trage ein: `a1b2c3d4e5f6g7h8i`
+   - ⚠️ **OHNE** `cx=`!
 
 ### Step 4: Test Your Configuration
 
@@ -87,6 +110,9 @@ You should see:
 
 ### Error: "Invalid Value" for cx parameter
 - This means your Search Engine ID is wrong
+- **Häufiger Fehler:** Du hast `cx=` mit kopiert
+  - ❌ Falsch: `GOOGLE_SEARCH_ENGINE_ID=cx=a1b2c3d4e5f6g7h8i`
+  - ✅ Richtig: `GOOGLE_SEARCH_ENGINE_ID=a1b2c3d4e5f6g7h8i`
 - Go back to https://programmablesearchengine.google.com/controlpanel/all
 - Find your search engine and copy the **Search engine ID** (not the name!)
 
