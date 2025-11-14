@@ -1,0 +1,380 @@
+# 🎯 FINALER UMSETZUNGSPLAN - Vibe Agency Pre-Flight Integration
+
+**Analysiert:** ✅ Repo-Struktur, ✅ State Machine, ✅ Agents, ✅ Workflow
+**Status:** Ready for Implementation
+**Strategie:** Phased Rollout (3 Sprints)
+
+---
+
+## 📊 KRITISCHE ERKENNTNISSE AUS DEM REPO
+
+### Was ich jetzt WIRKLICH verstehe:
+
+1. **Es gibt KEINEN "Orchestrator" als Skript** 
+   - Es gibt `AGENCY_OS_ORCHESTRATOR` - das ist ein **Agent** (wie alle anderen)
+   - Die State Machine ist **deklarativ** (YAML), nicht imperativ
+   - Workflow-Übergänge sind **artifact-basiert** (z.B. `project_manifest.json` triggert nächsten State)
+
+2. **Der aktuelle Workflow ist:**
+   ```
+   PLANNING (project_manifest.json) 
+      → CODING (artifact_bundle)
+      → TESTING (qa_report.json)
+      → AWAITING_QA_APPROVAL
+      → DEPLOYMENT
+      → PRODUCTION
+   ```
+
+3. **Geminis Kritik ist 100% korrekt:**
+   - `LEAN_CANVAS_VALIDATOR` existiert bereits
+   - `VIBE_ALIGNER/_prompt_core.md` sagt: "Input Artifacts: None (first agent in workflow)"
+   - Das ist **falsch** - `LEAN_CANVAS_VALIDATOR` sollte VOR `VIBE_ALIGNER` sein
+
+4. **Die State Machine hat KEIN "PRE_PLANNING"**
+   - Aktuell: `PLANNING` ist der erste State
+   - `PLANNING` hat `responsible_framework: "ProjectManagement"` - das ist zu vage
+
+---
+
+## 🎯 FINALE LÖSUNG: Minimale Integration (Geminis Ansatz)
+
+**Warum minimal?**
+- Der ursprüngliche Claude-Plan (PRE_FLIGHT_CHECK) ist redundant ✅
+- Geminis Lösung (nur Integration fixen) ist zu kurz ❌
+- Mein hybrider Ansatz (3 Modi) ist zu komplex ❌
+
+**Die RICHTIGE Lösung:**
+- `LEAN_CANVAS_VALIDATOR` ist der Pre-Flight Check
+- Wir fixen die Integration zu `VIBE_ALIGNER`
+- Wir klären die State Machine
+- Wir fügen später optional `REQUIREMENTS_CLARIFIER` hinzu (wenn Bedarf)
+
+---
+
+## 📋 SPRINT 1: Foundation Fix (KRITISCH - SOFORT)
+
+**Ziel:** Integration zwischen `LEAN_CANVAS_VALIDATOR` → `VIBE_ALIGNER` herstellen
+
+### 1.1 State Machine präzisieren
+
+**Datei:** `agency_os/00_system/state_machine/ORCHESTRATION_workflow_design.yaml`
+
+**Problem:** `PLANNING` ist zu vage - wer ist dafür verantwortlich?
+
+**Lösung:** Aufteilen in zwei Sub-States
+
+```yaml
+states:
+  - name: "PLANNING"
+    description: "Projektplanung und Anforderungsanalyse. Besteht aus zwei Phasen."
+    responsible_framework: "ProjectManagement"
+    output_artifact: "project_manifest.json"
+    sub_states:
+      - name: "BUSINESS_VALIDATION"
+        description: "Validierung des Geschäftsmodells durch Lean Canvas"
+        responsible_agent: "LEAN_CANVAS_VALIDATOR"
+        output_artifact: "lean_canvas_summary.json"
+        
+      - name: "FEATURE_SPECIFICATION"
+        description: "Umwandlung validierter Business-Anforderungen in technische Features"
+        responsible_agent: "VIBE_ALIGNER"
+        input_artifact: "lean_canvas_summary.json"
+        output_artifact: "feature_spec.json"
+
+# Neue Transition hinzufügen
+transitions:
+  - name: "T0_BusinessToFeatures"
+    from_state: "PLANNING.BUSINESS_VALIDATION"
+    to_state: "PLANNING.FEATURE_SPECIFICATION"
+    trigger: "lean_canvas_summary.json erstellt UND readiness.status == 'READY'"
+    type: "Automated"
+    
+  - name: "T1_StartCoding"
+    from_state: "PLANNING.FEATURE_SPECIFICATION"  # GEÄNDERT
+    to_state: "CODING"
+    trigger: "feature_spec.json erstellt mit gültigem code_gen_spec link."
+    type: "Automated"
+```
+
+**Warum Sub-States?**
+- Kompatibel mit der bestehenden State Machine
+- Kein Breaking Change (PLANNING bleibt PLANNING)
+- Klare Verantwortlichkeiten (wer macht was)
+
+---
+
+### 1.2 VIBE_ALIGNER Input erweitern
+
+**Datei:** `agency_os/01_planning_framework/agents/VIBE_ALIGNER/_prompt_core.md`
+
+**Änderung 1: Input Artifacts aktualisieren**
+
+```markdown
+## OPERATIONAL CONTEXT
+
+**Invocation:** Called by AGENCY_OS_ORCHESTRATOR after LEAN_CANVAS_VALIDATOR completes
+
+**Input Artifacts:** 
+- **Primary:** `lean_canvas_summary.json` (from LEAN_CANVAS_VALIDATOR)
+- **Fallback:** None (if user skips business validation - legacy mode)
+
+**Output Artifacts:** `feature_spec.json` (passed to GENESIS_BLUEPRINT)
+
+**Execution Model:** Sequential phases (1→6), each with specific goals and validation gates
+```
+
+**Änderung 2: Purpose Statement aktualisieren**
+
+```markdown
+**PURPOSE:** Transform validated business requirements (from Lean Canvas) into concrete, buildable feature specifications
+```
+
+---
+
+### 1.3 VIBE_ALIGNER Task 01 - Conditional Logic
+
+**Datei:** `agency_os/01_planning_framework/agents/VIBE_ALIGNER/tasks/task_01_education.md`
+
+**Neue Sektion am Anfang hinzufügen:**
+
+```markdown
+## INPUT CONTEXT CHECK
+
+Before starting education, check if `lean_canvas_summary.json` exists:
+
+### IF lean_canvas_summary.json EXISTS:
+```json
+{
+  "business_context": {...},
+  "success_criteria": {...},
+  "constraints": {...}
+}
+```
+
+**Action:**
+1. SHOW: Brief recap of business context
+   - "Based on your Lean Canvas, I understand you're building [PROBLEM] for [CUSTOMER_SEGMENTS]"
+2. ASK: "Is this scope still correct, or has anything changed?"
+3. IF no changes:
+   - Skip full education
+   - Extract MVP/v1.0 decision from `success_criteria`
+   - Jump to Task 02 (Feature Extraction)
+4. IF changes:
+   - Update scope
+   - Continue with education
+
+### IF lean_canvas_summary.json DOES NOT EXIST:
+**Action:**
+- Run full education phase as designed below
+- User is starting without business validation (legacy mode)
+
+---
+
+## ORIGINAL EDUCATION PHASE (Full Version)
+
+[... rest of task_01 bleibt unverändert ...]
+```
+
+---
+
+### 1.4 LEAN_CANVAS_VALIDATOR Handoff präzisieren
+
+**Datei:** `agency_os/01_planning_framework/agents/LEAN_CANVAS_VALIDATOR/tasks/task_03_handoff.md`
+
+**Neue Sektion hinzufügen:**
+
+```markdown
+## HANDOFF TO VIBE_ALIGNER
+
+After creating `lean_canvas_summary.json`, inform the user:
+
+---
+
+**✅ Business Validation Complete**
+
+Your Lean Canvas is validated and saved. Here's what happens next:
+
+**Next Agent:** VIBE_ALIGNER (Feature Specification)
+
+**What VIBE_ALIGNER will do:**
+- Use your business context to extract features
+- Validate technical feasibility
+- Create a buildable feature specification
+
+**What you need to do:**
+- Describe the features you envision for v1.0
+- VIBE_ALIGNER will already know your constraints, success criteria, and business context
+
+**Ready to continue?** (Type 'yes' or describe your first feature)
+
+---
+```
+
+---
+
+### 1.5 Data Contract für lean_canvas_summary.json
+
+**Datei:** `agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml`
+
+**Hinzufügen:**
+
+```yaml
+lean_canvas_summary:
+  version: "1.0"
+  description: "Output von LEAN_CANVAS_VALIDATOR, Input für VIBE_ALIGNER"
+  schema:
+    type: object
+    required: ["version", "canvas_fields", "riskiest_assumptions", "readiness"]
+    properties:
+      version:
+        type: string
+        const: "1.0"
+      canvas_fields:
+        type: object
+        required: ["problem", "customer_segments", "unique_value_proposition", 
+                   "solution", "channels", "revenue_streams", "cost_structure",
+                   "key_metrics", "unfair_advantage"]
+        properties:
+          problem:
+            type: string
+          customer_segments:
+            type: string
+          # ... (rest der 9 Felder)
+      riskiest_assumptions:
+        type: array
+        items:
+          type: object
+          properties:
+            assumption:
+              type: string
+            why_risky:
+              type: string
+            validation_method:
+              type: string
+      readiness:
+        type: object
+        required: ["status", "confidence_level"]
+        properties:
+          status:
+            type: string
+            enum: ["READY", "NOT_READY"]
+          confidence_level:
+            type: string
+            enum: ["high", "medium", "low"]
+          missing_inputs:
+            type: array
+            items:
+              type: string
+```
+
+---
+
+## 📋 SPRINT 2: Optionalität (SPÄTER - BEI BEDARF)
+
+**Ziel:** User können Lean Canvas überspringen (für technische Projekte)
+
+### 2.1 Skip-Logik in AGENCY_OS_ORCHESTRATOR
+
+**Datei:** `agency_os/00_system/agents/AGENCY_OS_ORCHESTRATOR/tasks/task_01_workflow_init.md`
+
+**Neue Sektion:**
+
+```markdown
+## PLANNING MODE SELECTION
+
+After user describes project, analyze if business validation is needed:
+
+### Auto-Detection Rules:
+- IF keywords: ["startup", "revenue", "business model", "customers", "market"] 
+  → Recommend LEAN_CANVAS_VALIDATOR
+- IF keywords: ["internal tool", "refactoring", "migration", "no revenue"]
+  → Offer to skip to VIBE_ALIGNER
+- ELSE
+  → Ask user
+
+### User Prompt:
+"I detected this is a [business/technical] project. Would you like to:
+A) Start with Business Validation (Lean Canvas) - Recommended for new products
+B) Skip to Feature Specification - For technical projects without business model
+
+Your choice: [A/B]"
+
+### Routing:
+- IF A → Start with LEAN_CANVAS_VALIDATOR
+- IF B → Create empty lean_canvas_summary.json with flag `skipped: true`, start VIBE_ALIGNER
+```
+
+---
+
+### 2.2 VIBE_ALIGNER Fallback-Modus
+
+**Datei:** `agency_os/01_planning_framework/agents/VIBE_ALIGNER/_prompt_core.md`
+
+**Erweitern:**
+
+```markdown
+**Input Artifacts:** 
+- **Primary:** `lean_canvas_summary.json` (from LEAN_CANVAS_VALIDATOR)
+- **Fallback:** If `lean_canvas_summary.skipped == true`, run full education phase
+```
+
+---
+
+## 📋 SPRINT 3: REQUIREMENTS_CLARIFIER (OPTIONAL - FUTURE)
+
+**Ziel:** Leichtgewichtiger Pre-Flight Check für technische Projekte
+
+**Nur wenn Sprint 2 zeigt, dass technische Projekte nicht gut mit Lean Canvas passen**
+
+### 3.1 Neuer Agent erstellen
+
+```
+agency_os/01_planning_framework/agents/REQUIREMENTS_CLARIFIER/
+├── _prompt_core.md
+├── _composition.yaml
+├── tasks/
+│   ├── task_01_functional_requirements.md
+│   ├── task_02_constraints.md
+│   ├── task_03_success_criteria.md
+│   └── task_04_handoff.md
+└── gates/
+    └── gate_requirements_clear.md
+```
+
+**Output:** `requirements_brief.json` (ähnlich wie `lean_canvas_summary.json`, aber ohne Business-Felder)
+
+---
+
+## 🎯 ZUSAMMENFASSUNG: Was wird wann gemacht?
+
+### ✅ SPRINT 1 (SOFORT - 4-6 Stunden):
+1. State Machine: Sub-States für PLANNING
+2. VIBE_ALIGNER: Input Artifacts + Purpose aktualisieren
+3. VIBE_ALIGNER Task 01: Conditional Logic
+4. LEAN_CANVAS_VALIDATOR Task 03: Handoff-Text
+5. Data Contract: lean_canvas_summary.json Schema
+
+**Result:** `LEAN_CANVAS_VALIDATOR` → `VIBE_ALIGNER` Integration funktioniert
+
+---
+
+### ⏳ SPRINT 2 (BEI BEDARF - 2-3 Stunden):
+1. AGENCY_OS_ORCHESTRATOR: Planning Mode Selection
+2. VIBE_ALIGNER: Fallback Mode für skipped Lean Canvas
+
+**Result:** User können Lean Canvas überspringen
+
+---
+
+### 🔮 SPRINT 3 (FUTURE - 8-10 Stunden):
+1. REQUIREMENTS_CLARIFIER Agent erstellen
+2. State Machine: Dritte Option hinzufügen
+3. Integration testen
+
+**Result:** Leichtgewichtiger Pre-Flight für technische Projekte
+
+---
+
+## 🚀 NÄCHSTER SCHRITT
+
+**Ich empfehle: Start mit Sprint 1**
