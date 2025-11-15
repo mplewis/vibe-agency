@@ -29,9 +29,11 @@ logger = logging.getLogger(__name__)
 # DATA STRUCTURES
 # =============================================================================
 
+
 @dataclass
 class LLMUsage:
     """Token usage and cost information"""
+
     input_tokens: int
     output_tokens: int
     model: str
@@ -42,6 +44,7 @@ class LLMUsage:
 @dataclass
 class LLMResponse:
     """Standardized LLM response"""
+
     content: str
     usage: LLMUsage
     model: str
@@ -51,6 +54,7 @@ class LLMResponse:
 # =============================================================================
 # COST TRACKER
 # =============================================================================
+
 
 class CostTracker:
     """
@@ -62,14 +66,8 @@ class CostTracker:
 
     # Pricing table (USD per million tokens)
     PRICING = {
-        "claude-3-5-sonnet-20241022": {
-            "input": 3.0,
-            "output": 15.0
-        },
-        "claude-3-5-sonnet-20250129": {
-            "input": 3.0,
-            "output": 15.0
-        }
+        "claude-3-5-sonnet-20241022": {"input": 3.0, "output": 15.0},
+        "claude-3-5-sonnet-20250129": {"input": 3.0, "output": 15.0},
     }
 
     def __init__(self):
@@ -100,7 +98,7 @@ class CostTracker:
             output_tokens=output_tokens,
             model=model,
             cost_usd=cost,
-            timestamp=datetime.utcnow().isoformat() + "Z"
+            timestamp=datetime.utcnow().isoformat() + "Z",
         )
 
         self.total_cost += cost
@@ -117,7 +115,9 @@ class CostTracker:
             "total_input_tokens": self.total_input_tokens,
             "total_output_tokens": self.total_output_tokens,
             "total_invocations": len(self.invocations),
-            "average_cost_per_invocation": round(self.total_cost / len(self.invocations), 4) if self.invocations else 0
+            "average_cost_per_invocation": (
+                round(self.total_cost / len(self.invocations), 4) if self.invocations else 0
+            ),
         }
 
 
@@ -125,24 +125,29 @@ class CostTracker:
 # EXCEPTIONS
 # =============================================================================
 
+
 class LLMClientError(Exception):
     """Base exception for LLM client errors"""
+
     pass
 
 
 class LLMInvocationError(LLMClientError):
     """Raised when LLM invocation fails after retries"""
+
     pass
 
 
 class BudgetExceededError(LLMClientError):
     """Raised when budget limit is reached"""
+
     pass
 
 
 # =============================================================================
 # NO-OP CLIENT (GRACEFUL FAILOVER)
 # =============================================================================
+
 
 class NoOpClient:
     """
@@ -184,6 +189,7 @@ class NoOpClient:
 # =============================================================================
 # LLM CLIENT
 # =============================================================================
+
 
 class LLMClient:
     """
@@ -232,13 +238,13 @@ class LLMClient:
         else:
             try:
                 from anthropic import Anthropic
+
                 self.client = Anthropic(api_key=self.api_key)
                 self.mode = "anthropic"
                 logger.info("LLM Client initialized with Anthropic API")
             except ImportError:
                 logger.error(
-                    "anthropic package not installed. "
-                    "Install with: pip install anthropic>=0.18.0"
+                    "anthropic package not installed. Install with: pip install anthropic>=0.18.0"
                 )
                 self.client = NoOpClient()
                 self.mode = "noop"
@@ -249,7 +255,7 @@ class LLMClient:
         model: str = "claude-3-5-sonnet-20241022",
         max_tokens: int = 4096,
         temperature: float = 1.0,
-        max_retries: int = 3
+        max_retries: int = 3,
     ) -> LLMResponse:
         """
         Invoke LLM with retry logic and cost tracking.
@@ -284,14 +290,14 @@ class LLMClient:
                     model=model,
                     max_tokens=max_tokens,
                     temperature=temperature,
-                    messages=[{"role": "user", "content": prompt}]
+                    messages=[{"role": "user", "content": prompt}],
                 )
 
                 # Track cost
                 usage = self.cost_tracker.record(
                     input_tokens=response.usage.input_tokens,
                     output_tokens=response.usage.output_tokens,
-                    model=model
+                    model=model,
                 )
 
                 # Log invocation
@@ -306,7 +312,7 @@ class LLMClient:
                     content=response.content[0].text,
                     usage=usage,
                     model=response.model,
-                    finish_reason=response.stop_reason
+                    finish_reason=response.stop_reason,
                 )
 
             except Exception as e:
@@ -319,7 +325,7 @@ class LLMClient:
 
                 if is_retryable and attempt < max_retries - 1:
                     # Exponential backoff: 2s, 4s, 8s
-                    wait_time = 2 ** attempt
+                    wait_time = 2**attempt
                     logger.warning(
                         f"LLM invocation failed ({error_name}), "
                         f"retrying in {wait_time}s (attempt {attempt + 1}/{max_retries})"
@@ -340,9 +346,13 @@ class LLMClient:
         """Get cost tracking summary"""
         summary = self.cost_tracker.get_summary()
         if self.budget_limit:
-            summary['budget_limit_usd'] = self.budget_limit
-            summary['budget_remaining_usd'] = round(self.budget_limit - self.cost_tracker.total_cost, 4)
-            summary['budget_used_percent'] = round((self.cost_tracker.total_cost / self.budget_limit) * 100, 2)
+            summary["budget_limit_usd"] = self.budget_limit
+            summary["budget_remaining_usd"] = round(
+                self.budget_limit - self.cost_tracker.total_cost, 4
+            )
+            summary["budget_used_percent"] = round(
+                (self.cost_tracker.total_cost / self.budget_limit) * 100, 2
+            )
         return summary
 
 
@@ -351,7 +361,6 @@ class LLMClient:
 # =============================================================================
 
 if __name__ == "__main__":
-
     # Test LLM client
     print("Testing LLM Client...")
     print("=" * 60)
@@ -369,7 +378,7 @@ if __name__ == "__main__":
             response = client.invoke(
                 prompt="What is 2+2? Answer in one sentence.",
                 model="claude-3-5-sonnet-20241022",
-                max_tokens=100
+                max_tokens=100,
             )
 
             print("Response:")

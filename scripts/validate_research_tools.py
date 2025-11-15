@@ -48,8 +48,8 @@ print()
 print("TEST 1: Google Search API Keys (Optional)")
 print("-" * 70)
 
-google_api_key = os.getenv('GOOGLE_SEARCH_API_KEY')
-google_engine_id = os.getenv('GOOGLE_SEARCH_ENGINE_ID')
+google_api_key = os.getenv("GOOGLE_SEARCH_API_KEY")
+google_engine_id = os.getenv("GOOGLE_SEARCH_ENGINE_ID")
 
 if google_api_key and google_engine_id:
     print("✅ Google Search API keys found")
@@ -108,6 +108,7 @@ if google_available:
     except Exception as e:
         print(f"❌ Google Search Client FAILED: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 else:
@@ -134,12 +135,12 @@ try:
 
     result = client.fetch(test_url)
 
-    if 'error' in result and result['error']:
+    if "error" in result and result["error"]:
         print(f"⚠️  Fetch returned error: {result['error']}")
         print("   (This might be expected - some sites block bots)")
         print("✅ WebFetchClient is callable and functional")
         print()
-    elif 'content' in result:
+    elif "content" in result:
         print(f"✅ Fetched {len(result['content'])} characters")
         print(f"   Title: {result.get('title', 'N/A')}")
         print()
@@ -150,6 +151,7 @@ try:
 except Exception as e:
     print(f"❌ Web Fetch Client FAILED: {e}")
     import traceback
+
     traceback.print_exc()
     sys.exit(1)
 
@@ -167,11 +169,9 @@ try:
 
     # Test web_fetch (always available)
     print("   Testing web_fetch tool...")
-    result = executor.execute_tool('web_fetch', {
-        'url': 'https://example.com'
-    })
+    result = executor.execute_tool("web_fetch", {"url": "https://example.com"})
 
-    if 'error' in result:
+    if "error" in result:
         print(f"⚠️  Tool returned error (might be site-specific): {result['error']}")
         print("✅ web_fetch tool is callable")
     else:
@@ -180,15 +180,12 @@ try:
     # Test google_search (if available)
     if google_available:
         print("   Testing google_search tool...")
-        result = executor.execute_tool('google_search', {
-            'query': 'test query',
-            'num_results': 2
-        })
+        result = executor.execute_tool("google_search", {"query": "test query", "num_results": 2})
 
-        if 'error' in result:
+        if "error" in result:
             print(f"❌ google_search failed: {result['error']}")
             sys.exit(1)
-        elif 'results' in result:
+        elif "results" in result:
             print(f"✅ google_search tool works ({len(result['results'])} results)")
     else:
         print("   Skipping google_search tool (keys not set)")
@@ -198,6 +195,7 @@ try:
 except Exception as e:
     print(f"❌ Tool Executor FAILED: {e}")
     import traceback
+
     traceback.print_exc()
     sys.exit(1)
 

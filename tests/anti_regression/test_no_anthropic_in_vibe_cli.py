@@ -34,25 +34,25 @@ def test_vibe_cli_no_anthropic_imports():
     """
     vibe_cli_path = REPO_ROOT / "vibe-cli"
 
-    with open(vibe_cli_path, 'r') as f:
+    with open(vibe_cli_path, "r") as f:
         content = f.read()
 
     # Check for anthropic imports
     forbidden_imports = [
-        'import anthropic',
-        'from anthropic import',
+        "import anthropic",
+        "from anthropic import",
     ]
 
     violations = []
-    for line_num, line in enumerate(content.split('\n'), 1):
+    for line_num, line in enumerate(content.split("\n"), 1):
         for pattern in forbidden_imports:
             if pattern in line:
                 violations.append(f"Line {line_num}: {line.strip()}")
 
     assert len(violations) == 0, (
-        f"\n{'='*70}\n"
+        f"\n{'=' * 70}\n"
         f"REGRESSION DETECTED: vibe-cli imports anthropic SDK\n"
-        f"{'='*70}\n\n"
+        f"{'=' * 70}\n\n"
         f"VIOLATIONS:\n" + "\n".join(f"  {v}" for v in violations) + "\n\n"
         f"WHY THIS IS FORBIDDEN:\n"
         f"  - MVP = DELEGATION ONLY (no API calls)\n"
@@ -64,7 +64,7 @@ def test_vibe_cli_no_anthropic_imports():
         f"  2. Remove Anthropic API client initialization\n"
         f"  3. Replace with delegation to Claude Code operator\n\n"
         f"See: docs/architecture/EXECUTION_MODE_STRATEGY.md\n"
-        f"{'='*70}\n"
+        f"{'=' * 70}\n"
     )
 
 
@@ -78,27 +78,27 @@ def test_vibe_cli_no_anthropic_client():
     """
     vibe_cli_path = REPO_ROOT / "vibe-cli"
 
-    with open(vibe_cli_path, 'r') as f:
+    with open(vibe_cli_path, "r") as f:
         content = f.read()
 
     # Check for Anthropic client usage
     forbidden_patterns = [
-        'anthropic.Anthropic(',
-        'Anthropic(',
-        '.messages.create(',
-        'client.messages',
+        "anthropic.Anthropic(",
+        "Anthropic(",
+        ".messages.create(",
+        "client.messages",
     ]
 
     violations = []
-    for line_num, line in enumerate(content.split('\n'), 1):
+    for line_num, line in enumerate(content.split("\n"), 1):
         for pattern in forbidden_patterns:
             if pattern in line:
                 violations.append(f"Line {line_num}: {line.strip()}")
 
     assert len(violations) == 0, (
-        f"\n{'='*70}\n"
+        f"\n{'=' * 70}\n"
         f"REGRESSION DETECTED: vibe-cli uses Anthropic API client\n"
-        f"{'='*70}\n\n"
+        f"{'=' * 70}\n\n"
         f"VIOLATIONS:\n" + "\n".join(f"  {v}" for v in violations) + "\n\n"
         f"WHY THIS IS FORBIDDEN:\n"
         f"  - vibe-cli should NOT make API calls in MVP\n"
@@ -108,7 +108,7 @@ def test_vibe_cli_no_anthropic_client():
         f"  Claude Code → vibe-cli (bridge) → Orchestrator\n"
         f"  Orchestrator prints prompt → vibe-cli → Claude Code responds\n\n"
         f"See: docs/architecture/EXECUTION_MODE_STRATEGY.md\n"
-        f"{'='*70}\n"
+        f"{'=' * 70}\n"
     )
 
 
@@ -122,19 +122,19 @@ def test_vibe_cli_no_api_key_usage():
     """
     vibe_cli_path = REPO_ROOT / "vibe-cli"
 
-    with open(vibe_cli_path, 'r') as f:
+    with open(vibe_cli_path, "r") as f:
         content = f.read()
 
     # Check for API key usage
     forbidden_patterns = [
-        'ANTHROPIC_API_KEY',
-        'anthropic_api_key',
+        "ANTHROPIC_API_KEY",
+        "anthropic_api_key",
     ]
 
     violations = []
-    for line_num, line in enumerate(content.split('\n'), 1):
+    for line_num, line in enumerate(content.split("\n"), 1):
         # Skip comments
-        if line.strip().startswith('#'):
+        if line.strip().startswith("#"):
             continue
 
         for pattern in forbidden_patterns:
@@ -142,9 +142,9 @@ def test_vibe_cli_no_api_key_usage():
                 violations.append(f"Line {line_num}: {line.strip()}")
 
     assert len(violations) == 0, (
-        f"\n{'='*70}\n"
+        f"\n{'=' * 70}\n"
         f"REGRESSION DETECTED: vibe-cli references ANTHROPIC_API_KEY\n"
-        f"{'='*70}\n\n"
+        f"{'=' * 70}\n\n"
         f"VIOLATIONS:\n" + "\n".join(f"  {v}" for v in violations) + "\n\n"
         f"WHY THIS IS FORBIDDEN:\n"
         f"  - vibe-cli doesn't need API keys in delegation mode\n"
@@ -154,7 +154,7 @@ def test_vibe_cli_no_api_key_usage():
         f"  No ANTHROPIC_API_KEY in vibe-cli\n"
         f"  (Standalone mode deferred to v1.1)\n\n"
         f"See: docs/architecture/EXECUTION_MODE_STRATEGY.md\n"
-        f"{'='*70}\n"
+        f"{'=' * 70}\n"
     )
 
 
@@ -173,14 +173,14 @@ def test_execution_mode_strategy_exists():
     )
 
     # Verify it contains key terms
-    with open(strategy_doc, 'r') as f:
+    with open(strategy_doc, "r") as f:
         content = f.read()
 
     required_terms = [
-        'DELEGATION ONLY',
-        'MVP',
-        'FORBIDDEN',
-        'Claude Code',
+        "DELEGATION ONLY",
+        "MVP",
+        "FORBIDDEN",
+        "Claude Code",
     ]
 
     for term in required_terms:
@@ -192,4 +192,5 @@ def test_execution_mode_strategy_exists():
 
 if __name__ == "__main__":
     import pytest
-    pytest.main([__file__, '-v'])
+
+    pytest.main([__file__, "-v"])

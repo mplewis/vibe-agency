@@ -12,28 +12,25 @@ import requests
 import subprocess
 from typing import Optional, Dict
 
+
 def get_github_token() -> Optional[str]:
     """Get GitHub token from available sources"""
 
     # Try environment variable
-    token = os.getenv('GITHUB_TOKEN') or os.getenv('GH_TOKEN')
+    token = os.getenv("GITHUB_TOKEN") or os.getenv("GH_TOKEN")
     if token:
         return token
 
     # Try gh CLI
     try:
-        result = subprocess.run(
-            ['gh', 'auth', 'token'],
-            capture_output=True,
-            text=True,
-            timeout=5
-        )
+        result = subprocess.run(["gh", "auth", "token"], capture_output=True, text=True, timeout=5)
         if result.returncode == 0:
             return result.stdout.strip()
     except Exception:
         pass
 
     return None
+
 
 def fetch_repository_secrets(owner: str, repo: str, token: str) -> Dict[str, str]:
     """
@@ -44,11 +41,11 @@ def fetch_repository_secrets(owner: str, repo: str, token: str) -> Dict[str, str
 
     Returns dict of secret names (values will be None).
     """
-    url = f'https://api.github.com/repos/{owner}/{repo}/actions/secrets'
+    url = f"https://api.github.com/repos/{owner}/{repo}/actions/secrets"
     headers = {
-        'Authorization': f'token {token}',
-        'Accept': 'application/vnd.github+json',
-        'X-GitHub-Api-Version': '2022-11-28'
+        "Authorization": f"token {token}",
+        "Accept": "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
     }
 
     try:
@@ -58,16 +55,17 @@ def fetch_repository_secrets(owner: str, repo: str, token: str) -> Dict[str, str
         data = resp.json()
         secrets = {}
 
-        for secret in data.get('secrets', []):
+        for secret in data.get("secrets", []):
             # API only returns names, not values
-            secrets[secret['name']] = None
+            secrets[secret["name"]] = None
 
         return secrets
 
     except requests.RequestException as e:
         raise RuntimeError(f"Failed to fetch secrets: {e}")
 
-def load_secrets_from_github(owner: str = 'kimeisele', repo: str = 'vibe-agency') -> bool:
+
+def load_secrets_from_github(owner: str = "kimeisele", repo: str = "vibe-agency") -> bool:
     """
     Attempt to load GitHub Secrets into environment.
 
@@ -99,7 +97,8 @@ def load_secrets_from_github(owner: str = 'kimeisele', repo: str = 'vibe-agency'
         print(f"❌ Failed to fetch secrets: {e}")
         return False
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     print("=" * 70)
     print("GitHub Secrets Loader")
     print("=" * 70)

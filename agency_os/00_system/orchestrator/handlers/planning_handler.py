@@ -53,29 +53,29 @@ class PlanningHandler:
 
         # Execute each sub-state
         for substate in substates:
-            if substate.get('optional') and not self._should_execute_optional_state(substate):
+            if substate.get("optional") and not self._should_execute_optional_state(substate):
                 logger.info(f"⏭️  Skipping optional state: {substate['name']}")
                 continue
 
             logger.info(f"▶️  Executing state: {substate['name']}")
 
-            if substate['name'] == "RESEARCH":
+            if substate["name"] == "RESEARCH":
                 self._execute_research_state(manifest)
-            elif substate['name'] == "BUSINESS_VALIDATION":
+            elif substate["name"] == "BUSINESS_VALIDATION":
                 self._execute_business_validation_state(manifest)
-            elif substate['name'] == "FEATURE_SPECIFICATION":
+            elif substate["name"] == "FEATURE_SPECIFICATION":
                 self._execute_feature_specification_state(manifest)
-            elif substate['name'] == "ARCHITECTURE_DESIGN":
+            elif substate["name"] == "ARCHITECTURE_DESIGN":
                 self._execute_architecture_design_state(manifest)
 
         # Apply quality gates before transitioning to CODING (GAD-002 Decision 2)
         from core_orchestrator import ProjectPhase
+
         logger.info("🔒 Applying quality gates for PLANNING → CODING transition...")
 
         try:
             self.orchestrator.apply_quality_gates(
-                transition_name="T1_StartCoding",
-                manifest=manifest
+                transition_name="T1_StartCoding", manifest=manifest
             )
         except Exception as e:
             logger.error(f"❌ Quality gate BLOCKED transition to CODING: {e}")
@@ -89,9 +89,9 @@ class PlanningHandler:
 
     def _get_planning_substates(self):
         """Get PLANNING sub-states from workflow YAML"""
-        for state in self.orchestrator.workflow.get('states', []):
-            if state['name'] == 'PLANNING':
-                return state.get('sub_states', [])
+        for state in self.orchestrator.workflow.get("states", []):
+            if state["name"] == "PLANNING":
+                return state.get("sub_states", [])
         return []
 
     def _should_execute_optional_state(self, state: Dict) -> bool:
@@ -105,23 +105,27 @@ class PlanningHandler:
         """
         import os
 
-        auto_mode = os.getenv('VIBE_AUTO_MODE', 'true').lower() == 'true'
+        auto_mode = os.getenv("VIBE_AUTO_MODE", "true").lower() == "true"
 
-        if state['name'] == "RESEARCH":
+        if state["name"] == "RESEARCH":
             if auto_mode:
-                logger.info("⏭️  Auto-skipping optional state: RESEARCH (set VIBE_AUTO_MODE=false for interactive)")
+                logger.info(
+                    "⏭️  Auto-skipping optional state: RESEARCH (set VIBE_AUTO_MODE=false for interactive)"
+                )
                 return False
 
             # Interactive mode
-            print("\n" + "="*60)
+            print("\n" + "=" * 60)
             print("OPTIONAL: Research Phase")
-            print("="*60)
+            print("=" * 60)
             print("The Research phase provides fact-based market, technical, and user validation.")
-            print("It includes: Competitor analysis, API evaluation, citation enforcement, personas.")
+            print(
+                "It includes: Competitor analysis, API evaluation, citation enforcement, personas."
+            )
             print("Estimated time: 1-2 hours")
             print()
             response = input("Do you want to run the Research phase? (y/n): ").strip().lower()
-            return response in ['y', 'yes']
+            return response in ["y", "yes"]
 
         return False
 
@@ -146,32 +150,30 @@ class PlanningHandler:
         market_analysis = self.orchestrator.execute_agent(
             agent_name="MARKET_RESEARCHER",
             task_id="competitor_identification",  # Main task
-            inputs={'project_context': manifest.metadata},
-            manifest=manifest
+            inputs={"project_context": manifest.metadata},
+            manifest=manifest,
         )
 
         tech_analysis = self.orchestrator.execute_agent(
             agent_name="TECH_RESEARCHER",
             task_id="api_evaluation",  # Main task
-            inputs={'project_context': manifest.metadata},
-            manifest=manifest
+            inputs={"project_context": manifest.metadata},
+            manifest=manifest,
         )
 
         # FACT_VALIDATOR (blocking quality gate)
         fact_validation = self.orchestrator.execute_agent(
             agent_name="FACT_VALIDATOR",
             task_id="knowledge_base_audit",
-            inputs={
-                'market_analysis': market_analysis,
-                'tech_analysis': tech_analysis
-            },
-            manifest=manifest
+            inputs={"market_analysis": market_analysis, "tech_analysis": tech_analysis},
+            manifest=manifest,
         )
 
         # Check quality gate
-        quality_score = fact_validation.get('quality_score', 0)
+        quality_score = fact_validation.get("quality_score", 0)
         if quality_score < 50:
             from core_orchestrator import QualityGateFailure
+
             raise QualityGateFailure(
                 f"FACT_VALIDATOR blocked research. Quality score: {quality_score}/100. "
                 f"Issues: {fact_validation.get('flagged_issues', [])}"
@@ -185,32 +187,32 @@ class PlanningHandler:
             user_insights = self.orchestrator.execute_agent(
                 agent_name="USER_RESEARCHER",
                 task_id="persona_generation",
-                inputs={'project_context': manifest.metadata},
-                manifest=manifest
+                inputs={"project_context": manifest.metadata},
+                manifest=manifest,
             )
 
         # Compile research brief
         research_brief = {
-            'version': '1.0',
-            'market_analysis': market_analysis,
-            'tech_analysis': tech_analysis,
-            'fact_validation': fact_validation,
-            'user_insights': user_insights,
-            'handoff_to_lean_canvas': {
-                'status': 'READY',
-                'timestamp': datetime.utcnow().isoformat() + 'Z'
-            }
+            "version": "1.0",
+            "market_analysis": market_analysis,
+            "tech_analysis": tech_analysis,
+            "fact_validation": fact_validation,
+            "user_insights": user_insights,
+            "handoff_to_lean_canvas": {
+                "status": "READY",
+                "timestamp": datetime.utcnow().isoformat() + "Z",
+            },
         }
 
         # Save artifact
         self.orchestrator.save_artifact(
             manifest.project_id,
-            'research_brief.json',
+            "research_brief.json",
             research_brief,
-            validate=True  # Schema validation
+            validate=True,  # Schema validation
         )
 
-        manifest.artifacts['research_brief'] = research_brief
+        manifest.artifacts["research_brief"] = research_brief
 
         logger.info("✅ RESEARCH complete → research_brief.json")
 
@@ -218,7 +220,7 @@ class PlanningHandler:
         """Ask if user wants USER_RESEARCHER (optional within RESEARCH)"""
         print("\n📋 USER_RESEARCHER is optional (generates personas, interview scripts)")
         response = input("Include USER_RESEARCHER? (y/n): ").strip().lower()
-        return response in ['y', 'yes']
+        return response in ["y", "yes"]
 
     # -------------------------------------------------------------------------
     # BUSINESS VALIDATION STATE
@@ -237,10 +239,7 @@ class PlanningHandler:
         logger.info("💼 Starting BUSINESS_VALIDATION sub-state...")
 
         # Load research brief if exists
-        research_brief = self.orchestrator.load_artifact(
-            manifest.project_id,
-            'research_brief.json'
-        )
+        research_brief = self.orchestrator.load_artifact(manifest.project_id, "research_brief.json")
 
         # -------------------------------------------------------------------------
         # TASK 01: Canvas Interview
@@ -251,11 +250,11 @@ class PlanningHandler:
             agent_name="LEAN_CANVAS_VALIDATOR",
             task_id="01_canvas_interview",
             inputs={
-                'project_context': manifest.metadata,
-                'research_brief': research_brief,  # May be None
-                'user_initial_idea': manifest.metadata.get('description', 'New project')
+                "project_context": manifest.metadata,
+                "research_brief": research_brief,  # May be None
+                "user_initial_idea": manifest.metadata.get("description", "New project"),
             },
-            manifest=manifest
+            manifest=manifest,
         )
 
         logger.info("✓ Canvas interview complete")
@@ -268,11 +267,8 @@ class PlanningHandler:
         risk_analysis = self.orchestrator.execute_agent(
             agent_name="LEAN_CANVAS_VALIDATOR",
             task_id="02_risk_analysis",
-            inputs={
-                'canvas_responses': canvas_responses,
-                'project_context': manifest.metadata
-            },
-            manifest=manifest
+            inputs={"canvas_responses": canvas_responses, "project_context": manifest.metadata},
+            manifest=manifest,
         )
 
         logger.info("✓ Risk analysis complete")
@@ -286,34 +282,31 @@ class PlanningHandler:
             agent_name="LEAN_CANVAS_VALIDATOR",
             task_id="03_handoff",
             inputs={
-                'canvas_responses': canvas_responses,
-                'riskiest_assumptions': risk_analysis.get('riskiest_assumptions', []),
-                'project_context': manifest.metadata,
-                'research_brief': research_brief
+                "canvas_responses": canvas_responses,
+                "riskiest_assumptions": risk_analysis.get("riskiest_assumptions", []),
+                "project_context": manifest.metadata,
+                "research_brief": research_brief,
             },
-            manifest=manifest
+            manifest=manifest,
         )
 
         # Check readiness
-        readiness = lean_canvas.get('readiness', {})
-        if readiness.get('status') != 'READY':
-            missing = readiness.get('missing_inputs', [])
-            logger.warning(
-                f"⚠️  Business validation not ready. Missing: {', '.join(missing)}"
-            )
+        readiness = lean_canvas.get("readiness", {})
+        if readiness.get("status") != "READY":
+            missing = readiness.get("missing_inputs", [])
+            logger.warning(f"⚠️  Business validation not ready. Missing: {', '.join(missing)}")
             # Continue anyway (user can iterate)
 
         # Save artifact
         self.orchestrator.save_artifact(
-            manifest.project_id,
-            'lean_canvas_summary.json',
-            lean_canvas,
-            validate=True
+            manifest.project_id, "lean_canvas_summary.json", lean_canvas, validate=True
         )
 
-        manifest.artifacts['lean_canvas_summary'] = lean_canvas
+        manifest.artifacts["lean_canvas_summary"] = lean_canvas
 
-        logger.info("✅ BUSINESS_VALIDATION complete → lean_canvas_summary.json (full sequence: 01→02→03)")
+        logger.info(
+            "✅ BUSINESS_VALIDATION complete → lean_canvas_summary.json (full sequence: 01→02→03)"
+        )
 
     # -------------------------------------------------------------------------
     # FEATURE SPECIFICATION STATE
@@ -332,12 +325,12 @@ class PlanningHandler:
 
         # Load lean canvas (required)
         lean_canvas = self.orchestrator.load_artifact(
-            manifest.project_id,
-            'lean_canvas_summary.json'
+            manifest.project_id, "lean_canvas_summary.json"
         )
 
         if not lean_canvas:
             from core_orchestrator import ArtifactNotFoundError
+
             raise ArtifactNotFoundError(
                 "lean_canvas_summary.json not found - BUSINESS_VALIDATION must run first"
             )
@@ -346,16 +339,13 @@ class PlanningHandler:
         feature_spec = self.orchestrator.execute_agent(
             agent_name="VIBE_ALIGNER",
             task_id="scope_negotiation",
-            inputs={
-                'project_context': manifest.metadata,
-                'lean_canvas_summary': lean_canvas
-            },
-            manifest=manifest
+            inputs={"project_context": manifest.metadata, "lean_canvas_summary": lean_canvas},
+            manifest=manifest,
         )
 
         # Check validation
-        validation = feature_spec.get('validation', {})
-        if not validation.get('ready_for_genesis', False):
+        validation = feature_spec.get("validation", {})
+        if not validation.get("ready_for_genesis", False):
             logger.warning(
                 "⚠️  Feature specification validation incomplete. "
                 "Genesis Blueprint may need additional information."
@@ -363,13 +353,10 @@ class PlanningHandler:
 
         # Save artifact
         self.orchestrator.save_artifact(
-            manifest.project_id,
-            'feature_spec.json',
-            feature_spec,
-            validate=True
+            manifest.project_id, "feature_spec.json", feature_spec, validate=True
         )
 
-        manifest.artifacts['feature_spec'] = feature_spec
+        manifest.artifacts["feature_spec"] = feature_spec
 
         logger.info("✅ FEATURE_SPECIFICATION complete → feature_spec.json")
 
@@ -389,20 +376,18 @@ class PlanningHandler:
         logger.info("🏗️  Starting ARCHITECTURE_DESIGN sub-state...")
 
         # Load feature spec (required)
-        feature_spec = self.orchestrator.load_artifact(
-            manifest.project_id,
-            'feature_spec.json'
-        )
+        feature_spec = self.orchestrator.load_artifact(manifest.project_id, "feature_spec.json")
 
         if not feature_spec:
             from core_orchestrator import ArtifactNotFoundError
+
             raise ArtifactNotFoundError(
                 "feature_spec.json not found - FEATURE_SPECIFICATION must run first"
             )
 
         # Check if ready for architecture design
-        validation = feature_spec.get('validation', {})
-        if not validation.get('ready_for_genesis', False):
+        validation = feature_spec.get("validation", {})
+        if not validation.get("ready_for_genesis", False):
             logger.warning(
                 "⚠️  Feature spec validation incomplete but continuing with architecture design. "
                 "GENESIS_BLUEPRINT may request additional clarifications."
@@ -412,48 +397,49 @@ class PlanningHandler:
         architecture_output = self.orchestrator.execute_agent(
             agent_name="GENESIS_BLUEPRINT",
             task_id="architecture_generation",
-            inputs={
-                'feature_spec': feature_spec,
-                'project_context': manifest.metadata
-            },
-            manifest=manifest
+            inputs={"feature_spec": feature_spec, "project_context": manifest.metadata},
+            manifest=manifest,
         )
 
         # GENESIS_BLUEPRINT should return both architecture.json and code_gen_spec.json
         # (either as separate fields or as a combined output - we'll handle both)
 
-        if isinstance(architecture_output, dict) and 'architecture' in architecture_output and 'code_gen_spec' in architecture_output:
+        if (
+            isinstance(architecture_output, dict)
+            and "architecture" in architecture_output
+            and "code_gen_spec" in architecture_output
+        ):
             # Separate outputs
-            architecture = architecture_output['architecture']
-            code_gen_spec = architecture_output['code_gen_spec']
+            architecture = architecture_output["architecture"]
+            code_gen_spec = architecture_output["code_gen_spec"]
         else:
             # Combined output (GENESIS_BLUEPRINT returns everything in one object)
             # Split it based on schema expectations
             architecture = architecture_output
             code_gen_spec = {
-                'modules': architecture_output.get('modules', []),
-                'dependencies': architecture_output.get('dependencies', []),
-                'build_config': architecture_output.get('build_config', {}),
-                'test_strategy': architecture_output.get('test_strategy', {})
+                "modules": architecture_output.get("modules", []),
+                "dependencies": architecture_output.get("dependencies", []),
+                "build_config": architecture_output.get("build_config", {}),
+                "test_strategy": architecture_output.get("test_strategy", {}),
             }
 
         # Save architecture.json
         self.orchestrator.save_artifact(
             manifest.project_id,
-            'architecture.json',
+            "architecture.json",
             architecture,
-            validate=False  # TODO: Add schema validation in Phase 4
+            validate=False,  # TODO: Add schema validation in Phase 4
         )
 
         # Save code_gen_spec.json (CRITICAL for CODING phase!)
         self.orchestrator.save_artifact(
             manifest.project_id,
-            'code_gen_spec.json',
+            "code_gen_spec.json",
             code_gen_spec,
-            validate=False  # TODO: Add schema validation in Phase 4
+            validate=False,  # TODO: Add schema validation in Phase 4
         )
 
-        manifest.artifacts['architecture'] = architecture
-        manifest.artifacts['code_gen_spec'] = code_gen_spec
+        manifest.artifacts["architecture"] = architecture
+        manifest.artifacts["code_gen_spec"] = code_gen_spec
 
         logger.info("✅ ARCHITECTURE_DESIGN complete → architecture.json + code_gen_spec.json")

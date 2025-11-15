@@ -34,6 +34,66 @@ _*Note: As of v1.2.1 (ADR-003), the system supports both **delegated execution**
 
 ---
 
+## 🚀 Quick Start
+
+### Setup (One Command)
+
+```bash
+make install
+```
+
+Or manually:
+
+```bash
+./setup.sh
+```
+
+### Usage
+
+```bash
+# Run a project
+./vibe-cli run <project-id>
+
+# Run tests
+make test
+
+# Check code quality
+make lint
+
+# Full validation (what CI runs)
+make ci
+```
+
+### Development
+
+```bash
+# See all available commands
+make help
+
+# Run tests with coverage
+make test-cov
+
+# Auto-format code
+make format
+
+# Type check
+make type-check
+
+# Security scan
+make security
+```
+
+### Requirements
+
+- Python 3.11+
+- `uv` (installed automatically by setup.sh)
+
+### For Devcontainer Users
+
+Open in VS Code with Dev Containers extension. Everything auto-installs.
+
+---
+
 ## 🏗️ Architecture
 
 **New in v1.2.1:** Delegated Execution Architecture ([ADR-003](docs/architecture/ADR-003_Delegated_Execution_Architecture.md))
@@ -115,8 +175,9 @@ If auto-install fails, use the manual setup script:
 Or install manually:
 
 ```bash
-pip install -r requirements.txt
-python3 validate_knowledge_index.py
+make install  # Recommended (uses UV)
+# OR
+./setup.sh    # Alternative setup script
 ```
 
 ### Layer 4: CI Validation (Continuous Enforcement)

@@ -47,13 +47,11 @@ class MaintenanceHandler:
         logger.info("🔧 Starting MAINTENANCE phase (STUB)")
 
         # Load deploy receipt
-        deploy_receipt = self.orchestrator.load_artifact(
-            manifest.project_id,
-            'deploy_receipt.json'
-        )
+        deploy_receipt = self.orchestrator.load_artifact(manifest.project_id, "deploy_receipt.json")
 
         if not deploy_receipt:
             from core_orchestrator import ArtifactNotFoundError
+
             raise ArtifactNotFoundError(
                 "deploy_receipt.json not found - DEPLOYMENT phase must complete first"
             )
@@ -62,33 +60,33 @@ class MaintenanceHandler:
 
         # STUB: Create mock maintenance_log
         maintenance_log = {
-            'version': '1.0',
-            'schema_version': '1.0',
-            'status': 'HEALTHY',  # STUB
-            'incidents': [],  # STUB
-            'planned_maintenance': [],  # STUB
-            'golden_signals': {
-                'latency_p95_ms': 45,  # STUB
-                'error_rate_percent': 0.1,  # STUB
-                'requests_per_second': 100,  # STUB
-                'saturation_percent': 35  # STUB
+            "version": "1.0",
+            "schema_version": "1.0",
+            "status": "HEALTHY",  # STUB
+            "incidents": [],  # STUB
+            "planned_maintenance": [],  # STUB
+            "golden_signals": {
+                "latency_p95_ms": 45,  # STUB
+                "error_rate_percent": 0.1,  # STUB
+                "requests_per_second": 100,  # STUB
+                "saturation_percent": 35,  # STUB
             },
-            'metadata': {
-                'last_check_at': self._get_timestamp(),
-                'phase': 'STUB',
-                'message': 'Phase 3: Stub implementation - actual monitoring in Phase 4'
-            }
+            "metadata": {
+                "last_check_at": self._get_timestamp(),
+                "phase": "STUB",
+                "message": "Phase 3: Stub implementation - actual monitoring in Phase 4",
+            },
         }
 
         # Save artifact
         self.orchestrator.save_artifact(
             manifest.project_id,
-            'maintenance_log.json',
+            "maintenance_log.json",
             maintenance_log,
-            validate=False  # No schema validation for stub
+            validate=False,  # No schema validation for stub
         )
 
-        manifest.artifacts['maintenance_log'] = maintenance_log
+        manifest.artifacts["maintenance_log"] = maintenance_log
 
         logger.info("✅ MAINTENANCE phase active (STUB) → maintenance_log.json")
         logger.info("   ⚠️  STUB: No actual monitoring (Phase 3)")
@@ -96,6 +94,7 @@ class MaintenanceHandler:
 
         # Stay in MAINTENANCE phase
         from core_orchestrator import ProjectPhase
+
         manifest.current_phase = ProjectPhase.MAINTENANCE
 
         logger.info("🔧 System in MAINTENANCE mode (STUB)")
@@ -103,4 +102,5 @@ class MaintenanceHandler:
     def _get_timestamp(self) -> str:
         """Get current timestamp"""
         from datetime import datetime
+
         return datetime.utcnow().isoformat() + "Z"

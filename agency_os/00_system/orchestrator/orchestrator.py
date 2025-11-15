@@ -27,8 +27,10 @@ from enum import Enum
 # DATA STRUCTURES
 # =============================================================================
 
+
 class ProjectPhase(Enum):
     """SDLC lifecycle phases"""
+
     PLANNING = "PLANNING"
     CODING = "CODING"
     TESTING = "TESTING"
@@ -40,6 +42,7 @@ class ProjectPhase(Enum):
 
 class PlanningSubState(Enum):
     """Planning phase sub-states"""
+
     RESEARCH = "RESEARCH"
     BUSINESS_VALIDATION = "BUSINESS_VALIDATION"
     FEATURE_SPECIFICATION = "FEATURE_SPECIFICATION"
@@ -48,6 +51,7 @@ class PlanningSubState(Enum):
 @dataclass
 class ProjectManifest:
     """Project manifest (Single Source of Truth)"""
+
     project_id: str
     name: str
     current_phase: ProjectPhase
@@ -59,6 +63,7 @@ class ProjectManifest:
 @dataclass
 class WorkflowState:
     """State definition from YAML"""
+
     name: str
     description: str
     responsible_agents: List[str]
@@ -72,6 +77,7 @@ class WorkflowState:
 @dataclass
 class ResearchBrief:
     """Output from RESEARCH phase"""
+
     market_analysis: Dict[str, Any]
     tech_analysis: Dict[str, Any]
     fact_validation: Dict[str, Any]
@@ -83,24 +89,29 @@ class ResearchBrief:
 # EXCEPTIONS
 # =============================================================================
 
+
 class QualityGateFailure(Exception):
     """Raised when a quality gate blocks progression"""
+
     pass
 
 
 class ArtifactNotFoundError(Exception):
     """Raised when required artifact is missing"""
+
     pass
 
 
 class StateTransitionError(Exception):
     """Raised when state transition is invalid"""
+
     pass
 
 
 # =============================================================================
 # ORCHESTRATOR
 # =============================================================================
+
 
 class Orchestrator:
     """
@@ -114,9 +125,11 @@ class Orchestrator:
     - Handle optional phases (like RESEARCH)
     """
 
-    def __init__(self,
-                 repo_root: Path,
-                 workflow_yaml: str = "agency_os/00_system/state_machine/ORCHESTRATION_workflow_design.yaml"):
+    def __init__(
+        self,
+        repo_root: Path,
+        workflow_yaml: str = "agency_os/00_system/state_machine/ORCHESTRATION_workflow_design.yaml",
+    ):
         """
         Initialize orchestrator.
 
@@ -143,28 +156,30 @@ class Orchestrator:
         if not self.workflow_yaml_path.exists():
             raise FileNotFoundError(f"Workflow YAML not found: {self.workflow_yaml_path}")
 
-        with open(self.workflow_yaml_path, 'r') as f:
+        with open(self.workflow_yaml_path, "r") as f:
             return yaml.safe_load(f)
 
     def get_planning_substates(self) -> List[WorkflowState]:
         """Get PLANNING sub-states from workflow"""
-        for state in self.workflow.get('states', []):
-            if state['name'] == 'PLANNING':
-                sub_states = state.get('sub_states', [])
+        for state in self.workflow.get("states", []):
+            if state["name"] == "PLANNING":
+                sub_states = state.get("sub_states", [])
                 return [self._parse_substate(s) for s in sub_states]
         return []
 
     def _parse_substate(self, state_dict: Dict[str, Any]) -> WorkflowState:
         """Parse sub-state dictionary into WorkflowState object"""
         return WorkflowState(
-            name=state_dict['name'],
-            description=state_dict.get('description', ''),
-            responsible_agents=state_dict.get('responsible_agents', [state_dict.get('responsible_agent')]),
-            input_artifact=state_dict.get('input_artifact'),
-            output_artifact=state_dict.get('output_artifact'),
-            optional=state_dict.get('optional', False),
-            input_artifact_optional=state_dict.get('input_artifact_optional', False),
-            state_machine_ref=state_dict.get('state_machine_ref')
+            name=state_dict["name"],
+            description=state_dict.get("description", ""),
+            responsible_agents=state_dict.get(
+                "responsible_agents", [state_dict.get("responsible_agent")]
+            ),
+            input_artifact=state_dict.get("input_artifact"),
+            output_artifact=state_dict.get("output_artifact"),
+            optional=state_dict.get("optional", False),
+            input_artifact_optional=state_dict.get("input_artifact_optional", False),
+            state_machine_ref=state_dict.get("state_machine_ref"),
         )
 
     # -------------------------------------------------------------------------
@@ -178,21 +193,21 @@ class Orchestrator:
         if not manifest_path.exists():
             raise FileNotFoundError(f"Project manifest not found: {manifest_path}")
 
-        with open(manifest_path, 'r') as f:
+        with open(manifest_path, "r") as f:
             data = json.load(f)
 
         # Parse planning sub-state (if exists and not null)
         planning_sub_state = None
-        if data['status'].get('planningSubState'):
-            planning_sub_state = PlanningSubState(data['status']['planningSubState'])
+        if data["status"].get("planningSubState"):
+            planning_sub_state = PlanningSubState(data["status"]["planningSubState"])
 
         return ProjectManifest(
-            project_id=data['metadata']['projectId'],
-            name=data['metadata']['name'],
-            current_phase=ProjectPhase(data['status']['projectPhase']),
+            project_id=data["metadata"]["projectId"],
+            name=data["metadata"]["name"],
+            current_phase=ProjectPhase(data["status"]["projectPhase"]),
             current_sub_state=planning_sub_state,
-            artifacts=data.get('artifacts', {}),
-            metadata=data
+            artifacts=data.get("artifacts", {}),
+            metadata=data,
         )
 
     def save_project_manifest(self, manifest: ProjectManifest) -> None:
@@ -200,13 +215,13 @@ class Orchestrator:
         manifest_path = self._get_manifest_path(manifest.project_id)
 
         # Update manifest data
-        manifest.metadata['status']['projectPhase'] = manifest.current_phase.value
+        manifest.metadata["status"]["projectPhase"] = manifest.current_phase.value
         if manifest.current_sub_state:
-            manifest.metadata['status']['planningSubState'] = manifest.current_sub_state.value
-        manifest.metadata['artifacts'] = manifest.artifacts
+            manifest.metadata["status"]["planningSubState"] = manifest.current_sub_state.value
+        manifest.metadata["artifacts"] = manifest.artifacts
 
         # Write to disk
-        with open(manifest_path, 'w') as f:
+        with open(manifest_path, "w") as f:
             json.dump(manifest.metadata, f, indent=2)
 
     def _get_manifest_path(self, project_id: str) -> Path:
@@ -216,9 +231,9 @@ class Orchestrator:
             if workspace_dir.is_dir():
                 manifest_path = workspace_dir / "project_manifest.json"
                 if manifest_path.exists():
-                    with open(manifest_path, 'r') as f:
+                    with open(manifest_path, "r") as f:
                         data = json.load(f)
-                        if data['metadata']['projectId'] == project_id:
+                        if data["metadata"]["projectId"] == project_id:
                             return manifest_path
 
         raise FileNotFoundError(f"Project {project_id} not found in workspaces")
@@ -231,9 +246,9 @@ class Orchestrator:
         """Load artifact from project workspace"""
         # Determine artifact path based on type
         artifact_paths = {
-            'research_brief.json': 'artifacts/planning/research_brief.json',
-            'lean_canvas_summary.json': 'artifacts/planning/lean_canvas_summary.json',
-            'feature_spec.json': 'artifacts/planning/feature_spec.json'
+            "research_brief.json": "artifacts/planning/research_brief.json",
+            "lean_canvas_summary.json": "artifacts/planning/lean_canvas_summary.json",
+            "feature_spec.json": "artifacts/planning/feature_spec.json",
         }
 
         if artifact_name not in artifact_paths:
@@ -246,15 +261,15 @@ class Orchestrator:
         if not artifact_path.exists():
             return None
 
-        with open(artifact_path, 'r') as f:
+        with open(artifact_path, "r") as f:
             return json.load(f)
 
     def save_artifact(self, project_id: str, artifact_name: str, data: Dict[str, Any]) -> None:
         """Save artifact to project workspace"""
         artifact_paths = {
-            'research_brief.json': 'artifacts/planning/research_brief.json',
-            'lean_canvas_summary.json': 'artifacts/planning/lean_canvas_summary.json',
-            'feature_spec.json': 'artifacts/planning/feature_spec.json'
+            "research_brief.json": "artifacts/planning/research_brief.json",
+            "lean_canvas_summary.json": "artifacts/planning/lean_canvas_summary.json",
+            "feature_spec.json": "artifacts/planning/feature_spec.json",
         }
 
         if artifact_name not in artifact_paths:
@@ -268,7 +283,7 @@ class Orchestrator:
         artifact_path.parent.mkdir(parents=True, exist_ok=True)
 
         # Write artifact
-        with open(artifact_path, 'w') as f:
+        with open(artifact_path, "w") as f:
             json.dump(data, f, indent=2)
 
     # -------------------------------------------------------------------------
@@ -288,7 +303,9 @@ class Orchestrator:
 
         # Verify we're in PLANNING phase
         if manifest.current_phase != ProjectPhase.PLANNING:
-            raise StateTransitionError(f"Cannot run planning phase. Current phase: {manifest.current_phase}")
+            raise StateTransitionError(
+                f"Cannot run planning phase. Current phase: {manifest.current_phase}"
+            )
 
         # Get planning sub-states
         substates = self.get_planning_substates()
@@ -323,15 +340,17 @@ class Orchestrator:
         For Phase 2, we use simple CLI prompt
         """
         if state.name == "RESEARCH":
-            print("\n" + "="*60)
+            print("\n" + "=" * 60)
             print("OPTIONAL: Research Phase")
-            print("="*60)
+            print("=" * 60)
             print("The Research phase provides fact-based market, technical, and user validation.")
-            print("It includes: Competitor analysis, API evaluation, citation enforcement, personas.")
+            print(
+                "It includes: Competitor analysis, API evaluation, citation enforcement, personas."
+            )
             print("Estimated time: 1-2 hours")
             print()
             response = input("Do you want to run the Research phase? (y/n): ").strip().lower()
-            return response in ['y', 'yes']
+            return response in ["y", "yes"]
 
         return False
 
@@ -357,13 +376,12 @@ class Orchestrator:
         tech_analysis = self._execute_agent_placeholder("TECH_RESEARCHER", {})
 
         # FACT_VALIDATOR (blocking)
-        fact_validation = self._execute_agent_placeholder("FACT_VALIDATOR", {
-            'market_analysis': market_analysis,
-            'tech_analysis': tech_analysis
-        })
+        fact_validation = self._execute_agent_placeholder(
+            "FACT_VALIDATOR", {"market_analysis": market_analysis, "tech_analysis": tech_analysis}
+        )
 
         # Check quality gate
-        if fact_validation.get('quality_score', 0) < 50:
+        if fact_validation.get("quality_score", 0) < 50:
             raise QualityGateFailure(
                 f"FACT_VALIDATOR blocked research. Quality score: {fact_validation.get('quality_score')}"
             )
@@ -375,37 +393,40 @@ class Orchestrator:
 
         # Compile research brief
         research_brief = {
-            'market_analysis': market_analysis,
-            'tech_analysis': tech_analysis,
-            'fact_validation': fact_validation,
-            'user_insights': user_insights,
-            'handoff_to_lean_canvas': {
-                'status': 'READY',
-                'timestamp': self._get_timestamp()
-            }
+            "market_analysis": market_analysis,
+            "tech_analysis": tech_analysis,
+            "fact_validation": fact_validation,
+            "user_insights": user_insights,
+            "handoff_to_lean_canvas": {"status": "READY", "timestamp": self._get_timestamp()},
         }
 
         # Save artifact
-        self.save_artifact(manifest.project_id, 'research_brief.json', research_brief)
-        manifest.artifacts['research_brief'] = research_brief
+        self.save_artifact(manifest.project_id, "research_brief.json", research_brief)
+        manifest.artifacts["research_brief"] = research_brief
 
         print("✅ RESEARCH phase complete → research_brief.json")
 
     def _load_research_workflow(self) -> Dict[str, Any]:
         """Load RESEARCH_workflow_design.yaml"""
-        research_yaml = self.repo_root / "agency_os" / "01_planning_framework" / "state_machine" / "RESEARCH_workflow_design.yaml"
+        research_yaml = (
+            self.repo_root
+            / "agency_os"
+            / "01_planning_framework"
+            / "state_machine"
+            / "RESEARCH_workflow_design.yaml"
+        )
 
         if not research_yaml.exists():
             raise FileNotFoundError(f"Research workflow not found: {research_yaml}")
 
-        with open(research_yaml, 'r') as f:
+        with open(research_yaml, "r") as f:
             return yaml.safe_load(f)
 
     def _ask_user_researcher(self) -> bool:
         """Ask if user wants USER_RESEARCHER (optional within RESEARCH)"""
         print("\n📋 USER_RESEARCHER is optional (generates personas, interview scripts)")
         response = input("Include USER_RESEARCHER? (y/n): ").strip().lower()
-        return response in ['y', 'yes']
+        return response in ["y", "yes"]
 
     # -------------------------------------------------------------------------
     # BUSINESS VALIDATION STATE
@@ -423,16 +444,16 @@ class Orchestrator:
         print("\n💼 Starting BUSINESS_VALIDATION phase...")
 
         # Load research brief if exists
-        research_brief = self.load_artifact(manifest.project_id, 'research_brief.json')
+        research_brief = self.load_artifact(manifest.project_id, "research_brief.json")
 
         # Execute LEAN_CANVAS_VALIDATOR
-        lean_canvas = self._execute_agent_placeholder("LEAN_CANVAS_VALIDATOR", {
-            'research_brief': research_brief
-        })
+        lean_canvas = self._execute_agent_placeholder(
+            "LEAN_CANVAS_VALIDATOR", {"research_brief": research_brief}
+        )
 
         # Save artifact
-        self.save_artifact(manifest.project_id, 'lean_canvas_summary.json', lean_canvas)
-        manifest.artifacts['lean_canvas_summary'] = lean_canvas
+        self.save_artifact(manifest.project_id, "lean_canvas_summary.json", lean_canvas)
+        manifest.artifacts["lean_canvas_summary"] = lean_canvas
 
         print("✅ BUSINESS_VALIDATION complete → lean_canvas_summary.json")
 
@@ -452,18 +473,18 @@ class Orchestrator:
         print("\n⚙️  Starting FEATURE_SPECIFICATION phase...")
 
         # Load lean canvas
-        lean_canvas = self.load_artifact(manifest.project_id, 'lean_canvas_summary.json')
+        lean_canvas = self.load_artifact(manifest.project_id, "lean_canvas_summary.json")
         if not lean_canvas:
             raise ArtifactNotFoundError("lean_canvas_summary.json not found")
 
         # Execute VIBE_ALIGNER
-        feature_spec = self._execute_agent_placeholder("VIBE_ALIGNER", {
-            'lean_canvas_summary': lean_canvas
-        })
+        feature_spec = self._execute_agent_placeholder(
+            "VIBE_ALIGNER", {"lean_canvas_summary": lean_canvas}
+        )
 
         # Save artifact
-        self.save_artifact(manifest.project_id, 'feature_spec.json', feature_spec)
-        manifest.artifacts['feature_spec'] = feature_spec
+        self.save_artifact(manifest.project_id, "feature_spec.json", feature_spec)
+        manifest.artifacts["feature_spec"] = feature_spec
 
         print("✅ FEATURE_SPECIFICATION complete → feature_spec.json")
 
@@ -490,47 +511,42 @@ class Orchestrator:
         # Mock outputs for testing
         if agent_name == "MARKET_RESEARCHER":
             return {
-                'competitors': [{'name': 'Competitor A', 'source': 'https://example.com'}],
-                'pricing_insights': {'median': 50, 'currency': 'USD'},
-                'market_size': 'TAM: $1B'
+                "competitors": [{"name": "Competitor A", "source": "https://example.com"}],
+                "pricing_insights": {"median": 50, "currency": "USD"},
+                "market_size": "TAM: $1B",
             }
         elif agent_name == "TECH_RESEARCHER":
             return {
-                'apis_evaluated': [{'name': 'Stripe', 'docs': 'https://stripe.com/docs'}],
-                'feasibility_score': 'high'
+                "apis_evaluated": [{"name": "Stripe", "docs": "https://stripe.com/docs"}],
+                "feasibility_score": "high",
             }
         elif agent_name == "FACT_VALIDATOR":
             # For testing: simulate low quality score to test blocking
             import os
-            if os.environ.get('TEST_FACT_VALIDATOR_FAILURE'):
+
+            if os.environ.get("TEST_FACT_VALIDATOR_FAILURE"):
                 return {
-                    'quality_score': 42,
-                    'verified_claims': 5,
-                    'flagged_issues': [
-                        'Missing source URL for Competitor A',
-                        'Market size has no methodology',
-                        'Pricing data is outdated'
-                    ]
+                    "quality_score": 42,
+                    "verified_claims": 5,
+                    "flagged_issues": [
+                        "Missing source URL for Competitor A",
+                        "Market size has no methodology",
+                        "Pricing data is outdated",
+                    ],
                 }
-            return {
-                'quality_score': 85,
-                'verified_claims': 10,
-                'flagged_issues': []
-            }
+            return {"quality_score": 85, "verified_claims": 10, "flagged_issues": []}
         elif agent_name == "USER_RESEARCHER":
-            return {
-                'personas': [{'name': 'Early Adopter', 'age': '25-35'}]
-            }
+            return {"personas": [{"name": "Early Adopter", "age": "25-35"}]}
         elif agent_name == "LEAN_CANVAS_VALIDATOR":
             return {
-                'problem': 'User problem',
-                'solution': 'MVP solution',
-                'readiness': {'status': 'READY'}
+                "problem": "User problem",
+                "solution": "MVP solution",
+                "readiness": {"status": "READY"},
             }
         elif agent_name == "VIBE_ALIGNER":
             return {
-                'features': ['Feature 1', 'Feature 2'],
-                'code_gen_spec': {'complexity': 'medium'}
+                "features": ["Feature 1", "Feature 2"],
+                "code_gen_spec": {"complexity": "medium"},
             }
 
         return {}
@@ -542,12 +558,14 @@ class Orchestrator:
     def _get_timestamp(self) -> str:
         """Get current timestamp in ISO format"""
         from datetime import datetime
+
         return datetime.utcnow().isoformat() + "Z"
 
 
 # =============================================================================
 # CLI INTERFACE (FOR TESTING)
 # =============================================================================
+
 
 def main():
     """CLI interface for testing orchestrator"""

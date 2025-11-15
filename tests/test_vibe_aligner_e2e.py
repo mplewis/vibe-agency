@@ -52,13 +52,13 @@ class TestVibeAlignerE2E:
         composition_path = vibe_aligner_path / "_composition.yaml"
         assert composition_path.exists()
 
-        with open(composition_path, 'r') as f:
+        with open(composition_path, "r") as f:
             composition = yaml.safe_load(f)
 
         assert composition is not None
-        assert 'composition_version' in composition
-        assert 'agent_id' in composition
-        assert composition['agent_id'] == 'VIBE_ALIGNER'
+        assert "composition_version" in composition
+        assert "agent_id" in composition
+        assert composition["agent_id"] == "VIBE_ALIGNER"
 
     def test_vibe_aligner_has_all_6_tasks(self, vibe_aligner_path):
         """Test: VIBE_ALIGNER has all 6 tasks (01-06)"""
@@ -71,7 +71,7 @@ class TestVibeAlignerE2E:
             "task_03_feasibility_validation.md",
             "task_04_gap_detection.md",
             "task_05_scope_negotiation.md",
-            "task_06_output_generation.md"
+            "task_06_output_generation.md",
         ]
 
         for task_file in required_tasks:
@@ -88,7 +88,7 @@ class TestVibeAlignerE2E:
             "task_03_feasibility_validation.meta.yaml",
             "task_04_gap_detection.meta.yaml",
             "task_05_scope_negotiation.meta.yaml",
-            "task_06_output_generation.meta.yaml"
+            "task_06_output_generation.meta.yaml",
         ]
 
         for meta_file in required_meta:
@@ -96,9 +96,9 @@ class TestVibeAlignerE2E:
             assert meta_path.exists(), f"Missing metadata: {meta_file}"
 
             # Validate YAML
-            with open(meta_path, 'r') as f:
+            with open(meta_path, "r") as f:
                 meta = yaml.safe_load(f)
-                assert 'phase' in meta
+                assert "phase" in meta
                 # Note: 'description' might not be in all meta files
 
     def test_vibe_aligner_knowledge_dependencies_exist(self, vibe_aligner_path):
@@ -106,7 +106,7 @@ class TestVibeAlignerE2E:
         knowledge_deps_path = vibe_aligner_path / "_knowledge_deps.yaml"
         assert knowledge_deps_path.exists()
 
-        with open(knowledge_deps_path, 'r') as f:
+        with open(knowledge_deps_path, "r") as f:
             deps = yaml.safe_load(f)
 
         assert deps is not None
@@ -116,26 +116,24 @@ class TestVibeAlignerE2E:
         """Test: FAE, FDG, APCE knowledge bases exist"""
         knowledge_path = repo_root / "agency_os" / "01_planning_framework" / "knowledge"
 
-        required_knowledge = [
-            "FAE_constraints.yaml",
-            "FDG_dependencies.yaml",
-            "APCE_rules.yaml"
-        ]
+        required_knowledge = ["FAE_constraints.yaml", "FDG_dependencies.yaml", "APCE_rules.yaml"]
 
         for kb_file in required_knowledge:
             kb_path = knowledge_path / kb_file
             assert kb_path.exists(), f"Missing knowledge base: {kb_file}"
 
             # Validate YAML (handle multi-document YAML)
-            with open(kb_path, 'r') as f:
+            with open(kb_path, "r") as f:
                 docs = list(yaml.safe_load_all(f))
                 assert len(docs) > 0
 
     def test_fae_knowledge_base_structure(self):
         """Test: FAE knowledge base has correct structure"""
-        fae_path = repo_root / "agency_os" / "01_planning_framework" / "knowledge" / "FAE_constraints.yaml"
+        fae_path = (
+            repo_root / "agency_os" / "01_planning_framework" / "knowledge" / "FAE_constraints.yaml"
+        )
 
-        with open(fae_path, 'r') as f:
+        with open(fae_path, "r") as f:
             fae = yaml.safe_load(f)
 
         # FAE has constraints or rules structure
@@ -143,18 +141,26 @@ class TestVibeAlignerE2E:
 
     def test_fdg_knowledge_base_structure(self):
         """Test: FDG knowledge base has correct structure"""
-        fdg_path = repo_root / "agency_os" / "01_planning_framework" / "knowledge" / "FDG_dependencies.yaml"
+        fdg_path = (
+            repo_root
+            / "agency_os"
+            / "01_planning_framework"
+            / "knowledge"
+            / "FDG_dependencies.yaml"
+        )
 
-        with open(fdg_path, 'r') as f:
+        with open(fdg_path, "r") as f:
             # FDG might be multi-document YAML
             docs = list(yaml.safe_load_all(f))
             assert len(docs) > 0
 
     def test_apce_knowledge_base_structure(self):
         """Test: APCE knowledge base has correct structure"""
-        apce_path = repo_root / "agency_os" / "01_planning_framework" / "knowledge" / "APCE_rules.yaml"
+        apce_path = (
+            repo_root / "agency_os" / "01_planning_framework" / "knowledge" / "APCE_rules.yaml"
+        )
 
-        with open(apce_path, 'r') as f:
+        with open(apce_path, "r") as f:
             # APCE might be multi-document YAML
             docs = list(yaml.safe_load_all(f))
             assert len(docs) > 0
@@ -163,33 +169,33 @@ class TestVibeAlignerE2E:
         """Test: VIBE_ALIGNER composition order is correct"""
         composition_path = vibe_aligner_path / "_composition.yaml"
 
-        with open(composition_path, 'r') as f:
+        with open(composition_path, "r") as f:
             composition = yaml.safe_load(f)
 
-        assert 'composition_order' in composition
-        order = composition['composition_order']
+        assert "composition_order" in composition
+        order = composition["composition_order"]
 
         # Verify expected components
-        sources = [item['source'] for item in order]
-        assert '_prompt_core.md' in sources
-        assert '${knowledge_files}' in sources
-        assert '${task_prompt}' in sources
-        assert '${runtime_context}' in sources
+        sources = [item["source"] for item in order]
+        assert "_prompt_core.md" in sources
+        assert "${knowledge_files}" in sources
+        assert "${task_prompt}" in sources
+        assert "${runtime_context}" in sources
 
     def test_vibe_aligner_workflow_notes(self, vibe_aligner_path):
         """Test: VIBE_ALIGNER composition has workflow notes"""
         composition_path = vibe_aligner_path / "_composition.yaml"
 
-        with open(composition_path, 'r') as f:
+        with open(composition_path, "r") as f:
             composition = yaml.safe_load(f)
 
-        assert 'notes' in composition
-        notes = composition['notes']
+        assert "notes" in composition
+        notes = composition["notes"]
 
         # Verify workflow description
-        assert 'Task 1' in notes
-        assert 'Task 6' in notes
-        assert 'feature_spec.json' in notes
+        assert "Task 1" in notes
+        assert "Task 6" in notes
+        assert "feature_spec.json" in notes
 
     def test_prompt_runtime_can_load_vibe_aligner(self, prompt_runtime):
         """Test: PromptRuntime can load VIBE_ALIGNER agent"""
@@ -207,36 +213,36 @@ class TestVibeAlignerE2E:
         if not feature_spec_path.exists():
             pytest.skip("feature_spec_v1.0_FINAL.json not found (dogfooding not completed)")
 
-        with open(feature_spec_path, 'r') as f:
+        with open(feature_spec_path, "r") as f:
             spec = json.load(f)
 
         # Validate structure
-        assert 'project' in spec
-        assert 'features' in spec
-        assert 'scope_negotiation' in spec
-        assert 'validation' in spec
-        assert 'metadata' in spec
+        assert "project" in spec
+        assert "features" in spec
+        assert "scope_negotiation" in spec
+        assert "validation" in spec
+        assert "metadata" in spec
 
         # Validate project section
-        assert 'name' in spec['project']
-        assert 'core_problem' in spec['project']
+        assert "name" in spec["project"]
+        assert "core_problem" in spec["project"]
 
         # Validate features section
-        assert isinstance(spec['features'], list)
-        assert len(spec['features']) > 0
+        assert isinstance(spec["features"], list)
+        assert len(spec["features"]) > 0
 
         # Validate first feature structure
-        feature = spec['features'][0]
-        assert 'id' in feature
-        assert 'name' in feature
-        assert 'priority' in feature
-        assert 'complexity_score' in feature
-        assert 'estimated_effort' in feature
+        feature = spec["features"][0]
+        assert "id" in feature
+        assert "name" in feature
+        assert "priority" in feature
+        assert "complexity_score" in feature
+        assert "estimated_effort" in feature
 
         # Validate metadata
-        assert 'vibe_version' in spec['metadata']
-        assert 'created_at' in spec['metadata']
-        assert spec['metadata']['vibe_version'] == '3.0'
+        assert "vibe_version" in spec["metadata"]
+        assert "created_at" in spec["metadata"]
+        assert spec["metadata"]["vibe_version"] == "3.0"
 
     def test_vibe_aligner_task_01_education(self, vibe_aligner_path):
         """Test: Task 01 (Education/Calibration) exists and has correct structure"""
@@ -244,7 +250,7 @@ class TestVibeAlignerE2E:
         assert task_path.exists()
 
         # Task should educate user about v1.0 constraints
-        with open(task_path, 'r') as f:
+        with open(task_path, "r") as f:
             content = f.read()
             assert len(content) > 0
 
@@ -254,9 +260,9 @@ class TestVibeAlignerE2E:
         assert task_path.exists()
 
         # Task should generate feature_spec.json
-        with open(task_path, 'r') as f:
+        with open(task_path, "r") as f:
             content = f.read()
-            assert 'feature_spec.json' in content
+            assert "feature_spec.json" in content
 
     def test_dogfooding_artifacts_exist(self):
         """Test: Dogfooding artifacts exist (from VIBE_ALIGNER self-application)"""
@@ -266,14 +272,14 @@ class TestVibeAlignerE2E:
             "feature_spec_v1.0_FINAL.json",
             # Raw artifacts from Tasks 03-06
             "phase_03_feasibility.json",
-            "phase_04_gap_detection.json"
+            "phase_04_gap_detection.json",
         ]
 
         for artifact in expected_artifacts:
             artifact_path = artifacts_dir / artifact
             if artifact_path.exists():
                 # Validate JSON
-                with open(artifact_path, 'r') as f:
+                with open(artifact_path, "r") as f:
                     data = json.load(f)
                     assert data is not None
 
@@ -284,19 +290,19 @@ class TestVibeAlignerE2E:
         if not feasibility_path.exists():
             pytest.skip("phase_03_feasibility.json not found")
 
-        with open(feasibility_path, 'r') as f:
+        with open(feasibility_path, "r") as f:
             feasibility = json.load(f)
 
-        assert 'feature_feasibility_checks' in feasibility
-        checks = feasibility['feature_feasibility_checks']
+        assert "feature_feasibility_checks" in feasibility
+        checks = feasibility["feature_feasibility_checks"]
 
         # Each feature should have FAE validation
         for check in checks:
-            assert 'feature_id' in check
-            assert 'fae_rules_checked' in check
-            assert 'status' in check
+            assert "feature_id" in check
+            assert "fae_rules_checked" in check
+            assert "status" in check
             # Status can be FEASIBLE, INFEASIBLE_FOR_V1, or IN_PROGRESS
-            assert check['status'] in ['FEASIBLE', 'INFEASIBLE_FOR_V1', 'IN_PROGRESS']
+            assert check["status"] in ["FEASIBLE", "INFEASIBLE_FOR_V1", "IN_PROGRESS"]
 
     def test_vibe_aligner_detects_gaps_with_fdg(self):
         """Test: Task 04 detects gaps using FDG dependencies"""
@@ -305,16 +311,16 @@ class TestVibeAlignerE2E:
         if not gap_detection_path.exists():
             pytest.skip("phase_04_gap_detection.json not found")
 
-        with open(gap_detection_path, 'r') as f:
+        with open(gap_detection_path, "r") as f:
             gap_detection = json.load(f)
 
-        assert 'features_with_dependencies' in gap_detection
-        features = gap_detection['features_with_dependencies']
+        assert "features_with_dependencies" in gap_detection
+        features = gap_detection["features_with_dependencies"]
 
         # Each feature should have dependencies analyzed
         for feature in features:
-            assert 'feature_id' in feature
-            assert 'dependencies' in feature
+            assert "feature_id" in feature
+            assert "dependencies" in feature
 
     def test_vibe_aligner_negotiates_scope_with_apce(self):
         """Test: Task 05 negotiates scope using APCE complexity scoring"""
@@ -323,20 +329,20 @@ class TestVibeAlignerE2E:
         if not final_spec_path.exists():
             pytest.skip("feature_spec_v1.0_FINAL.json not found")
 
-        with open(final_spec_path, 'r') as f:
+        with open(final_spec_path, "r") as f:
             spec = json.load(f)
 
-        assert 'scope_negotiation' in spec
-        negotiation = spec['scope_negotiation']
+        assert "scope_negotiation" in spec
+        negotiation = spec["scope_negotiation"]
 
         # Scope negotiation should have complexity breakdown
-        assert 'total_complexity' in negotiation
-        assert 'complexity_breakdown' in negotiation
-        assert 'timeline_estimate' in negotiation
+        assert "total_complexity" in negotiation
+        assert "complexity_breakdown" in negotiation
+        assert "timeline_estimate" in negotiation
 
         # Each feature should have complexity score
-        for feature in spec['features']:
-            assert 'complexity_score' in feature
+        for feature in spec["features"]:
+            assert "complexity_score" in feature
 
 
 def test_vibe_aligner_basic():

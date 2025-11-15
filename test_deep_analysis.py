@@ -17,14 +17,14 @@ from pathlib import Path
 
 # Import utilities
 import importlib.util
+
 spec = importlib.util.spec_from_file_location(
-    "prompt_runtime",
-    Path(__file__).parent / "agency_os/00_system/runtime/prompt_runtime.py"
+    "prompt_runtime", Path(__file__).parent / "agency_os/00_system/runtime/prompt_runtime.py"
 )
 prompt_runtime = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(prompt_runtime)
 
-sys.path.insert(0, str(Path(__file__).parent / 'scripts'))
+sys.path.insert(0, str(Path(__file__).parent / "scripts"))
 from workspace_utils import load_workspace_manifest, list_active_workspaces
 
 
@@ -38,12 +38,12 @@ def test_manifest_schema_consistency():
     issues = []
 
     # Load root manifest for comparison
-    root_manifest_path = Path('project_manifest.json')
+    root_manifest_path = Path("project_manifest.json")
     with open(root_manifest_path) as f:
         root_manifest = json.load(f)
 
-    root_has_api_version = 'apiVersion' in root_manifest
-    root_has_kind = 'kind' in root_manifest
+    root_has_api_version = "apiVersion" in root_manifest
+    root_has_kind = "kind" in root_manifest
 
     print("Root manifest:")
     print(f"  apiVersion: {'✅' if root_has_api_version else '❌'}")
@@ -52,12 +52,12 @@ def test_manifest_schema_consistency():
 
     for ws in workspaces:
         try:
-            manifest = load_workspace_manifest(ws['name'])
+            manifest = load_workspace_manifest(ws["name"])
 
-            has_api_version = 'apiVersion' in manifest
-            has_kind = 'kind' in manifest
-            has_status = 'status' in manifest
-            has_artifacts = 'artifacts' in manifest
+            has_api_version = "apiVersion" in manifest
+            has_kind = "kind" in manifest
+            has_status = "status" in manifest
+            has_artifacts = "artifacts" in manifest
 
             print(f"Workspace: {ws['name']}")
             print(f"  apiVersion: {'✅' if has_api_version else '❌'}")
@@ -94,22 +94,22 @@ def test_agent_task_coverage():
     print("=" * 60 + "\n")
 
     agents = [
-        'VIBE_ALIGNER',
-        'GENESIS_BLUEPRINT',
-        'CODE_GENERATOR',
-        'QA_VALIDATOR',
-        'DEPLOY_MANAGER',
-        'BUG_TRIAGE'
+        "VIBE_ALIGNER",
+        "GENESIS_BLUEPRINT",
+        "CODE_GENERATOR",
+        "QA_VALIDATOR",
+        "DEPLOY_MANAGER",
+        "BUG_TRIAGE",
     ]
 
     issues = []
 
     for agent_id in agents:
-        agent_base = Path('agency_os')
+        agent_base = Path("agency_os")
 
         # Find agent directory
         agent_path = None
-        for framework_dir in agent_base.glob('*/agents'):
+        for framework_dir in agent_base.glob("*/agents"):
             potential_path = framework_dir / agent_id
             if potential_path.exists():
                 agent_path = potential_path
@@ -122,11 +122,7 @@ def test_agent_task_coverage():
         print(f"Agent: {agent_id}")
 
         # Check for required files
-        required_files = [
-            '_prompt_core.md',
-            '_composition.yaml',
-            '_knowledge_deps.yaml'
-        ]
+        required_files = ["_prompt_core.md", "_composition.yaml", "_knowledge_deps.yaml"]
 
         for req_file in required_files:
             file_path = agent_path / req_file
@@ -137,10 +133,10 @@ def test_agent_task_coverage():
                 issues.append(f"{agent_id}: Missing {req_file}")
 
         # Check tasks directory
-        tasks_dir = agent_path / 'tasks'
+        tasks_dir = agent_path / "tasks"
         if tasks_dir.exists():
-            task_files = list(tasks_dir.glob('task_*.md'))
-            meta_files = list(tasks_dir.glob('task_*.meta.yaml'))
+            task_files = list(tasks_dir.glob("task_*.md"))
+            meta_files = list(tasks_dir.glob("task_*.meta.yaml"))
 
             print(f"  tasks: {len(task_files)} task files, {len(meta_files)} metadata files")
 
@@ -199,7 +195,8 @@ def test_error_handling():
     # Test 1: Invalid workspace name
     try:
         from workspace_utils import load_workspace_manifest
-        load_workspace_manifest('nonexistent_workspace')
+
+        load_workspace_manifest("nonexistent_workspace")
         print("  ❌ load_workspace_manifest: No error for invalid workspace")
         return False
     except FileNotFoundError:
@@ -208,7 +205,8 @@ def test_error_handling():
     # Test 2: Invalid workspace in get_workspace_by_name
     try:
         from workspace_utils import get_workspace_by_name
-        result = get_workspace_by_name('nonexistent')
+
+        result = get_workspace_by_name("nonexistent")
         if result is None:
             print("  ✅ get_workspace_by_name: Returns None for invalid workspace")
         else:
@@ -230,7 +228,7 @@ def test_end_to_end_workflow():
     print("=" * 60 + "\n")
 
     # Set workspace
-    os.environ['ACTIVE_WORKSPACE'] = 'prabhupad_os'
+    os.environ["ACTIVE_WORKSPACE"] = "prabhupad_os"
     print(f"✓ Set workspace: {os.getenv('ACTIVE_WORKSPACE')}")
 
     # Create runtime
@@ -238,25 +236,20 @@ def test_end_to_end_workflow():
     print("✓ Created runtime")
 
     # Execute task
-    context = {
-        'project_id': 'prabhupad_os_001',
-        'phase': 'PLANNING'
-    }
+    context = {"project_id": "prabhupad_os_001", "phase": "PLANNING"}
 
     try:
         prompt = runtime.execute_task(
-            agent_id='VIBE_ALIGNER',
-            task_id='01_education_calibration',
-            context=context
+            agent_id="VIBE_ALIGNER", task_id="01_education_calibration", context=context
         )
 
         print(f"✓ Generated prompt ({len(prompt):,} chars)")
 
         # Verify context was modified with resolved paths
         required_keys = [
-            '_resolved_workspace',
-            '_resolved_artifact_base_path',
-            '_resolved_planning_path'
+            "_resolved_workspace",
+            "_resolved_artifact_base_path",
+            "_resolved_planning_path",
         ]
 
         all_present = all(key in context for key in required_keys)
@@ -273,6 +266,7 @@ def test_end_to_end_workflow():
     except Exception as e:
         print(f"❌ Workflow failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -301,6 +295,7 @@ def main():
             print(f"\n❌ TEST CRASHED: {test_name}")
             print(f"   Error: {e}")
             import traceback
+
             traceback.print_exc()
             results.append((test_name, False))
 
@@ -327,6 +322,6 @@ def main():
         return False
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     success = main()
     sys.exit(0 if success else 1)

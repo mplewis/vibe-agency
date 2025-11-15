@@ -22,39 +22,42 @@ from handlers.planning_handler import PlanningHandler
 
 class Colors:
     """ANSI color codes"""
-    GREEN = '\033[92m'
-    RED = '\033[91m'
-    BLUE = '\033[94m'
-    RESET = '\033[0m'
-    BOLD = '\033[1m'
+
+    GREEN = "\033[92m"
+    RED = "\033[91m"
+    BLUE = "\033[94m"
+    RESET = "\033[0m"
+    BOLD = "\033[1m"
 
 
 def test_workflow_defines_all_substates():
     """Test that workflow YAML defines all 4 substates"""
     print(f"\n{Colors.BLUE}Test 1: Workflow YAML defines all substates{Colors.RESET}")
 
-    workflow_path = PROJECT_ROOT / "agency_os/00_system/state_machine/ORCHESTRATION_workflow_design.yaml"
+    workflow_path = (
+        PROJECT_ROOT / "agency_os/00_system/state_machine/ORCHESTRATION_workflow_design.yaml"
+    )
     with open(workflow_path) as f:
         workflow = yaml.safe_load(f)
 
     # Find PLANNING state
     planning_state = None
-    for state in workflow['states']:
-        if state['name'] == 'PLANNING':
+    for state in workflow["states"]:
+        if state["name"] == "PLANNING":
             planning_state = state
             break
 
     assert planning_state is not None, "PLANNING state not found"
-    substates = planning_state.get('sub_states', [])
+    substates = planning_state.get("sub_states", [])
 
     print(f"  Found {len(substates)} substates:")
     for s in substates:
-        optional = " (optional)" if s.get('optional') else ""
+        optional = " (optional)" if s.get("optional") else ""
         print(f"    - {s['name']}{optional}")
 
     # Expected substates
-    expected = ['RESEARCH', 'BUSINESS_VALIDATION', 'FEATURE_SPECIFICATION', 'ARCHITECTURE_DESIGN']
-    found = [s['name'] for s in substates]
+    expected = ["RESEARCH", "BUSINESS_VALIDATION", "FEATURE_SPECIFICATION", "ARCHITECTURE_DESIGN"]
+    found = [s["name"] for s in substates]
 
     print(f"\n  {Colors.BOLD}Verification:{Colors.RESET}")
     all_present = True
@@ -72,36 +75,43 @@ def test_transitions_complete():
     """Test that transitions connect all substates"""
     print(f"\n{Colors.BLUE}Test 2: Transitions form complete chain{Colors.RESET}")
 
-    workflow_path = PROJECT_ROOT / "agency_os/00_system/state_machine/ORCHESTRATION_workflow_design.yaml"
+    workflow_path = (
+        PROJECT_ROOT / "agency_os/00_system/state_machine/ORCHESTRATION_workflow_design.yaml"
+    )
     with open(workflow_path) as f:
         workflow = yaml.safe_load(f)
 
-    transitions = workflow.get('transitions', [])
+    transitions = workflow.get("transitions", [])
 
     # Critical transitions for planning workflow
     critical = {
-        'T0_BusinessToFeatures': ('PLANNING.BUSINESS_VALIDATION', 'PLANNING.FEATURE_SPECIFICATION'),
-        'T0c_FeaturesToArchitecture': ('PLANNING.FEATURE_SPECIFICATION', 'PLANNING.ARCHITECTURE_DESIGN'),
-        'T1_StartCoding': ('PLANNING.ARCHITECTURE_DESIGN', 'CODING'),
+        "T0_BusinessToFeatures": ("PLANNING.BUSINESS_VALIDATION", "PLANNING.FEATURE_SPECIFICATION"),
+        "T0c_FeaturesToArchitecture": (
+            "PLANNING.FEATURE_SPECIFICATION",
+            "PLANNING.ARCHITECTURE_DESIGN",
+        ),
+        "T1_StartCoding": ("PLANNING.ARCHITECTURE_DESIGN", "CODING"),
     }
 
     print("  Critical transitions:")
     all_correct = True
 
     for name, (expected_from, expected_to) in critical.items():
-        trans = next((t for t in transitions if t['name'] == name), None)
+        trans = next((t for t in transitions if t["name"] == name), None)
 
         if not trans:
             print(f"    {Colors.RED}❌ {name} missing{Colors.RESET}")
             all_correct = False
             continue
 
-        from_ok = trans['from_state'] == expected_from
-        to_ok = trans['to_state'] == expected_to
+        from_ok = trans["from_state"] == expected_from
+        to_ok = trans["to_state"] == expected_to
 
         if from_ok and to_ok:
-            from_short = expected_from.replace('PLANNING.', '')
-            to_short = expected_to.replace('PLANNING.', '') if 'PLANNING' in expected_to else expected_to
+            from_short = expected_from.replace("PLANNING.", "")
+            to_short = (
+                expected_to.replace("PLANNING.", "") if "PLANNING" in expected_to else expected_to
+            )
             print(f"    {Colors.GREEN}✅ {name}: {from_short} → {to_short}{Colors.RESET}")
         else:
             print(f"    {Colors.RED}❌ {name} incorrect{Colors.RESET}")
@@ -118,10 +128,10 @@ def test_handler_has_all_methods():
 
     # Expected methods
     expected_methods = [
-        '_execute_research_state',
-        '_execute_business_validation_state',
-        '_execute_feature_specification_state',
-        '_execute_architecture_design_state',
+        "_execute_research_state",
+        "_execute_business_validation_state",
+        "_execute_feature_specification_state",
+        "_execute_architecture_design_state",
     ]
 
     print("  Checking PlanningHandler methods:")
@@ -131,7 +141,7 @@ def test_handler_has_all_methods():
         if hasattr(PlanningHandler, method_name):
             method = getattr(PlanningHandler, method_name)
             if callable(method):
-                short_name = method_name.replace('_execute_', '').replace('_state', '')
+                short_name = method_name.replace("_execute_", "").replace("_state", "")
                 print(f"    {Colors.GREEN}✅ {short_name} implemented{Colors.RESET}")
             else:
                 print(f"    {Colors.RED}❌ {method_name} not callable{Colors.RESET}")
@@ -154,10 +164,10 @@ def test_handler_execute_logic():
 
     # Look for execute() method and check for all substate routing
     expected_routes = [
-        ('RESEARCH', '_execute_research_state'),
-        ('BUSINESS_VALIDATION', '_execute_business_validation_state'),
-        ('FEATURE_SPECIFICATION', '_execute_feature_specification_state'),
-        ('ARCHITECTURE_DESIGN', '_execute_architecture_design_state'),
+        ("RESEARCH", "_execute_research_state"),
+        ("BUSINESS_VALIDATION", "_execute_business_validation_state"),
+        ("FEATURE_SPECIFICATION", "_execute_feature_specification_state"),
+        ("ARCHITECTURE_DESIGN", "_execute_architecture_design_state"),
     ]
 
     print("  Checking execute() routing logic:")
@@ -169,7 +179,7 @@ def test_handler_execute_logic():
         has_call = method_name in source
 
         if has_check and has_call:
-            short = substate_name.replace('_', ' ').title()
+            short = substate_name.replace("_", " ").title()
             print(f"    {Colors.GREEN}✅ {short} routed to {method_name}{Colors.RESET}")
         else:
             print(f"    {Colors.RED}❌ {substate_name} routing missing{Colors.RESET}")
@@ -182,26 +192,28 @@ def test_expected_artifacts():
     """Document expected artifacts from full workflow"""
     print(f"\n{Colors.BLUE}Test 5: Expected artifacts documented{Colors.RESET}")
 
-    workflow_path = PROJECT_ROOT / "agency_os/00_system/state_machine/ORCHESTRATION_workflow_design.yaml"
+    workflow_path = (
+        PROJECT_ROOT / "agency_os/00_system/state_machine/ORCHESTRATION_workflow_design.yaml"
+    )
     with open(workflow_path) as f:
         workflow = yaml.safe_load(f)
 
     planning_state = None
-    for state in workflow['states']:
-        if state['name'] == 'PLANNING':
+    for state in workflow["states"]:
+        if state["name"] == "PLANNING":
             planning_state = state
             break
 
-    substates = planning_state.get('sub_states', [])
+    substates = planning_state.get("sub_states", [])
 
     print("  Expected artifacts from PLANNING workflow:")
     artifact_count = 0
 
     for substate in substates:
-        if substate.get('optional'):
+        if substate.get("optional"):
             continue  # Skip optional substates for MVP
 
-        output = substate.get('output_artifact')
+        output = substate.get("output_artifact")
         if output:
             if isinstance(output, list):
                 for artifact in output:
@@ -223,10 +235,10 @@ def test_expected_artifacts():
 
 def main():
     """Run all tests"""
-    print(f"\n{Colors.BOLD}{'='*80}")
+    print(f"\n{Colors.BOLD}{'=' * 80}")
     print("Full Planning Workflow Architecture Test")
     print("Purpose: Verify workflow will execute all 4 substates and generate all artifacts")
-    print(f"{'='*80}{Colors.RESET}")
+    print(f"{'=' * 80}{Colors.RESET}")
 
     tests = [
         ("Workflow defines all substates", test_workflow_defines_all_substates),
@@ -245,32 +257,43 @@ def main():
         except Exception as e:
             print(f"{Colors.RED}❌ Test '{name}' crashed: {e}{Colors.RESET}")
             import traceback
+
             traceback.print_exc()
             results.append((name, False))
 
     # Summary
-    print(f"\n{Colors.BOLD}{'='*80}")
+    print(f"\n{Colors.BOLD}{'=' * 80}")
     print("Test Summary")
-    print(f"{'='*80}{Colors.RESET}\n")
+    print(f"{'=' * 80}{Colors.RESET}\n")
 
     passed = sum(1 for _, result in results if result)
     total = len(results)
 
     for name, result in results:
-        status = f"{Colors.GREEN}✅ PASSED{Colors.RESET}" if result else f"{Colors.RED}❌ FAILED{Colors.RESET}"
+        status = (
+            f"{Colors.GREEN}✅ PASSED{Colors.RESET}"
+            if result
+            else f"{Colors.RED}❌ FAILED{Colors.RESET}"
+        )
         print(f"  {name}: {status}")
 
     print(f"\n{Colors.BOLD}Total: {passed}/{total} tests passed{Colors.RESET}\n")
 
     if passed == total:
-        print(f"{Colors.GREEN}{Colors.BOLD}🎉 Architecture verified! Workflow will execute all 4 substates:{Colors.RESET}")
+        print(
+            f"{Colors.GREEN}{Colors.BOLD}🎉 Architecture verified! Workflow will execute all 4 substates:{Colors.RESET}"
+        )
         print("  1. BUSINESS_VALIDATION → lean_canvas_summary.json")
         print("  2. FEATURE_SPECIFICATION → feature_spec.json")
         print("  3. ARCHITECTURE_DESIGN → architecture.json + code_gen_spec.json")
-        print(f"{Colors.GREEN}{Colors.BOLD}  Total: 4 artifacts will be generated ✅{Colors.RESET}\n")
+        print(
+            f"{Colors.GREEN}{Colors.BOLD}  Total: 4 artifacts will be generated ✅{Colors.RESET}\n"
+        )
         return 0
     else:
-        print(f"{Colors.RED}{Colors.BOLD}❌ Architecture incomplete. Fix failures above.{Colors.RESET}\n")
+        print(
+            f"{Colors.RED}{Colors.BOLD}❌ Architecture incomplete. Fix failures above.{Colors.RESET}\n"
+        )
         return 1
 
 

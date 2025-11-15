@@ -25,12 +25,13 @@ class ToolExecutor:
             return
 
         # Always available
-        self.tools['web_fetch'] = WebFetchClient()
+        self.tools["web_fetch"] = WebFetchClient()
 
         # Only if API keys are set
         import os
-        if os.getenv('GOOGLE_SEARCH_API_KEY') and os.getenv('GOOGLE_SEARCH_ENGINE_ID'):
-            self.tools['google_search'] = GoogleSearchClient()
+
+        if os.getenv("GOOGLE_SEARCH_API_KEY") and os.getenv("GOOGLE_SEARCH_ENGINE_ID"):
+            self.tools["google_search"] = GoogleSearchClient()
 
         self._initialized = True
 
@@ -48,17 +49,17 @@ class ToolExecutor:
         self._ensure_tools_initialized()
 
         if tool_name not in self.tools:
-            return {'error': f"Tool not available: {tool_name} (check API keys)"}
+            return {"error": f"Tool not available: {tool_name} (check API keys)"}
 
         try:
-            if tool_name == 'google_search':
-                query = parameters.get('query')
-                num_results = parameters.get('num_results', 10)
-                return {'results': self.tools['google_search'].search(query, num_results)}
+            if tool_name == "google_search":
+                query = parameters.get("query")
+                num_results = parameters.get("num_results", 10)
+                return {"results": self.tools["google_search"].search(query, num_results)}
 
-            elif tool_name == 'web_fetch':
-                url = parameters.get('url')
-                return self.tools['web_fetch'].fetch(url)
+            elif tool_name == "web_fetch":
+                url = parameters.get("url")
+                return self.tools["web_fetch"].fetch(url)
 
         except Exception as e:
-            return {'error': f"Tool execution failed: {e}"}
+            return {"error": f"Tool execution failed: {e}"}

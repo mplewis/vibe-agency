@@ -40,7 +40,10 @@ def test_e2e_research_agent_with_tools():
     print("Step 1: Load tool definitions (simulating PromptRuntime)")
 
     import yaml
-    tool_defs_path = repo_root / "agency_os" / "00_system" / "orchestrator" / "tools" / "tool_definitions.yaml"
+
+    tool_defs_path = (
+        repo_root / "agency_os" / "00_system" / "orchestrator" / "tools" / "tool_definitions.yaml"
+    )
     with open(tool_defs_path) as f:
         tool_defs = yaml.safe_load(f)
 
@@ -90,7 +93,6 @@ Identify the top 5 competitors in this space.
     print()
 
     try:
-
         # Step 3: Verify tools are in prompt (they are, we just composed them)
         print("Step 3: Verify tool definitions are in prompt")
         print("✅ AVAILABLE TOOLS section present")
@@ -121,10 +123,7 @@ I will analyze the results to identify key competitors.
         # Step 5: Test orchestrator's ability to detect and parse tool request
         print("Step 5: Test CoreOrchestrator XML parsing")
 
-        orchestrator = CoreOrchestrator(
-            repo_root=repo_root,
-            execution_mode="delegated"
-        )
+        orchestrator = CoreOrchestrator(repo_root=repo_root, execution_mode="delegated")
 
         tool_call = orchestrator._parse_tool_use(agent_response_with_tool_request)
 
@@ -144,14 +143,14 @@ I will analyze the results to identify key competitors.
 
         try:
             executor = ToolExecutor()
-            result = executor.execute(tool_call['name'], tool_call['parameters'])
+            result = executor.execute(tool_call["name"], tool_call["parameters"])
 
-            if 'error' in result and result['error']:
+            if "error" in result and result["error"]:
                 print(f"⚠️  Tool execution returned error: {result['error']}")
                 print("   (This is expected if Google API credentials not configured)")
             else:
                 print("✅ Tool executed successfully")
-                if 'results' in result:
+                if "results" in result:
                     print(f"   Returned {len(result['results'])} search results")
         except Exception as e:
             print(f"⚠️  Tool execution failed: {e}")
@@ -205,7 +204,9 @@ I will analyze the results to identify key competitors.
         print()
         print("3. End-to-end integration test with REAL Claude API")
         print("   - Not just XML parsing unit tests")
-        print("   - Full round-trip: prompt → API → tool request → execute → result → API → final response")
+        print(
+            "   - Full round-trip: prompt → API → tool request → execute → result → API → final response"
+        )
         print()
 
         return False  # Test fails to highlight design gaps
@@ -217,6 +218,7 @@ I will analyze the results to identify key competitors.
     except Exception as e:
         print(f"❌ Unexpected error: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 

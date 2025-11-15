@@ -30,13 +30,8 @@ sys.path.insert(0, str(_REPO_ROOT))
 sys.path.insert(0, str(_RUNTIME_PATH))
 
 # Import directly from the runtime directory (since folder starts with number)
-from prompt_registry import (
-    PromptRegistry
-)
-from prompt_runtime import (
-    PromptRuntime,
-    AgentNotFoundError
-)
+from prompt_registry import PromptRegistry
+from prompt_runtime import PromptRuntime, AgentNotFoundError
 
 
 class TestGovernanceInjection:
@@ -48,7 +43,7 @@ class TestGovernanceInjection:
             agent="VIBE_ALIGNER",
             task="02_feature_extraction",
             workspace="ROOT",
-            inject_governance=True
+            inject_governance=True,
         )
 
         # Check for Guardian Directives header
@@ -71,7 +66,7 @@ class TestGovernanceInjection:
             agent="VIBE_ALIGNER",
             task="02_feature_extraction",
             workspace="ROOT",
-            inject_governance=False
+            inject_governance=False,
         )
 
         # Guardian Directives section should not be present
@@ -87,7 +82,7 @@ class TestContextEnrichment:
             agent="VIBE_ALIGNER",
             task="02_feature_extraction",
             workspace="ROOT",
-            inject_governance=False  # Disable to isolate context section
+            inject_governance=False,  # Disable to isolate context section
         )
 
         # Check for context header
@@ -99,17 +94,14 @@ class TestContextEnrichment:
 
     def test_context_enrichment_with_additional_context(self):
         """Additional context should be included"""
-        additional_context = {
-            "test_key": "test_value",
-            "project_id": "test-123"
-        }
+        additional_context = {"test_key": "test_value", "project_id": "test-123"}
 
         prompt = PromptRegistry.compose(
             agent="VIBE_ALIGNER",
             task="02_feature_extraction",
             workspace="ROOT",
             inject_governance=False,
-            context=additional_context
+            context=additional_context,
         )
 
         # Additional context should be present
@@ -126,7 +118,7 @@ class TestToolInjection:
             task="02_feature_extraction",
             workspace="ROOT",
             inject_governance=False,
-            inject_tools=["google_search"]
+            inject_tools=["google_search"],
         )
 
         # Check for tools section
@@ -140,7 +132,7 @@ class TestToolInjection:
             task="02_feature_extraction",
             workspace="ROOT",
             inject_governance=False,
-            inject_tools=None
+            inject_tools=None,
         )
 
         # Tools section should not be present
@@ -160,7 +152,7 @@ class TestSOPInjection:
             task="02_feature_extraction",
             workspace="ROOT",
             inject_governance=False,
-            inject_sops=["SOP_001"]
+            inject_sops=["SOP_001"],
         )
 
         # Check for SOPs section
@@ -174,7 +166,7 @@ class TestSOPInjection:
             task="02_feature_extraction",
             workspace="ROOT",
             inject_governance=False,
-            inject_sops=None
+            inject_sops=None,
         )
 
         # SOPs section should not be present
@@ -192,7 +184,7 @@ class TestCompositionOrder:
             workspace="ROOT",
             inject_governance=True,
             inject_tools=["google_search"],
-            inject_sops=["SOP_001"]
+            inject_sops=["SOP_001"],
         )
 
         # Find positions of each section
@@ -225,9 +217,7 @@ class TestBackwardCompatibility:
 
         # This should work without any Registry involvement
         prompt = runtime.execute_task(
-            agent_id="VIBE_ALIGNER",
-            task_id="02_feature_extraction",
-            context={"test": "value"}
+            agent_id="VIBE_ALIGNER", task_id="02_feature_extraction", context={"test": "value"}
         )
 
         # Should have core prompt components
@@ -248,7 +238,7 @@ class TestMissingWorkspace:
             agent="VIBE_ALIGNER",
             task="02_feature_extraction",
             workspace="NONEXISTENT_WORKSPACE_12345",
-            inject_governance=False
+            inject_governance=False,
         )
 
         # Should still produce a prompt
@@ -265,9 +255,7 @@ class TestMissingAgent:
         """Should raise AgentNotFoundError for invalid agent"""
         with pytest.raises(AgentNotFoundError):
             PromptRegistry.compose(
-                agent="NONEXISTENT_AGENT_XYZ",
-                task="some_task",
-                workspace="ROOT"
+                agent="NONEXISTENT_AGENT_XYZ", task="some_task", workspace="ROOT"
             )
 
 
@@ -277,10 +265,7 @@ class TestOptionalParams:
     def test_minimal_call(self):
         """Should work with only required params"""
         # Only agent and task required
-        prompt = PromptRegistry.compose(
-            agent="VIBE_ALIGNER",
-            task="02_feature_extraction"
-        )
+        prompt = PromptRegistry.compose(agent="VIBE_ALIGNER", task="02_feature_extraction")
 
         # Should produce valid prompt
         assert len(prompt) > 0
@@ -295,7 +280,7 @@ class TestOptionalParams:
             inject_governance=False,
             inject_tools=None,
             inject_sops=None,
-            context=None
+            context=None,
         )
 
         # Should produce valid prompt (just context + agent)
@@ -309,7 +294,7 @@ class TestOptionalParams:
             agent="VIBE_ALIGNER",  # Use VIBE_ALIGNER but without task
             task=None,
             workspace="ROOT",
-            inject_governance=False
+            inject_governance=False,
         )
 
         # Should create a minimal meta-agent prompt
@@ -322,6 +307,7 @@ class TestOptionalParams:
 # Integration Test Helpers
 # =================================================================
 
+
 def test_full_composition_smoke_test():
     """Smoke test: Full composition with all features enabled"""
     prompt = PromptRegistry.compose(
@@ -331,7 +317,7 @@ def test_full_composition_smoke_test():
         inject_governance=True,
         inject_tools=["google_search"],
         inject_sops=["SOP_001"],
-        context={"project_id": "test-123"}
+        context={"project_id": "test-123"},
     )
 
     # Should be significantly larger than base prompt

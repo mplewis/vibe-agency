@@ -26,12 +26,13 @@ sys.path.insert(0, str(_ORCHESTRATOR_PATH))
 from prompt_registry import PromptRegistry
 from core_orchestrator import CoreOrchestrator, PROMPT_REGISTRY_AVAILABLE
 
+
 def test_prompt_registry_integration():
     """Test that orchestrator uses PromptRegistry with governance"""
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("INTEGRATION TEST: Orchestrator → PromptRegistry")
-    print("="*60 + "\n")
+    print("=" * 60 + "\n")
 
     # Test 1: Verify PromptRegistry is available
     print("Test 1: PromptRegistry availability...")
@@ -43,7 +44,7 @@ def test_prompt_registry_integration():
     try:
         orchestrator = CoreOrchestrator(
             repo_root=_REPO_ROOT,
-            execution_mode="autonomous"  # Use autonomous for testing
+            execution_mode="autonomous",  # Use autonomous for testing
         )
         print("✓ Orchestrator initialized")
         print(f"  - Using PromptRegistry: {orchestrator.use_registry}\n")
@@ -60,7 +61,7 @@ def test_prompt_registry_integration():
             agent="VIBE_ALIGNER",
             task="02_feature_extraction",
             workspace="ROOT",
-            inject_governance=True
+            inject_governance=True,
         )
 
         print(f"✓ Prompt composed: {len(prompt):,} chars")
@@ -71,9 +72,15 @@ def test_prompt_registry_integration():
 
         # Verify all 9 directives
         directives = [
-            "Manifest Primacy", "Atomicity", "Validation Gates",
-            "Knowledge Grounding", "Traceability", "Graceful Degradation",
-            "Budget Awareness", "HITL Respect", "Output Contract"
+            "Manifest Primacy",
+            "Atomicity",
+            "Validation Gates",
+            "Knowledge Grounding",
+            "Traceability",
+            "Graceful Degradation",
+            "Budget Awareness",
+            "HITL Respect",
+            "Output Contract",
         ]
         all_present = all(d in prompt for d in directives)
         assert all_present, "All 9 Guardian Directives should be present"
@@ -110,16 +117,13 @@ def test_prompt_registry_integration():
 
         runtime = PromptRuntime(base_path=_REPO_ROOT)
         old_prompt = runtime.execute_task(
-            agent_id="VIBE_ALIGNER",
-            task_id="02_feature_extraction",
-            context={"test": "value"}
+            agent_id="VIBE_ALIGNER", task_id="02_feature_extraction", context={"test": "value"}
         )
 
         print(f"✓ PromptRuntime still works: {len(old_prompt):,} chars")
 
         # Verify it DOES NOT have Guardian Directives (old method)
-        assert "GUARDIAN DIRECTIVES" not in old_prompt, \
-            "PromptRuntime should NOT inject governance"
+        assert "GUARDIAN DIRECTIVES" not in old_prompt, "PromptRuntime should NOT inject governance"
         print("✓ PromptRuntime correctly excludes governance\n")
 
     except Exception as e:
@@ -137,10 +141,7 @@ def test_prompt_registry_integration():
     for agent, task in test_agents:
         try:
             prompt = PromptRegistry.compose(
-                agent=agent,
-                task=task,
-                workspace="ROOT",
-                inject_governance=True
+                agent=agent, task=task, workspace="ROOT", inject_governance=True
             )
             has_directives = "GUARDIAN DIRECTIVES" in prompt
             print(f"  ✓ {agent}: {len(prompt):,} chars, governance={has_directives}")
@@ -161,11 +162,12 @@ def test_prompt_registry_integration():
             agent="VIBE_ALIGNER",
             task="02_feature_extraction",
             workspace="ROOT",
-            inject_governance=False
+            inject_governance=False,
         )
 
-        assert "GUARDIAN DIRECTIVES" not in prompt_no_gov, \
+        assert "GUARDIAN DIRECTIVES" not in prompt_no_gov, (
             "Should not have directives when inject_governance=False"
+        )
         print("✓ inject_governance=False works")
 
         # With tools (if agent supports them)
@@ -174,7 +176,7 @@ def test_prompt_registry_integration():
             task="02_feature_extraction",
             workspace="ROOT",
             inject_governance=True,
-            inject_tools=["google_search"]
+            inject_tools=["google_search"],
         )
 
         print(f"✓ inject_tools works: {len(prompt_with_tools):,} chars")
@@ -185,11 +187,12 @@ def test_prompt_registry_integration():
             task="02_feature_extraction",
             workspace="ROOT",
             inject_governance=True,
-            inject_sops=["SOP_001"]
+            inject_sops=["SOP_001"],
         )
 
-        assert "STANDARD OPERATING PROCEDURES" in prompt_with_sops, \
+        assert "STANDARD OPERATING PROCEDURES" in prompt_with_sops, (
             "SOPs should be present when inject_sops specified"
+        )
         print("✓ inject_sops works\n")
 
     except Exception as e:
@@ -197,10 +200,11 @@ def test_prompt_registry_integration():
         raise
 
     # Summary
-    print("="*60)
+    print("=" * 60)
     print("✅ ALL INTEGRATION TESTS PASSED!")
-    print("="*60)
-    print("""
+    print("=" * 60)
+    print(
+        """
 Summary:
   ✓ PromptRegistry available and loaded by orchestrator
   ✓ Guardian Directives auto-injected (9 directives)
@@ -210,7 +214,8 @@ Summary:
   ✓ Optional parameters work correctly
 
 Phase 2 Integration: COMPLETE ✅
-    """)
+    """
+    )
 
     return True
 
@@ -222,5 +227,6 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"\n❌ Integration test failed: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)

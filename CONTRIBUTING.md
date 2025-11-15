@@ -39,21 +39,32 @@ This project adheres to a simple code of conduct:
    cd vibe-agency
    ```
 
-2. **Install dependencies:**
+2. **Set up environment (one command):**
    ```bash
-   pip install -r requirements.txt
+   make install
    ```
 
-3. **Install pre-commit hooks:**
+   This will:
+   - Install UV (if not already installed)
+   - Install all dependencies from `uv.lock` (deterministic)
+   - Set up pre-commit hooks
+   - Validate knowledge bases
+
+   **Alternative (manual):**
    ```bash
-   pip install pre-commit
-   pre-commit install
+   ./setup.sh        # Runs same setup as make install
    ```
 
-4. **Verify installation:**
+3. **Verify installation:**
    ```bash
-   python3 validate_knowledge_index.py
-   python3 agency_os/00_system/runtime/prompt_runtime.py
+   make test         # Run test suite
+   make lint         # Check code quality
+   ```
+
+   Or run individual checks:
+   ```bash
+   uv run python validate_knowledge_index.py
+   uv run pytest tests/ -v
    ```
 
 ## Making Changes

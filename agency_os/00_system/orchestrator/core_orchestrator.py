@@ -43,10 +43,12 @@ logger = logging.getLogger(__name__)
 # PromptRegistry provides automatic governance injection
 try:
     from prompt_registry import PromptRegistry
+
     PROMPT_REGISTRY_AVAILABLE = True
 except ImportError:
     # Fallback to PromptRuntime if Registry not available
     from prompt_runtime import PromptRuntime
+
     PROMPT_REGISTRY_AVAILABLE = False
     logger.warning("PromptRegistry not available, falling back to PromptRuntime")
 
@@ -54,6 +56,7 @@ except ImportError:
 sys.path.insert(0, str(Path(__file__).resolve().parent / "tools"))
 try:
     from tool_executor import ToolExecutor
+
     TOOLS_AVAILABLE = True
 except ImportError:
     TOOLS_AVAILABLE = False
@@ -64,8 +67,10 @@ except ImportError:
 # DATA STRUCTURES
 # =============================================================================
 
+
 class ProjectPhase(Enum):
     """SDLC lifecycle phases"""
+
     PLANNING = "PLANNING"
     CODING = "CODING"
     TESTING = "TESTING"
@@ -77,6 +82,7 @@ class ProjectPhase(Enum):
 
 class PlanningSubState(Enum):
     """Planning phase sub-states"""
+
     RESEARCH = "RESEARCH"
     BUSINESS_VALIDATION = "BUSINESS_VALIDATION"
     FEATURE_SPECIFICATION = "FEATURE_SPECIFICATION"
@@ -85,6 +91,7 @@ class PlanningSubState(Enum):
 @dataclass
 class ProjectManifest:
     """Project manifest (Single Source of Truth)"""
+
     project_id: str
     name: str
     current_phase: ProjectPhase
@@ -97,6 +104,7 @@ class ProjectManifest:
 @dataclass
 class WorkflowState:
     """State definition from YAML"""
+
     name: str
     description: str
     responsible_agents: List[str]
@@ -111,34 +119,41 @@ class WorkflowState:
 # EXCEPTIONS
 # =============================================================================
 
+
 class OrchestratorError(Exception):
     """Base exception for orchestrator errors"""
+
     pass
 
 
 class QualityGateFailure(OrchestratorError):
     """Raised when a quality gate blocks progression"""
+
     pass
 
 
 class ArtifactNotFoundError(OrchestratorError):
     """Raised when required artifact is missing"""
+
     pass
 
 
 class StateTransitionError(OrchestratorError):
     """Raised when state transition is invalid"""
+
     pass
 
 
 class SchemaValidationError(OrchestratorError):
     """Raised when artifact fails schema validation"""
+
     pass
 
 
 # =============================================================================
 # SCHEMA VALIDATOR (GAD-002 Decision 3)
 # =============================================================================
+
 
 class SchemaValidator:
     """
@@ -156,10 +171,12 @@ class SchemaValidator:
             self.contracts = None
             return
 
-        with open(contracts_yaml_path, 'r') as f:
+        with open(contracts_yaml_path, "r") as f:
             self.contracts = yaml.safe_load(f)
 
-        logger.info(f"Schema validator initialized with {len(self.contracts.get('schemas', []))} schemas")
+        logger.info(
+            f"Schema validator initialized with {len(self.contracts.get('schemas', []))} schemas"
+        )
 
     def validate_artifact(self, artifact_name: str, data: Dict[str, Any]) -> None:
         """
@@ -177,11 +194,11 @@ class SchemaValidator:
             return
 
         # Find schema for this artifact
-        schema_name = artifact_name.replace('.json', '.schema.json')
+        schema_name = artifact_name.replace(".json", ".schema.json")
         schema_def = None
 
-        for schema in self.contracts.get('schemas', []):
-            if schema['name'] == schema_name:
+        for schema in self.contracts.get("schemas", []):
+            if schema["name"] == schema_name:
                 schema_def = schema
                 break
 
@@ -193,9 +210,9 @@ class SchemaValidator:
         # TODO: Full JSON Schema validation with jsonschema library
         errors = []
 
-        for field_def in schema_def.get('fields', []):
-            field_name = field_def['name']
-            required = field_def.get('required', False)
+        for field_def in schema_def.get("fields", []):
+            field_name = field_def["name"]
+            required = field_def.get("required", False)
 
             if required and field_name not in data:
                 errors.append(f"Missing required field: {field_name}")
@@ -211,6 +228,7 @@ class SchemaValidator:
 # =============================================================================
 # CORE ORCHESTRATOR
 # =============================================================================
+
 
 class CoreOrchestrator:
     """
@@ -232,7 +250,7 @@ class CoreOrchestrator:
         repo_root: Path,
         workflow_yaml: str = "agency_os/00_system/state_machine/ORCHESTRATION_workflow_design.yaml",
         contracts_yaml: str = "agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml",
-        execution_mode: str = "delegated"
+        execution_mode: str = "delegated",
     ):
         """
         Initialize core orchestrator.
@@ -285,7 +303,7 @@ class CoreOrchestrator:
         if not self.workflow_yaml_path.exists():
             raise FileNotFoundError(f"Workflow YAML not found: {self.workflow_yaml_path}")
 
-        with open(self.workflow_yaml_path, 'r') as f:
+        with open(self.workflow_yaml_path, "r") as f:
             return yaml.safe_load(f)
 
     def get_phase_handler(self, phase: ProjectPhase):
@@ -298,18 +316,23 @@ class CoreOrchestrator:
             # Import handler dynamically
             if phase == ProjectPhase.PLANNING:
                 from handlers.planning_handler import PlanningHandler
+
                 self._handlers[phase] = PlanningHandler(self)
             elif phase == ProjectPhase.CODING:
                 from handlers.coding_handler import CodingHandler
+
                 self._handlers[phase] = CodingHandler(self)
             elif phase == ProjectPhase.TESTING:
                 from handlers.testing_handler import TestingHandler
+
                 self._handlers[phase] = TestingHandler(self)
             elif phase == ProjectPhase.DEPLOYMENT:
                 from handlers.deployment_handler import DeploymentHandler
+
                 self._handlers[phase] = DeploymentHandler(self)
             elif phase == ProjectPhase.MAINTENANCE:
                 from handlers.maintenance_handler import MaintenanceHandler
+
                 self._handlers[phase] = MaintenanceHandler(self)
             else:
                 raise ValueError(f"No handler for phase: {phase}")
@@ -327,41 +350,42 @@ class CoreOrchestrator:
         if not manifest_path.exists():
             raise FileNotFoundError(f"Project manifest not found: {manifest_path}")
 
-        with open(manifest_path, 'r') as f:
+        with open(manifest_path, "r") as f:
             data = json.load(f)
 
         # Validate manifest against schema (CRITICAL: Do this BEFORE accessing fields)
         try:
             self._validate_manifest_structure(data, project_id)
         except SchemaValidationError as e:
-            raise OrchestratorError(
-                f"Invalid project manifest for '{project_id}':\n{e}"
-            ) from e
+            raise OrchestratorError(f"Invalid project manifest for '{project_id}':\n{e}") from e
 
         # Parse phase
-        current_phase = ProjectPhase(data['status']['projectPhase'])
+        current_phase = ProjectPhase(data["status"]["projectPhase"])
 
         # Parse planning sub-state (if exists)
         planning_sub_state = None
-        if data['status'].get('planningSubState'):
-            planning_sub_state = PlanningSubState(data['status']['planningSubState'])
+        if data["status"].get("planningSubState"):
+            planning_sub_state = PlanningSubState(data["status"]["planningSubState"])
 
         # Parse budget (GAD-002 Decision 7)
-        budget = data.get('budget', {
-            'max_cost_usd': 10.0,  # Default budget
-            'current_cost_usd': 0.0,
-            'alert_threshold': 0.80,
-            'cost_breakdown': {}
-        })
+        budget = data.get(
+            "budget",
+            {
+                "max_cost_usd": 10.0,  # Default budget
+                "current_cost_usd": 0.0,
+                "alert_threshold": 0.80,
+                "cost_breakdown": {},
+            },
+        )
 
         return ProjectManifest(
-            project_id=data['metadata']['projectId'],
-            name=data['metadata']['name'],
+            project_id=data["metadata"]["projectId"],
+            name=data["metadata"]["name"],
             current_phase=current_phase,
             current_sub_state=planning_sub_state,
-            artifacts=data.get('artifacts', {}),
+            artifacts=data.get("artifacts", {}),
             budget=budget,
-            metadata=data
+            metadata=data,
         )
 
     def save_project_manifest(self, manifest: ProjectManifest) -> None:
@@ -369,21 +393,23 @@ class CoreOrchestrator:
         manifest_path = self._get_manifest_path(manifest.project_id)
 
         # Update manifest data
-        manifest.metadata['status']['projectPhase'] = manifest.current_phase.value
+        manifest.metadata["status"]["projectPhase"] = manifest.current_phase.value
         if manifest.current_sub_state:
-            manifest.metadata['status']['planningSubState'] = manifest.current_sub_state.value
+            manifest.metadata["status"]["planningSubState"] = manifest.current_sub_state.value
         else:
-            manifest.metadata['status']['planningSubState'] = None
+            manifest.metadata["status"]["planningSubState"] = None
 
-        manifest.metadata['artifacts'] = manifest.artifacts
-        manifest.metadata['budget'] = manifest.budget
-        manifest.metadata['status']['lastUpdate'] = datetime.utcnow().isoformat() + "Z"
+        manifest.metadata["artifacts"] = manifest.artifacts
+        manifest.metadata["budget"] = manifest.budget
+        manifest.metadata["status"]["lastUpdate"] = datetime.utcnow().isoformat() + "Z"
 
         # Write to disk
-        with open(manifest_path, 'w') as f:
+        with open(manifest_path, "w") as f:
             json.dump(manifest.metadata, f, indent=2)
 
-        logger.info(f"Saved manifest: {manifest.project_id} (phase: {manifest.current_phase.value})")
+        logger.info(
+            f"Saved manifest: {manifest.project_id} (phase: {manifest.current_phase.value})"
+        )
 
     def _get_manifest_path(self, project_id: str) -> Path:
         """Get path to project manifest"""
@@ -393,16 +419,14 @@ class CoreOrchestrator:
                 manifest_path = workspace_dir / "project_manifest.json"
                 if manifest_path.exists():
                     try:
-                        with open(manifest_path, 'r') as f:
+                        with open(manifest_path, "r") as f:
                             data = json.load(f)
                             # Safely check for projectId (handle invalid manifests)
-                            if data.get('metadata', {}).get('projectId') == project_id:
+                            if data.get("metadata", {}).get("projectId") == project_id:
                                 return manifest_path
                     except (json.JSONDecodeError, KeyError) as e:
                         # Skip invalid manifests (log warning but continue search)
-                        logger.warning(
-                            f"Skipping invalid manifest {manifest_path}: {e}"
-                        )
+                        logger.warning(f"Skipping invalid manifest {manifest_path}: {e}")
                         continue
 
         raise FileNotFoundError(f"Project {project_id} not found in workspaces")
@@ -424,48 +448,53 @@ class CoreOrchestrator:
         errors = []
 
         # Check top-level required fields
-        required_fields = ['apiVersion', 'kind', 'metadata', 'status', 'artifacts']
+        required_fields = ["apiVersion", "kind", "metadata", "status", "artifacts"]
         for req_field in required_fields:
             if req_field not in data:
                 errors.append(f"Missing required top-level field: '{req_field}'")
 
         # Validate metadata structure
-        if 'metadata' in data:
-            metadata_required = ['projectId', 'name', 'owner', 'createdAt']
+        if "metadata" in data:
+            metadata_required = ["projectId", "name", "owner", "createdAt"]
             for meta_field in metadata_required:
-                if meta_field not in data['metadata']:
+                if meta_field not in data["metadata"]:
                     errors.append(f"Missing required metadata field: 'metadata.{meta_field}'")
 
         # Validate status structure
-        if 'status' in data:
-            if 'projectPhase' not in data['status']:
+        if "status" in data:
+            if "projectPhase" not in data["status"]:
                 errors.append("Missing required field: 'status.projectPhase'")
             else:
                 # Validate phase value
-                valid_phases = ['PLANNING', 'CODING', 'TESTING', 'AWAITING_QA_APPROVAL', 'DEPLOYMENT', 'PRODUCTION', 'MAINTENANCE']
-                if data['status']['projectPhase'] not in valid_phases:
+                valid_phases = [
+                    "PLANNING",
+                    "CODING",
+                    "TESTING",
+                    "AWAITING_QA_APPROVAL",
+                    "DEPLOYMENT",
+                    "PRODUCTION",
+                    "MAINTENANCE",
+                ]
+                if data["status"]["projectPhase"] not in valid_phases:
                     errors.append(
                         f"Invalid projectPhase: '{data['status']['projectPhase']}'. "
                         f"Must be one of: {', '.join(valid_phases)}"
                     )
 
         # Validate apiVersion
-        if data.get('apiVersion') and data['apiVersion'] != 'agency.os/v1alpha1':
+        if data.get("apiVersion") and data["apiVersion"] != "agency.os/v1alpha1":
             errors.append(
-                f"Invalid apiVersion: '{data['apiVersion']}'. "
-                f"Expected: 'agency.os/v1alpha1'"
+                f"Invalid apiVersion: '{data['apiVersion']}'. Expected: 'agency.os/v1alpha1'"
             )
 
         # Validate kind
-        if data.get('kind') and data['kind'] != 'Project':
-            errors.append(
-                f"Invalid kind: '{data['kind']}'. Expected: 'Project'"
-            )
+        if data.get("kind") and data["kind"] != "Project":
+            errors.append(f"Invalid kind: '{data['kind']}'. Expected: 'Project'")
 
         if errors:
             raise SchemaValidationError(
-                f"Manifest validation failed for project '{project_id}':\n" +
-                "\n".join(f"  - {e}" for e in errors)
+                f"Manifest validation failed for project '{project_id}':\n"
+                + "\n".join(f"  - {e}" for e in errors)
             )
 
         logger.debug(f"✓ Manifest structure validation passed for '{project_id}'")
@@ -477,13 +506,13 @@ class CoreOrchestrator:
     def load_artifact(self, project_id: str, artifact_name: str) -> Optional[Dict[str, Any]]:
         """Load artifact from project workspace"""
         artifact_paths = {
-            'research_brief.json': 'artifacts/planning/research_brief.json',
-            'lean_canvas_summary.json': 'artifacts/planning/lean_canvas_summary.json',
-            'feature_spec.json': 'artifacts/planning/feature_spec.json',
-            'code_gen_spec.json': 'artifacts/coding/code_gen_spec.json',
-            'test_plan.json': 'artifacts/testing/test_plan.json',
-            'qa_report.json': 'artifacts/testing/qa_report.json',
-            'deploy_receipt.json': 'artifacts/deployment/deploy_receipt.json'
+            "research_brief.json": "artifacts/planning/research_brief.json",
+            "lean_canvas_summary.json": "artifacts/planning/lean_canvas_summary.json",
+            "feature_spec.json": "artifacts/planning/feature_spec.json",
+            "code_gen_spec.json": "artifacts/coding/code_gen_spec.json",
+            "test_plan.json": "artifacts/testing/test_plan.json",
+            "qa_report.json": "artifacts/testing/qa_report.json",
+            "deploy_receipt.json": "artifacts/deployment/deploy_receipt.json",
         }
 
         if artifact_name not in artifact_paths:
@@ -496,15 +525,11 @@ class CoreOrchestrator:
         if not artifact_path.exists():
             return None
 
-        with open(artifact_path, 'r') as f:
+        with open(artifact_path, "r") as f:
             return json.load(f)
 
     def save_artifact(
-        self,
-        project_id: str,
-        artifact_name: str,
-        data: Dict[str, Any],
-        validate: bool = True
+        self, project_id: str, artifact_name: str, data: Dict[str, Any], validate: bool = True
     ) -> None:
         """
         Save artifact to project workspace (with schema validation).
@@ -516,13 +541,13 @@ class CoreOrchestrator:
             self.validator.validate_artifact(artifact_name, data)
 
         artifact_paths = {
-            'research_brief.json': 'artifacts/planning/research_brief.json',
-            'lean_canvas_summary.json': 'artifacts/planning/lean_canvas_summary.json',
-            'feature_spec.json': 'artifacts/planning/feature_spec.json',
-            'code_gen_spec.json': 'artifacts/coding/code_gen_spec.json',
-            'test_plan.json': 'artifacts/testing/test_plan.json',
-            'qa_report.json': 'artifacts/testing/qa_report.json',
-            'deploy_receipt.json': 'artifacts/deployment/deploy_receipt.json'
+            "research_brief.json": "artifacts/planning/research_brief.json",
+            "lean_canvas_summary.json": "artifacts/planning/lean_canvas_summary.json",
+            "feature_spec.json": "artifacts/planning/feature_spec.json",
+            "code_gen_spec.json": "artifacts/coding/code_gen_spec.json",
+            "test_plan.json": "artifacts/testing/test_plan.json",
+            "qa_report.json": "artifacts/testing/qa_report.json",
+            "deploy_receipt.json": "artifacts/deployment/deploy_receipt.json",
         }
 
         if artifact_name not in artifact_paths:
@@ -536,7 +561,7 @@ class CoreOrchestrator:
         artifact_path.parent.mkdir(parents=True, exist_ok=True)
 
         # Write artifact
-        with open(artifact_path, 'w') as f:
+        with open(artifact_path, "w") as f:
             json.dump(data, f, indent=2)
 
         logger.info(f"✓ Saved artifact: {artifact_name}")
@@ -546,11 +571,7 @@ class CoreOrchestrator:
     # -------------------------------------------------------------------------
 
     def execute_agent(
-        self,
-        agent_name: str,
-        task_id: str,
-        inputs: Dict[str, Any],
-        manifest: ProjectManifest
+        self, agent_name: str, task_id: str, inputs: Dict[str, Any], manifest: ProjectManifest
     ) -> Dict[str, Any]:
         """
         Execute agent by composing prompt and delegating to appropriate executor.
@@ -578,10 +599,10 @@ class CoreOrchestrator:
                     agent=agent_name,
                     task=task_id,
                     workspace=manifest.name,  # Use manifest name as workspace
-                    inject_governance=True,   # ALWAYS inject Guardian Directives
-                    inject_tools=None,        # Tools loaded from agent's _composition.yaml
-                    inject_sops=None,         # SOPs can be added per-task if needed
-                    context=inputs            # Pass inputs as context
+                    inject_governance=True,  # ALWAYS inject Guardian Directives
+                    inject_tools=None,  # Tools loaded from agent's _composition.yaml
+                    inject_sops=None,  # SOPs can be added per-task if needed
+                    context=inputs,  # Pass inputs as context
                 )
             else:
                 # Fallback to PromptRuntime (no governance)
@@ -605,11 +626,7 @@ class CoreOrchestrator:
             raise
 
     def _request_intelligence(
-        self,
-        agent_name: str,
-        task_id: str,
-        prompt: str,
-        manifest: ProjectManifest
+        self, agent_name: str, task_id: str, prompt: str, manifest: ProjectManifest
     ) -> Dict[str, Any]:
         """
         Request intelligence from external operator (Claude Code) via STDOUT/STDIN handoff.
@@ -643,9 +660,11 @@ class CoreOrchestrator:
             "context": {
                 "project_id": manifest.project_id,
                 "phase": manifest.current_phase.value,
-                "sub_state": manifest.current_sub_state.value if manifest.current_sub_state else None
+                "sub_state": (
+                    manifest.current_sub_state.value if manifest.current_sub_state else None
+                ),
             },
-            "wait_for_response": True
+            "wait_for_response": True,
         }
 
         # Write request to STDOUT with markers (for parsing)
@@ -674,18 +693,14 @@ class CoreOrchestrator:
 
                 # Execute tool
                 try:
-                    result = tool_executor.execute(tool_call['name'], tool_call['parameters'])
+                    result = tool_executor.execute(tool_call["name"], tool_call["parameters"])
                     logger.info(f"✅ Tool executed successfully: {tool_call['name']}")
                 except Exception as e:
                     logger.error(f"❌ Tool execution failed: {e}")
-                    result = {'error': str(e)}
+                    result = {"error": str(e)}
 
                 # Send tool result back to Claude Code
-                tool_result = {
-                    "type": "TOOL_RESULT",
-                    "tool": tool_call['name'],
-                    "result": result
-                }
+                tool_result = {"type": "TOOL_RESULT", "tool": tool_call["name"], "result": result}
                 print("---TOOL_RESULT_START---", file=sys.stderr)
                 print(json.dumps(tool_result, indent=2))
                 sys.stdout.flush()
@@ -733,12 +748,12 @@ class CoreOrchestrator:
             Dict with 'name' and 'parameters' if tool use found, None otherwise
         """
         # Check if text contains tool_use tag
-        if '<tool_use' not in text:
+        if "<tool_use" not in text:
             return None
 
         try:
             # Extract tool_use XML (might be embedded in other text)
-            match = re.search(r'<tool_use[^>]*>.*?</tool_use>', text, re.DOTALL)
+            match = re.search(r"<tool_use[^>]*>.*?</tool_use>", text, re.DOTALL)
             if not match:
                 return None
 
@@ -748,24 +763,21 @@ class CoreOrchestrator:
             root = ET.fromstring(tool_xml)
 
             # Extract tool name from attribute
-            tool_name = root.get('name')
+            tool_name = root.get("name")
             if not tool_name:
                 logger.warning("Tool use missing 'name' attribute")
                 return None
 
             # Extract parameters
             parameters = {}
-            params_elem = root.find('parameters')
+            params_elem = root.find("parameters")
             if params_elem is not None:
                 for param in params_elem:
                     param_name = param.tag
                     param_value = param.text or ""
                     parameters[param_name] = param_value
 
-            return {
-                'name': tool_name,
-                'parameters': parameters
-            }
+            return {"name": tool_name, "parameters": parameters}
 
         except ET.ParseError as e:
             logger.error(f"Failed to parse tool use XML: {e}")
@@ -775,10 +787,7 @@ class CoreOrchestrator:
             return None
 
     def _execute_autonomous(
-        self,
-        agent_name: str,
-        prompt: str,
-        manifest: ProjectManifest
+        self, agent_name: str, prompt: str, manifest: ProjectManifest
     ) -> Dict[str, Any]:
         """
         Execute agent autonomously (legacy mode) via direct LLM invocation.
@@ -795,28 +804,29 @@ class CoreOrchestrator:
         """
         # Initialize LLM client with project budget
         if not self.llm_client:
-            budget_limit = manifest.budget.get('max_cost_usd', 10.0)
+            budget_limit = manifest.budget.get("max_cost_usd", 10.0)
             self.llm_client = LLMClient(budget_limit=budget_limit)
 
         # Invoke LLM
         response = self.llm_client.invoke(
-            prompt=prompt,
-            model="claude-3-5-sonnet-20241022",
-            max_tokens=4096
+            prompt=prompt, model="claude-3-5-sonnet-20241022", max_tokens=4096
         )
 
         # Update budget in manifest
         cost_summary = self.llm_client.get_cost_summary()
-        manifest.budget['current_cost_usd'] = cost_summary['total_cost_usd']
+        manifest.budget["current_cost_usd"] = cost_summary["total_cost_usd"]
 
         # Track cost breakdown by phase
         phase_key = manifest.current_phase.value.lower()
-        if phase_key not in manifest.budget.get('cost_breakdown', {}):
-            manifest.budget.setdefault('cost_breakdown', {})[phase_key] = 0.0
-        manifest.budget['cost_breakdown'][phase_key] = cost_summary['total_cost_usd']
+        if phase_key not in manifest.budget.get("cost_breakdown", {}):
+            manifest.budget.setdefault("cost_breakdown", {})[phase_key] = 0.0
+        manifest.budget["cost_breakdown"][phase_key] = cost_summary["total_cost_usd"]
 
         # Check budget alert threshold
-        if cost_summary.get('budget_used_percent', 0) >= manifest.budget.get('alert_threshold', 0.80) * 100:
+        if (
+            cost_summary.get("budget_used_percent", 0)
+            >= manifest.budget.get("alert_threshold", 0.80) * 100
+        ):
             logger.warning(
                 f"⚠️  Budget alert: {cost_summary['budget_used_percent']:.1f}% used "
                 f"(${cost_summary['total_cost_usd']:.2f} / ${manifest.budget['max_cost_usd']:.2f})"
@@ -839,7 +849,7 @@ class CoreOrchestrator:
         check_type: str,
         manifest: ProjectManifest,
         severity: str = "info",
-        blocking: bool = False
+        blocking: bool = False,
     ) -> Dict[str, Any]:
         """
         Invoke AUDITOR agent for quality gate checks.
@@ -867,20 +877,20 @@ class CoreOrchestrator:
                 agent_name="AUDITOR",
                 task_id="semantic_audit",  # Default task
                 inputs=audit_context,
-                manifest=manifest
+                manifest=manifest,
             )
 
             # Parse audit result
-            status = audit_result.get('status', 'UNKNOWN')
-            findings = audit_result.get('findings', [])
+            status = audit_result.get("status", "UNKNOWN")
+            findings = audit_result.get("findings", [])
 
             audit_report = {
-                'check_type': check_type,
-                'severity': severity,
-                'blocking': blocking,
-                'status': status,
-                'findings': findings,
-                'timestamp': datetime.utcnow().isoformat() + "Z"
+                "check_type": check_type,
+                "severity": severity,
+                "blocking": blocking,
+                "status": status,
+                "findings": findings,
+                "timestamp": datetime.utcnow().isoformat() + "Z",
             }
 
             # Log results
@@ -917,12 +927,12 @@ class CoreOrchestrator:
                 raise QualityGateFailure(f"Audit execution failed: {e}")
             else:
                 return {
-                    'check_type': check_type,
-                    'severity': severity,
-                    'blocking': blocking,
-                    'status': 'ERROR',
-                    'error': str(e),
-                    'timestamp': datetime.utcnow().isoformat() + "Z"
+                    "check_type": check_type,
+                    "severity": severity,
+                    "blocking": blocking,
+                    "status": "ERROR",
+                    "error": str(e),
+                    "timestamp": datetime.utcnow().isoformat() + "Z",
                 }
 
     def _build_audit_context(self, check_type: str, manifest: ProjectManifest) -> Dict[str, Any]:
@@ -933,69 +943,65 @@ class CoreOrchestrator:
         """
         # Base context
         context = {
-            'audit_mode': check_type,
-            'project_id': manifest.project_id,
-            'current_phase': manifest.current_phase.value,
-            'target_files': []
+            "audit_mode": check_type,
+            "project_id": manifest.project_id,
+            "current_phase": manifest.current_phase.value,
+            "target_files": [],
         }
 
         # Check-type specific context
         if check_type == "prompt_security_scan":
             # Scan all agent prompts in planning framework
-            context['target_files'] = [
-                'agency_os/01_planning_framework/agents/*/tasks/*.md',
-                'agency_os/01_planning_framework/agents/*/_prompt_core.md'
+            context["target_files"] = [
+                "agency_os/01_planning_framework/agents/*/tasks/*.md",
+                "agency_os/01_planning_framework/agents/*/_prompt_core.md",
             ]
-            context['scan_for'] = [
-                'prompt_injection_vulnerabilities',
-                'instruction_override_risks',
-                'context_pollution'
+            context["scan_for"] = [
+                "prompt_injection_vulnerabilities",
+                "instruction_override_risks",
+                "context_pollution",
             ]
 
         elif check_type == "data_privacy_scan":
             # Scan feature specs and planning artifacts for PII leaks
-            context['target_files'] = [
+            context["target_files"] = [
                 f"workspaces/{manifest.project_id}/artifacts/planning/feature_spec.json",
-                f"workspaces/{manifest.project_id}/artifacts/planning/lean_canvas_summary.json"
+                f"workspaces/{manifest.project_id}/artifacts/planning/lean_canvas_summary.json",
             ]
-            context['scan_for'] = [
-                'pii_leaks',
-                'sensitive_data_exposure',
-                'gdpr_compliance'
-            ]
+            context["scan_for"] = ["pii_leaks", "sensitive_data_exposure", "gdpr_compliance"]
 
         elif check_type == "code_security_scan":
             # Scan generated code for security vulnerabilities
-            context['target_files'] = [
+            context["target_files"] = [
                 f"workspaces/{manifest.project_id}/artifacts/coding/generated_code/**/*"
             ]
-            context['scan_for'] = [
-                'sql_injection',
-                'xss_vulnerabilities',
-                'hardcoded_secrets',
-                'insecure_dependencies'
+            context["scan_for"] = [
+                "sql_injection",
+                "xss_vulnerabilities",
+                "hardcoded_secrets",
+                "insecure_dependencies",
             ]
 
         elif check_type == "license_compliance_scan":
             # Scan dependencies for license compatibility
-            context['target_files'] = [
+            context["target_files"] = [
                 f"workspaces/{manifest.project_id}/artifacts/coding/code_gen_spec.json"
             ]
-            context['scan_for'] = [
-                'incompatible_licenses',
-                'copyleft_violations',
-                'missing_attributions'
+            context["scan_for"] = [
+                "incompatible_licenses",
+                "copyleft_violations",
+                "missing_attributions",
             ]
 
         elif check_type == "feature_spec_validation":
             # Validate feature_spec against schema
-            context['target_files'] = [
+            context["target_files"] = [
                 f"workspaces/{manifest.project_id}/artifacts/planning/feature_spec.json"
             ]
-            context['scan_for'] = [
-                'schema_violations',
-                'incomplete_specifications',
-                'logical_inconsistencies'
+            context["scan_for"] = [
+                "schema_violations",
+                "incomplete_specifications",
+                "logical_inconsistencies",
             ]
 
         else:
@@ -1004,11 +1010,7 @@ class CoreOrchestrator:
 
         return context
 
-    def apply_quality_gates(
-        self,
-        transition_name: str,
-        manifest: ProjectManifest
-    ) -> None:
+    def apply_quality_gates(self, transition_name: str, manifest: ProjectManifest) -> None:
         """
         Apply quality gates for a state transition.
 
@@ -1023,40 +1025,40 @@ class CoreOrchestrator:
         """
         # Find transition in workflow
         transition = None
-        for t in self.workflow.get('transitions', []):
-            if t['name'] == transition_name:
+        for t in self.workflow.get("transitions", []):
+            if t["name"] == transition_name:
                 transition = t
                 break
 
-        if not transition or 'quality_gates' not in transition:
+        if not transition or "quality_gates" not in transition:
             # No quality gates for this transition
             return
 
         logger.info(f"🔒 Applying quality gates for transition: {transition_name}")
 
-        quality_gates = transition['quality_gates']
+        quality_gates = transition["quality_gates"]
         audit_reports = []
 
         # Run blocking quality gates first
         for gate in quality_gates:
-            if gate.get('blocking', False):
+            if gate.get("blocking", False):
                 audit_report = self.invoke_auditor(
-                    check_type=gate['check'],
+                    check_type=gate["check"],
                     manifest=manifest,
-                    severity=gate.get('severity', 'critical'),
-                    blocking=True
+                    severity=gate.get("severity", "critical"),
+                    blocking=True,
                 )
                 audit_reports.append(audit_report)
 
         # Run async quality gates (fire and forget)
         for gate in quality_gates:
-            if not gate.get('blocking', False):
+            if not gate.get("blocking", False):
                 try:
                     audit_report = self.invoke_auditor(
-                        check_type=gate['check'],
+                        check_type=gate["check"],
                         manifest=manifest,
-                        severity=gate.get('severity', 'info'),
-                        blocking=False
+                        severity=gate.get("severity", "info"),
+                        blocking=False,
                     )
                     audit_reports.append(audit_report)
                 except Exception as e:
@@ -1064,16 +1066,13 @@ class CoreOrchestrator:
 
         # Store audit reports in manifest
         if audit_reports:
-            if 'quality_gate_reports' not in manifest.artifacts:
-                manifest.artifacts['quality_gate_reports'] = {}
-            manifest.artifacts['quality_gate_reports'][transition_name] = audit_reports
+            if "quality_gate_reports" not in manifest.artifacts:
+                manifest.artifacts["quality_gate_reports"] = {}
+            manifest.artifacts["quality_gate_reports"][transition_name] = audit_reports
 
         logger.info(f"✅ Quality gates passed for: {transition_name}")
 
-    def run_horizontal_audits(
-        self,
-        manifest: ProjectManifest
-    ) -> List[Dict[str, Any]]:
+    def run_horizontal_audits(self, manifest: ProjectManifest) -> List[Dict[str, Any]]:
         """
         Run horizontal audits for current phase.
 
@@ -1089,27 +1088,27 @@ class CoreOrchestrator:
         phase_name = manifest.current_phase.value
         phase_config = None
 
-        for state in self.workflow.get('states', []):
-            if state['name'] == phase_name:
+        for state in self.workflow.get("states", []):
+            if state["name"] == phase_name:
                 phase_config = state
                 break
 
-        if not phase_config or 'horizontal_audits' not in phase_config:
+        if not phase_config or "horizontal_audits" not in phase_config:
             logger.info(f"No horizontal audits defined for phase: {phase_name}")
             return []
 
         logger.info(f"🔍 Running horizontal audits for phase: {phase_name}")
 
-        horizontal_audits = phase_config['horizontal_audits']
+        horizontal_audits = phase_config["horizontal_audits"]
         audit_results = []
 
         for audit in horizontal_audits:
             try:
                 audit_result = self.invoke_auditor(
-                    check_type=audit['name'],
+                    check_type=audit["name"],
                     manifest=manifest,
-                    severity=audit.get('severity', 'info'),
-                    blocking=audit.get('blocking', False)
+                    severity=audit.get("severity", "info"),
+                    blocking=audit.get("blocking", False),
                 )
                 audit_results.append(audit_result)
             except QualityGateFailure as e:
@@ -1118,20 +1117,22 @@ class CoreOrchestrator:
                 raise
             except Exception as e:
                 logger.warning(f"Horizontal audit failed (non-blocking): {e}")
-                audit_results.append({
-                    'check_type': audit['name'],
-                    'severity': audit.get('severity', 'info'),
-                    'blocking': False,
-                    'status': 'ERROR',
-                    'error': str(e),
-                    'timestamp': datetime.utcnow().isoformat() + "Z"
-                })
+                audit_results.append(
+                    {
+                        "check_type": audit["name"],
+                        "severity": audit.get("severity", "info"),
+                        "blocking": False,
+                        "status": "ERROR",
+                        "error": str(e),
+                        "timestamp": datetime.utcnow().isoformat() + "Z",
+                    }
+                )
 
         # Store horizontal audit results in manifest
         if audit_results:
-            if 'horizontal_audits' not in manifest.artifacts:
-                manifest.artifacts['horizontal_audits'] = {}
-            manifest.artifacts['horizontal_audits'][phase_name] = audit_results
+            if "horizontal_audits" not in manifest.artifacts:
+                manifest.artifacts["horizontal_audits"] = {}
+            manifest.artifacts["horizontal_audits"][phase_name] = audit_results
 
         logger.info(f"✅ Horizontal audits complete for phase: {phase_name}")
         return audit_results
@@ -1197,20 +1198,21 @@ class CoreOrchestrator:
             logger.info("🎉 SDLC workflow complete - project in PRODUCTION")
 
         # Print final cost summary
-        logger.info("\n" + "="*60)
+        logger.info("\n" + "=" * 60)
         logger.info("COST SUMMARY")
-        logger.info("="*60)
+        logger.info("=" * 60)
         logger.info(f"Total cost: ${manifest.budget.get('current_cost_usd', 0):.4f}")
         logger.info(f"Budget limit: ${manifest.budget.get('max_cost_usd', 0):.2f}")
-        if manifest.budget.get('cost_breakdown'):
+        if manifest.budget.get("cost_breakdown"):
             logger.info("\nBreakdown by phase:")
-            for phase, cost in manifest.budget['cost_breakdown'].items():
+            for phase, cost in manifest.budget["cost_breakdown"].items():
                 logger.info(f"  {phase}: ${cost:.4f}")
 
 
 # =============================================================================
 # CLI INTERFACE (FOR TESTING)
 # =============================================================================
+
 
 def main():
     """CLI interface for testing core orchestrator"""
@@ -1230,47 +1232,33 @@ Examples:
 Execution Modes:
   delegated   - Hands off prompts to Claude Code via STDOUT/STDIN (default)
   autonomous  - Executes prompts directly via Anthropic API (legacy)
-        """
+        """,
     )
 
+    parser.add_argument("repo_root", type=Path, help="Root directory of vibe-agency repository")
+    parser.add_argument("project_id", type=str, help="Project ID (from project_manifest.json)")
     parser.add_argument(
-        'repo_root',
-        type=Path,
-        help='Root directory of vibe-agency repository'
+        "--mode",
+        type=str,
+        choices=["delegated", "autonomous"],
+        default="delegated",
+        help="Execution mode (default: delegated)",
     )
     parser.add_argument(
-        'project_id',
+        "--log-level",
         type=str,
-        help='Project ID (from project_manifest.json)'
-    )
-    parser.add_argument(
-        '--mode',
-        type=str,
-        choices=['delegated', 'autonomous'],
-        default='delegated',
-        help='Execution mode (default: delegated)'
-    )
-    parser.add_argument(
-        '--log-level',
-        type=str,
-        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'],
-        default='INFO',
-        help='Logging level (default: INFO)'
+        choices=["DEBUG", "INFO", "WARNING", "ERROR"],
+        default="INFO",
+        help="Logging level (default: INFO)",
     )
 
     args = parser.parse_args()
 
     # Configure logging
-    logging.basicConfig(
-        level=getattr(logging, args.log_level),
-        format='%(message)s'
-    )
+    logging.basicConfig(level=getattr(logging, args.log_level), format="%(message)s")
 
     # Initialize orchestrator
-    orchestrator = CoreOrchestrator(
-        repo_root=args.repo_root,
-        execution_mode=args.mode
-    )
+    orchestrator = CoreOrchestrator(repo_root=args.repo_root, execution_mode=args.mode)
 
     # Run full SDLC
     try:

@@ -36,6 +36,7 @@ from uuid import UUID
 # WORKSPACE CONTEXT RESOLUTION
 # =================================================================
 
+
 def get_active_workspace() -> str:
     """
     Returns current workspace context from environment variable or state file.
@@ -58,12 +59,12 @@ def get_active_workspace() -> str:
         'ROOT'
     """
     # Check environment variable first
-    env_workspace = os.getenv('ACTIVE_WORKSPACE')
+    env_workspace = os.getenv("ACTIVE_WORKSPACE")
     if env_workspace:
         return env_workspace
 
     # Fall back to state file
-    state_file = Path('.active_workspace')
+    state_file = Path(".active_workspace")
     if state_file.exists():
         try:
             workspace = state_file.read_text().strip()
@@ -72,7 +73,7 @@ def get_active_workspace() -> str:
         except Exception:
             pass
 
-    return 'ROOT'
+    return "ROOT"
 
 
 def set_active_workspace(workspace_name: str):
@@ -84,11 +85,11 @@ def set_active_workspace(workspace_name: str):
     Args:
         workspace_name: Workspace to activate
     """
-    state_file = Path('.active_workspace')
+    state_file = Path(".active_workspace")
     state_file.write_text(workspace_name)
 
     # Also set environment variable for current process
-    os.environ['ACTIVE_WORKSPACE'] = workspace_name
+    os.environ["ACTIVE_WORKSPACE"] = workspace_name
 
 
 def resolve_manifest_path(workspace_name: Optional[str] = None) -> Path:
@@ -118,10 +119,10 @@ def resolve_manifest_path(workspace_name: Optional[str] = None) -> Path:
     if workspace_name is None:
         workspace_name = get_active_workspace()
 
-    if workspace_name == 'ROOT':
-        return Path('project_manifest.json')
+    if workspace_name == "ROOT":
+        return Path("project_manifest.json")
     else:
-        return Path(f'workspaces/{workspace_name}/project_manifest.json')
+        return Path(f"workspaces/{workspace_name}/project_manifest.json")
 
 
 def resolve_artifact_base_path(workspace_name: Optional[str] = None) -> Path:
@@ -146,15 +147,16 @@ def resolve_artifact_base_path(workspace_name: Optional[str] = None) -> Path:
     if workspace_name is None:
         workspace_name = get_active_workspace()
 
-    if workspace_name == 'ROOT':
-        return Path('artifacts')
+    if workspace_name == "ROOT":
+        return Path("artifacts")
     else:
-        return Path(f'workspaces/{workspace_name}/artifacts')
+        return Path(f"workspaces/{workspace_name}/artifacts")
 
 
 # =================================================================
 # MANIFEST OPERATIONS
 # =================================================================
+
 
 def load_workspace_manifest(workspace_name: Optional[str] = None) -> Dict:
     """
@@ -185,7 +187,7 @@ def load_workspace_manifest(workspace_name: Optional[str] = None) -> Dict:
             f"Workspace '{workspace_name or get_active_workspace()}' may not exist."
         )
 
-    with open(manifest_path, 'r') as f:
+    with open(manifest_path, "r") as f:
         return json.load(f)
 
 
@@ -205,18 +207,19 @@ def save_workspace_manifest(manifest: Dict, workspace_name: Optional[str] = None
     manifest_path = resolve_manifest_path(workspace_name)
 
     # Auto-update timestamp
-    manifest['metadata']['lastUpdatedAt'] = datetime.now().isoformat()
+    manifest["metadata"]["lastUpdatedAt"] = datetime.now().isoformat()
 
     # Ensure parent directory exists
     manifest_path.parent.mkdir(parents=True, exist_ok=True)
 
-    with open(manifest_path, 'w') as f:
+    with open(manifest_path, "w") as f:
         json.dump(manifest, f, indent=2)
 
 
 # =================================================================
 # WORKSPACE REGISTRY OPERATIONS
 # =================================================================
+
 
 def load_workspace_registry() -> Dict:
     """
@@ -228,7 +231,7 @@ def load_workspace_registry() -> Dict:
     Raises:
         FileNotFoundError: If registry file doesn't exist
     """
-    registry_path = Path('workspaces/.workspace_index.yaml')
+    registry_path = Path("workspaces/.workspace_index.yaml")
 
     if not registry_path.exists():
         raise FileNotFoundError(
@@ -236,7 +239,7 @@ def load_workspace_registry() -> Dict:
             "Repository may not be properly initialized."
         )
 
-    with open(registry_path, 'r') as f:
+    with open(registry_path, "r") as f:
         return yaml.safe_load(f)
 
 
@@ -249,12 +252,12 @@ def save_workspace_registry(registry: Dict):
     Args:
         registry: Registry dict to save
     """
-    registry_path = Path('workspaces/.workspace_index.yaml')
+    registry_path = Path("workspaces/.workspace_index.yaml")
 
     # Auto-update metadata
-    registry['metadata']['lastUpdated'] = datetime.now().strftime('%Y-%m-%d')
+    registry["metadata"]["lastUpdated"] = datetime.now().strftime("%Y-%m-%d")
 
-    with open(registry_path, 'w') as f:
+    with open(registry_path, "w") as f:
         yaml.dump(registry, f, sort_keys=False, default_flow_style=False)
 
 
@@ -278,13 +281,13 @@ def get_workspace_by_name(workspace_name: str) -> Optional[Dict]:
     registry = load_workspace_registry()
 
     # Search active workspaces
-    for ws in registry.get('workspaces', []):
-        if ws['name'] == workspace_name:
+    for ws in registry.get("workspaces", []):
+        if ws["name"] == workspace_name:
             return ws
 
     # Search archived workspaces
-    for ws in registry.get('archived', []):
-        if ws['name'] == workspace_name:
+    for ws in registry.get("archived", []):
+        if ws["name"] == workspace_name:
             return ws
 
     return None
@@ -311,10 +314,10 @@ def get_workspace_by_project_id(project_id: str) -> Optional[Dict]:
     registry = load_workspace_registry()
 
     # Search active workspaces
-    for ws in registry.get('workspaces', []):
+    for ws in registry.get("workspaces", []):
         try:
-            manifest = load_workspace_manifest(ws['name'])
-            if manifest['metadata']['projectId'] == project_id:
+            manifest = load_workspace_manifest(ws["name"])
+            if manifest["metadata"]["projectId"] == project_id:
                 return ws
         except (FileNotFoundError, json.JSONDecodeError, KeyError):
             # Skip invalid workspace
@@ -322,13 +325,13 @@ def get_workspace_by_project_id(project_id: str) -> Optional[Dict]:
 
     # If not found in workspaces, check ROOT manifest
     try:
-        root_manifest = load_workspace_manifest('ROOT')
-        if root_manifest['metadata']['projectId'] == project_id:
+        root_manifest = load_workspace_manifest("ROOT")
+        if root_manifest["metadata"]["projectId"] == project_id:
             return {
-                'id': 'root-001',
-                'name': 'ROOT',
-                'manifestPath': 'project_manifest.json',
-                'status': 'active'
+                "id": "root-001",
+                "name": "ROOT",
+                "manifestPath": "project_manifest.json",
+                "status": "active",
             }
     except (FileNotFoundError, json.JSONDecodeError, KeyError):
         pass
@@ -351,7 +354,7 @@ def list_active_workspaces() -> List[Dict]:
         'acme_corp'
     """
     registry = load_workspace_registry()
-    return registry.get('workspaces', [])
+    return registry.get("workspaces", [])
 
 
 def list_archived_workspaces() -> List[Dict]:
@@ -362,19 +365,20 @@ def list_archived_workspaces() -> List[Dict]:
         list: Array of archived workspace entries
     """
     registry = load_workspace_registry()
-    return registry.get('archived', [])
+    return registry.get("archived", [])
 
 
 # =================================================================
 # WORKSPACE LIFECYCLE OPERATIONS
 # =================================================================
 
+
 def register_workspace(
     workspace_name: str,
     workspace_type: str,
     project_name: str,
     project_description: str,
-    owner_email: str
+    owner_email: str,
 ) -> Dict:
     """
     Adds new workspace to registry (called by SOP_007).
@@ -395,9 +399,7 @@ def register_workspace(
     # Check if workspace already exists
     existing = get_workspace_by_name(workspace_name)
     if existing:
-        raise ValueError(
-            f"Workspace '{workspace_name}' already exists with ID: {existing['id']}"
-        )
+        raise ValueError(f"Workspace '{workspace_name}' already exists with ID: {existing['id']}")
 
     registry = load_workspace_registry()
 
@@ -406,30 +408,27 @@ def register_workspace(
     workspace_id = f"{workspace_name}-{counter:03d}"
 
     # Check for ID collisions
-    existing_ids = [ws['id'] for ws in registry.get('workspaces', [])]
+    existing_ids = [ws["id"] for ws in registry.get("workspaces", [])]
     while workspace_id in existing_ids:
         counter += 1
         workspace_id = f"{workspace_name}-{counter:03d}"
 
     # Create new workspace entry
     new_entry = {
-        'id': workspace_id,
-        'name': workspace_name,
-        'type': workspace_type,
-        'description': project_description,
-        'manifestPath': f'workspaces/{workspace_name}/project_manifest.json',
-        'status': 'active',
-        'createdAt': datetime.now().strftime('%Y-%m-%d'),
-        'lastUpdated': datetime.now().strftime('%Y-%m-%d'),
-        'metadata': {
-            'owner': owner_email,
-            'tags': [workspace_type]
-        }
+        "id": workspace_id,
+        "name": workspace_name,
+        "type": workspace_type,
+        "description": project_description,
+        "manifestPath": f"workspaces/{workspace_name}/project_manifest.json",
+        "status": "active",
+        "createdAt": datetime.now().strftime("%Y-%m-%d"),
+        "lastUpdated": datetime.now().strftime("%Y-%m-%d"),
+        "metadata": {"owner": owner_email, "tags": [workspace_type]},
     }
 
     # Add to registry
-    registry['workspaces'].append(new_entry)
-    registry['metadata']['totalWorkspaces'] = len(registry['workspaces'])
+    registry["workspaces"].append(new_entry)
+    registry["metadata"]["totalWorkspaces"] = len(registry["workspaces"])
 
     # Save updated registry
     save_workspace_registry(registry)
@@ -437,10 +436,7 @@ def register_workspace(
     return new_entry
 
 
-def archive_workspace(
-    workspace_name: str,
-    reason: str = "Project delivered"
-) -> Dict:
+def archive_workspace(workspace_name: str, reason: str = "Project delivered") -> Dict:
     """
     Moves workspace from active to archived in registry (called by SOP_009).
 
@@ -458,9 +454,9 @@ def archive_workspace(
 
     # Find workspace in active list
     workspace_entry = None
-    for i, ws in enumerate(registry.get('workspaces', [])):
-        if ws['name'] == workspace_name:
-            workspace_entry = registry['workspaces'].pop(i)
+    for i, ws in enumerate(registry.get("workspaces", [])):
+        if ws["name"] == workspace_name:
+            workspace_entry = registry["workspaces"].pop(i)
             break
 
     if not workspace_entry:
@@ -470,18 +466,18 @@ def archive_workspace(
         )
 
     # Add archival metadata
-    workspace_entry['status'] = 'archived'
-    workspace_entry['archivedAt'] = datetime.now().isoformat()
-    workspace_entry['archivedReason'] = reason
+    workspace_entry["status"] = "archived"
+    workspace_entry["archivedAt"] = datetime.now().isoformat()
+    workspace_entry["archivedReason"] = reason
 
     # Move to archived list
-    if 'archived' not in registry:
-        registry['archived'] = []
+    if "archived" not in registry:
+        registry["archived"] = []
 
-    registry['archived'].append(workspace_entry)
+    registry["archived"].append(workspace_entry)
 
     # Update totals
-    registry['metadata']['totalWorkspaces'] = len(registry['workspaces'])
+    registry["metadata"]["totalWorkspaces"] = len(registry["workspaces"])
 
     # Save updated registry
     save_workspace_registry(registry)
@@ -492,6 +488,7 @@ def archive_workspace(
 # =================================================================
 # VALIDATION UTILITIES
 # =================================================================
+
 
 def validate_workspace_name(name: str) -> bool:
     """
@@ -512,7 +509,8 @@ def validate_workspace_name(name: str) -> bool:
         False
     """
     import re
-    pattern = r'^[a-z][a-z0-9_]*$'
+
+    pattern = r"^[a-z][a-z0-9_]*$"
     return bool(re.match(pattern, name))
 
 
@@ -527,7 +525,8 @@ def validate_email(email: str) -> bool:
         bool: True if valid format, False otherwise
     """
     import re
-    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+
+    pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
     return bool(re.match(pattern, email))
 
 
@@ -552,7 +551,7 @@ def validate_uuid(uuid_string: str) -> bool:
 # MAIN (FOR CLI TESTING)
 # =================================================================
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import sys
 
     if len(sys.argv) < 2:
@@ -564,7 +563,7 @@ if __name__ == '__main__':
 
     command = sys.argv[1]
 
-    if command == 'list':
+    if command == "list":
         workspaces = list_active_workspaces()
         print(f"\nACTIVE WORKSPACES ({len(workspaces)}):")
         print("-" * 60)
@@ -574,7 +573,7 @@ if __name__ == '__main__':
             print(f"    Owner: {ws['metadata']['owner']}")
             print()
 
-    elif command == 'get' and len(sys.argv) == 3:
+    elif command == "get" and len(sys.argv) == 3:
         ws_name = sys.argv[2]
         ws = get_workspace_by_name(ws_name)
         if ws:
@@ -582,10 +581,10 @@ if __name__ == '__main__':
         else:
             print(f"Workspace '{ws_name}' not found.")
 
-    elif command == 'active':
+    elif command == "active":
         active_ws = get_active_workspace()
         print(f"Active workspace: {active_ws}")
-        if active_ws != 'ROOT':
+        if active_ws != "ROOT":
             manifest_path = resolve_manifest_path()
             print(f"Manifest path: {manifest_path}")
 

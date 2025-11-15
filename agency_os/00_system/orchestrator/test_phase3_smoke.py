@@ -47,6 +47,7 @@ def test_imports():
     except Exception as e:
         print(f"❌ Import failed: {e}\n")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -73,6 +74,7 @@ def test_orchestrator_init():
     except Exception as e:
         print(f"❌ Initialization failed: {e}\n")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -89,9 +91,9 @@ def test_llm_client_failover():
         import os
 
         # Temporarily remove API key to test failover
-        api_key_backup = os.environ.get('ANTHROPIC_API_KEY')
-        if 'ANTHROPIC_API_KEY' in os.environ:
-            del os.environ['ANTHROPIC_API_KEY']
+        api_key_backup = os.environ.get("ANTHROPIC_API_KEY")
+        if "ANTHROPIC_API_KEY" in os.environ:
+            del os.environ["ANTHROPIC_API_KEY"]
 
         client = LLMClient()
         print("✅ LLM Client initialized (graceful failover)")
@@ -100,12 +102,13 @@ def test_llm_client_failover():
 
         # Restore API key
         if api_key_backup:
-            os.environ['ANTHROPIC_API_KEY'] = api_key_backup
+            os.environ["ANTHROPIC_API_KEY"] = api_key_backup
 
         return True
     except Exception as e:
         print(f"❌ LLM client test failed: {e}\n")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -120,17 +123,19 @@ def test_schema_validator():
         print("📋 Loading schema validator...")
         from orchestrator.core_orchestrator import SchemaValidator
 
-        contracts_path = Path.cwd() / "agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml"
+        contracts_path = (
+            Path.cwd() / "agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml"
+        )
         validator = SchemaValidator(contracts_path)
 
         print("✅ Schema validator initialized")
         print(f"   Contracts file: {contracts_path}")
         if validator.contracts:
-            schemas = validator.contracts.get('schemas', [])
+            schemas = validator.contracts.get("schemas", [])
             print(f"   Schemas loaded: {len(schemas)}")
 
             # List some schemas
-            schema_names = [s.get('name', 'unknown') for s in schemas[:5]]
+            schema_names = [s.get("name", "unknown") for s in schemas[:5]]
             if schema_names:
                 print(f"   Sample schemas: {', '.join(schema_names)}")
         print()
@@ -139,6 +144,7 @@ def test_schema_validator():
     except Exception as e:
         print(f"❌ Schema validator test failed: {e}\n")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -161,7 +167,7 @@ def test_phase_handlers():
             ProjectPhase.CODING,
             ProjectPhase.TESTING,
             ProjectPhase.DEPLOYMENT,
-            ProjectPhase.MAINTENANCE
+            ProjectPhase.MAINTENANCE,
         ]
 
         for phase in phases:
@@ -173,6 +179,7 @@ def test_phase_handlers():
     except Exception as e:
         print(f"❌ Phase handler test failed: {e}\n")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -191,17 +198,17 @@ def test_knowledge_metadata():
             "agency_os/01_planning_framework/knowledge/research/RESEARCH_market_sizing_formulas.yaml",
             "agency_os/01_planning_framework/knowledge/research/RESEARCH_competitor_analysis_templates.yaml",
             "agency_os/01_planning_framework/knowledge/research/RESEARCH_red_flag_taxonomy.yaml",
-            "agency_os/00_system/knowledge/AOS_Ontology.yaml"
+            "agency_os/00_system/knowledge/AOS_Ontology.yaml",
         ]
 
         for file_path in test_files:
             full_path = Path.cwd() / file_path
             if full_path.exists():
-                with open(full_path, 'r') as f:
+                with open(full_path, "r") as f:
                     content = yaml.safe_load(f)
 
-                if 'metadata' in content:
-                    metadata = content['metadata']
+                if "metadata" in content:
+                    metadata = content["metadata"]
                     print(f"   ✓ {file_path.split('/')[-1]}")
                     print(f"      Version: {metadata.get('version', 'N/A')}")
                     print(f"      Status: {metadata.get('status', 'N/A')}")
@@ -214,6 +221,7 @@ def test_knowledge_metadata():
     except Exception as e:
         print(f"❌ Knowledge metadata test failed: {e}\n")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -231,7 +239,7 @@ def main():
         ("LLM Client Graceful Failover", test_llm_client_failover),
         ("Schema Validator", test_schema_validator),
         ("Phase Handlers", test_phase_handlers),
-        ("Knowledge Metadata", test_knowledge_metadata)
+        ("Knowledge Metadata", test_knowledge_metadata),
     ]
 
     results = []

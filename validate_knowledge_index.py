@@ -8,6 +8,7 @@ import yaml
 import sys
 from pathlib import Path
 
+
 def validate_knowledge_index(index_path: str = ".knowledge_index.yaml") -> bool:
     """
     Validates the knowledge index file.
@@ -28,7 +29,7 @@ def validate_knowledge_index(index_path: str = ".knowledge_index.yaml") -> bool:
 
     # Load YAML
     try:
-        with open(index_file, 'r') as f:
+        with open(index_file, "r") as f:
             index_data = yaml.safe_load(f)
     except yaml.YAMLError as e:
         print(f"❌ ERROR: Invalid YAML syntax: {e}")
@@ -37,7 +38,7 @@ def validate_knowledge_index(index_path: str = ".knowledge_index.yaml") -> bool:
     print("✅ YAML syntax valid")
 
     # Validate structure
-    required_keys = ['version', 'kind', 'categories']
+    required_keys = ["version", "kind", "categories"]
     for key in required_keys:
         if key not in index_data:
             print(f"❌ ERROR: Missing required key: {key}")
@@ -46,19 +47,19 @@ def validate_knowledge_index(index_path: str = ".knowledge_index.yaml") -> bool:
     print(f"✅ Required keys present: {', '.join(required_keys)}")
 
     # Validate version format
-    version = index_data.get('version', '')
-    if not version or not version.count('.') >= 2:
+    version = index_data.get("version", "")
+    if not version or not version.count(".") >= 2:
         print(f"⚠️  WARNING: Invalid version format: {version}")
     else:
         print(f"✅ Version: {version}")
 
     # Check kind
     expected_kind = "KnowledgeIndex"
-    if index_data.get('kind') != expected_kind:
+    if index_data.get("kind") != expected_kind:
         print(f"⚠️  WARNING: Expected kind '{expected_kind}', got '{index_data.get('kind')}'")
 
     # Validate all file paths
-    categories = index_data.get('categories', [])
+    categories = index_data.get("categories", [])
     total_files = 0
     missing_files = []
     valid_files = []
@@ -67,11 +68,11 @@ def validate_knowledge_index(index_path: str = ".knowledge_index.yaml") -> bool:
     print("-" * 60)
 
     for category in categories:
-        cat_id = category.get('id', 'unknown')
-        files = category.get('files', [])
+        cat_id = category.get("id", "unknown")
+        files = category.get("files", [])
 
         for file_entry in files:
-            file_path = file_entry.get('path')
+            file_path = file_entry.get("path")
             if not file_path:
                 print(f"⚠️  Category '{cat_id}': No path specified")
                 continue
@@ -102,13 +103,13 @@ def validate_knowledge_index(index_path: str = ".knowledge_index.yaml") -> bool:
         return False
 
     # Validate query examples (if present)
-    query_examples = index_data.get('queryExamples', [])
+    query_examples = index_data.get("queryExamples", [])
     if query_examples:
         print(f"\n✅ Query examples defined: {len(query_examples)}")
         for i, example in enumerate(query_examples, 1):
-            query = example.get('query', 'N/A')
-            category = example.get('matchesCategory', 'N/A')
-            print(f"  {i}. \"{query}\" → {category}")
+            query = example.get("query", "N/A")
+            category = example.get("matchesCategory", "N/A")
+            print(f'  {i}. "{query}" → {category}')
 
     print("\n" + "=" * 60)
     print("✅ ALL VALIDATIONS PASSED")
@@ -135,9 +136,7 @@ def validate_hardcoded_paths() -> bool:
     # Find all hardcoded agency_os/ references
     try:
         result = subprocess.run(
-            ['grep', '-rh', 'agency_os/', str(ssf_dir)],
-            capture_output=True,
-            text=True
+            ["grep", "-rh", "agency_os/", str(ssf_dir)], capture_output=True, text=True
         )
 
         if result.returncode != 0:
@@ -145,12 +144,13 @@ def validate_hardcoded_paths() -> bool:
             return True
 
         # Extract unique paths
-        lines = result.stdout.strip().split('\n')
+        lines = result.stdout.strip().split("\n")
         paths = set()
 
         for line in lines:
             # Extract agency_os/... patterns
             import re
+
             matches = re.findall(r'agency_os/[^\s\'"`,;)]+', line)
             paths.update(matches)
 
@@ -161,7 +161,7 @@ def validate_hardcoded_paths() -> bool:
 
         for path in sorted(paths):
             # Skip wildcard paths (e.g., "agency_os/*/knowledge/") - these are documentation examples
-            if '*' in path or '...' in path:
+            if "*" in path or "..." in path:
                 skipped_wildcards.append(path)
                 continue
 

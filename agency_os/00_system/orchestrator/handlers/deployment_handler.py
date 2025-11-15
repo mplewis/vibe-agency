@@ -47,19 +47,17 @@ class DeploymentHandler:
         logger.info("🚀 Starting DEPLOYMENT phase (STUB)")
 
         # Load QA report
-        qa_report = self.orchestrator.load_artifact(
-            manifest.project_id,
-            'qa_report.json'
-        )
+        qa_report = self.orchestrator.load_artifact(manifest.project_id, "qa_report.json")
 
         if not qa_report:
             from core_orchestrator import ArtifactNotFoundError
+
             raise ArtifactNotFoundError(
                 "qa_report.json not found - TESTING phase must complete first"
             )
 
         # Check if QA approved (should be set by vibe-cli approve-qa)
-        if not manifest.artifacts.get('qa_approved', False):
+        if not manifest.artifacts.get("qa_approved", False):
             logger.warning(
                 "⚠️  QA not explicitly approved, but proceeding with deployment (Phase 3 stub)"
             )
@@ -68,33 +66,33 @@ class DeploymentHandler:
 
         # STUB: Create mock deploy_receipt
         deploy_receipt = {
-            'version': '1.0',
-            'schema_version': '1.0',
-            'status': 'SUCCESS',  # STUB
-            'artifact_version_deployed': 'v1.0.0-stub',  # STUB
-            'db_migration_status': 'SKIPPED',  # STUB
-            'health_check_status': 'OK',  # STUB
-            'golden_signal_values': {
-                'latency_p95_ms': 50,  # STUB
-                'error_rate_percent': 0.0  # STUB
+            "version": "1.0",
+            "schema_version": "1.0",
+            "status": "SUCCESS",  # STUB
+            "artifact_version_deployed": "v1.0.0-stub",  # STUB
+            "db_migration_status": "SKIPPED",  # STUB
+            "health_check_status": "OK",  # STUB
+            "golden_signal_values": {
+                "latency_p95_ms": 50,  # STUB
+                "error_rate_percent": 0.0,  # STUB
             },
-            'metadata': {
-                'deployed_at': self._get_timestamp(),
-                'deployed_by': 'orchestrator_stub',
-                'phase': 'STUB',
-                'message': 'Phase 3: Stub implementation - actual deployment in Phase 4'
-            }
+            "metadata": {
+                "deployed_at": self._get_timestamp(),
+                "deployed_by": "orchestrator_stub",
+                "phase": "STUB",
+                "message": "Phase 3: Stub implementation - actual deployment in Phase 4",
+            },
         }
 
         # Save artifact
         self.orchestrator.save_artifact(
             manifest.project_id,
-            'deploy_receipt.json',
+            "deploy_receipt.json",
             deploy_receipt,
-            validate=False  # No schema validation for stub
+            validate=False,  # No schema validation for stub
         )
 
-        manifest.artifacts['deploy_receipt'] = deploy_receipt
+        manifest.artifacts["deploy_receipt"] = deploy_receipt
 
         logger.info("✅ DEPLOYMENT complete (STUB) → deploy_receipt.json")
         logger.info("   ⚠️  STUB: No actual deployment (Phase 3)")
@@ -102,6 +100,7 @@ class DeploymentHandler:
 
         # Transition to PRODUCTION
         from core_orchestrator import ProjectPhase
+
         manifest.current_phase = ProjectPhase.PRODUCTION
 
         logger.info("🎉 Project deployed to PRODUCTION (STUB)")
@@ -109,4 +108,5 @@ class DeploymentHandler:
     def _get_timestamp(self) -> str:
         """Get current timestamp"""
         from datetime import datetime
+
         return datetime.utcnow().isoformat() + "Z"

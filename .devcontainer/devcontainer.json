@@ -1,19 +1,31 @@
 {
   "name": "vibe-agency",
   "image": "mcr.microsoft.com/devcontainers/python:3.11",
-  "postCreateCommand": "pip install -r requirements.txt && pip install pre-commit && pre-commit install && python3 validate_knowledge_index.py",
+  "postCreateCommand": "pip install uv && uv sync --all-extras && uv run pre-commit install && python3 validate_knowledge_index.py",
   "customizations": {
     "vscode": {
       "extensions": [
         "ms-python.python",
         "ms-python.vscode-pylance",
-        "charliermarsh.ruff"
+        "charliermarsh.ruff",
+        "ms-python.mypy-type-checker"
       ],
       "settings": {
-        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
         "python.linting.enabled": true,
         "python.linting.ruffEnabled": true,
-        "python.formatting.provider": "black"
+        "python.formatting.provider": "black",
+        "[python]": {
+          "editor.defaultFormatter": "charliermarsh.ruff",
+          "editor.formatOnSave": true,
+          "editor.codeActionsOnSave": {
+            "source.organizeImports": true,
+            "source.fixAll": true
+          }
+        },
+        "mypy-type-checker.args": [
+          "--config-file=pyproject.toml"
+        ]
       }
     }
   },
