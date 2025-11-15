@@ -107,7 +107,16 @@ prompt = PromptRegistry.compose(
 )
 ```
 
-**Status:** Not implemented (MVP priority #1)
+**Status:** ✅ IMPLEMENTED (2025-11-15) - Production ready
+
+**Implementation Details:**
+- File: `agency_os/00_system/runtime/prompt_registry.py` (~450 lines)
+- Automatic Guardian Directives injection (9 governance rules)
+- Context enrichment (manifest, workspace paths)
+- Tool/SOP injection (when requested)
+- Graceful error handling and fallbacks
+- Fully integrated with core orchestrator
+- Comprehensive test coverage (9 unit tests + integration tests)
 
 ---
 
@@ -133,10 +142,11 @@ prompt = PromptRegistry.compose(
 - Different purpose (governs design vs. executes projects)
 - Different invocation (manual via sessions, not orchestrator)
 
-**Integration:**
-- Guardian Directives → Injected into AOS prompts via Prompt Registry
-- SOPs → Loaded by Registry when HITL workflows triggered
-- No runtime integration (intentional)
+**Integration Model:**
+- **Design-time:** SSF defines rules (Guardian Directives, SOPs)
+- **Composition-time:** Prompt Registry injects SSF rules into AOS prompts
+- **Runtime:** Claude Code enforces rules (intelligence layer)
+- **No orchestrator calls to SSF agents** (manual sessions only)
 
 ---
 
@@ -375,18 +385,18 @@ Orchestrator → INTELLIGENCE_REQUEST
 
 ## 🚧 Current Limitations
 
-### Known Gaps (As of 2025-11-15)
+### Known Gaps (As of 2025-11-15 - Updated)
 
-1. **No Prompt Registry**
-   - Manual composition everywhere
-   - Governance injection ad-hoc
-   - No central interface
-   - **Fix:** Build registry (MVP priority #1)
+1. ~~**No Prompt Registry**~~ ✅ **RESOLVED (2025-11-15)**
+   - ✅ Prompt Registry implemented and integrated
+   - ✅ Automatic governance injection active
+   - ✅ Central interface for all prompt composition
+   - ✅ Orchestrator fully integrated
 
-2. **Guardian Directives Not Enforced**
-   - Exist in SSF but not injected into AOS prompts
-   - Relies on manual adherence
-   - **Fix:** Prompt Registry auto-injection
+2. ~~**Guardian Directives Not Enforced**~~ ✅ **RESOLVED (2025-11-15)**
+   - ✅ Guardian Directives automatically injected via Prompt Registry
+   - ✅ All 9 directives enforced at runtime
+   - ✅ Comprehensive test coverage
 
 3. **Handlers 3-5 Are Stubs**
    - Testing, Deployment, Maintenance phases incomplete
@@ -398,10 +408,10 @@ Orchestrator → INTELLIGENCE_REQUEST
    - No iterative planning workflow
    - **Fix:** Defer to Phase N (not MVP)
 
-5. **vibe-cli.py Name Collision**
-   - Two files: vibe-cli (integration) vs vibe-cli.py (utility)
-   - Confusing for developers
-   - **Fix:** Rename vibe-cli.py → prompt-cli.py
+5. ~~**vibe-cli.py Name Collision**~~ ✅ **RESOLVED (2025-11-15)**
+   - ✅ Renamed vibe-cli.py → prompt-cli.py
+   - ✅ Clear separation: vibe-cli (integration) vs prompt-cli.py (utility)
+   - ✅ No more naming confusion
 
 ---
 
@@ -451,6 +461,74 @@ Orchestrator → INTELLIGENCE_REQUEST
 
 ---
 
+## 📖 Glossary
+
+### Architecture Terms
+
+**Meta-framework**
+A framework that governs how another framework is built. SSF is a meta-framework because it defines rules for building AOS.
+
+**Composition-time**
+The phase when prompts are assembled from multiple sources (agent core + knowledge + governance + context). Happens before runtime execution.
+
+**Runtime**
+The phase when composed prompts are executed by Claude Code. Involves decision-making, content generation, and validation.
+
+**Design-time**
+The phase when rules, SOPs, and directives are created by humans or SSF agents. Precedes composition-time.
+
+**Delegated Mode**
+Execution mode where orchestrator delegates intelligence to Claude Code via STDIN/STDOUT (vibe-cli). Recommended default.
+
+**Autonomous Mode**
+Execution mode where orchestrator calls Anthropic API directly. Less integration with Claude Code ecosystem.
+
+**Guardian Directives**
+9 governance rules defined by SSF that enforce quality standards in AOS (e.g., "Manifest Primacy", "Atomicity").
+
+**Quality Gate**
+A checkpoint in the SDLC where execution pauses for validation (automated or HITL) before proceeding.
+
+**HITL (Human-in-the-Loop)**
+Approval points where human judgment is required (e.g., QA approval gate, SOP-guided workflows).
+
+**Manifest Primacy**
+Guardian Directive #1: `project_manifest.json` is the single source of truth for all project state.
+
+**Atomic Task**
+Guardian Directive #2: Every task is independently executable and produces well-defined outputs.
+
+**Knowledge Dependency**
+YAML files that agents require to make grounded decisions (e.g., FAE_constraints.yaml, FDG_dependencies.yaml).
+
+**Prompt Registry**
+High-level interface for prompt composition that automatically injects governance, context, tools, and SOPs. The "heart" of the system.
+
+**PromptRuntime**
+Low-level prompt composition engine. Used internally by Prompt Registry. Not meant for direct use.
+
+### Framework Terms
+
+**Agency OS (AOS)**
+The product framework - builds user projects through 5 SDLC phases.
+
+**System Steward Framework (SSF)**
+Meta-governance framework - defines rules for how AOS should be built.
+
+**Research Sub-Framework**
+Optional capability in PLANNING phase for web search and fact-checking (4 agents + 2 tools).
+
+**SDLC**
+Software Development Lifecycle: PLANNING → CODING → TESTING → DEPLOYMENT → MAINTENANCE
+
+**Stub**
+Minimal implementation that allows end-to-end flow but lacks real functionality (e.g., Handlers 3-5).
+
+**Orphaned Agent**
+An agent that exists but isn't routed by the orchestrator (e.g., GENESIS_UPDATE).
+
+---
+
 ## 🤝 For Contributors
 
 **Before proposing changes:**
@@ -471,6 +549,6 @@ Orchestrator → INTELLIGENCE_REQUEST
 
 ---
 
-**Last Updated:** 2025-11-15
+**Last Updated:** 2025-11-15 (Refined with professional review feedback)
 **Maintainer:** vibe-agency core team
 **Status:** Living document (update as system evolves)
