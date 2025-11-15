@@ -251,31 +251,31 @@ agency_os/
 
 **Location:** `/vibe-cli` (351 lines)
 
-**Flow:**
+**Flow (MVP - DELEGATION ONLY):**
 1. Launches orchestrator as subprocess
 2. Monitors STDOUT for `INTELLIGENCE_REQUEST` (JSON)
-3. Executes prompt via Anthropic API
-4. Handles multi-turn tool use loop
+3. Delegates prompt to Claude Code operator (via STDOUT/STDIN)
+4. Forwards response back to orchestrator
 5. Sends `INTELLIGENCE_RESPONSE` via STDIN
 
-**Multi-turn Tool Use:**
+**Delegation Flow:**
 ```
 Orchestrator → INTELLIGENCE_REQUEST
              ↓
-         vibe-cli → Anthropic API (with tools)
+         vibe-cli prints DELEGATION_REQUEST to STDOUT
              ↓
-         API returns stop_reason="tool_use"
+         Claude Code operator reads request
              ↓
-         vibe-cli executes tools locally (tool_executor.py)
+         Claude Code executes via Anthropic API (with tools if needed)
              ↓
-         vibe-cli sends tool_result back to API
-             ↓
-         API returns final response
+         Claude Code sends response to vibe-cli via STDIN
              ↓
          vibe-cli → INTELLIGENCE_RESPONSE → Orchestrator
 ```
 
-**Status:** ✅ Fully implemented (GAD-003)
+**Status:** ✅ Delegation mode implemented (MVP)
+**Note:** Tool execution delegated to Claude Code operator, not vibe-cli.
+**See:** docs/architecture/EXECUTION_MODE_STRATEGY.md
 
 ---
 
@@ -328,11 +328,13 @@ Orchestrator → INTELLIGENCE_REQUEST
    ↓
 6. Orchestrator sends INTELLIGENCE_REQUEST (via STDOUT)
    ↓
-7. vibe-cli executes prompt via Anthropic API
-   │  - Multi-turn conversation if tools needed
-   │  - Local tool execution via tool_executor.py
+7. vibe-cli delegates to Claude Code operator
+   │  - Prints DELEGATION_REQUEST to STDOUT
+   │  - Claude Code executes via Anthropic API
+   │  - Handles multi-turn tool use if needed
+   │  - Claude Code sends result via STDIN
    ↓
-8. vibe-cli sends INTELLIGENCE_RESPONSE (via STDIN)
+8. vibe-cli forwards INTELLIGENCE_RESPONSE to orchestrator (via STDIN)
    ↓
 9. Orchestrator processes result, updates manifest
    ↓

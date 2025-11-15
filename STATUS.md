@@ -110,21 +110,20 @@
 
 ## Next Actions (Priority Order)
 
-### Priority 1: Complete vibe-cli Tool Use Loop
-**Why:** Research agents with tools cannot complete multi-turn workflows.
+### Priority 1: ~~Complete vibe-cli Tool Use Loop~~ DEFERRED TO v1.1
+**Status:** MVP uses DELEGATION ONLY mode (tools delegated to Claude Code operator).
 
 **What EXISTS:**
-- ✅ vibe-cli integration (handles INTELLIGENCE_REQUEST → API → RESPONSE)
-- ✅ Orchestrator tool execution (parses `<tool_use>`, executes tools, sends TOOL_RESULT)
+- ✅ vibe-cli delegation mode (handles INTELLIGENCE_REQUEST → DELEGATION → RESPONSE)
+- ✅ Claude Code operator handles tool execution (not vibe-cli)
 
-**What's MISSING:**
-- ❌ vibe-cli tool result forwarding (doesn't handle TOOL_RESULT in multi-turn loop)
+**What's DEFERRED (v1.1 - Standalone Mode):**
+- ❌ vibe-cli direct API calls (forbidden in MVP)
+- ❌ vibe-cli tool execution (delegated to Claude Code in MVP)
 
-**Options:**
-- **Option A:** Add tool result handling to vibe-cli `_monitor_orchestrator()` (2-3 hours)
-- **Option B:** Switch to Anthropic native tool use API (3-4 hours, simpler long-term)
+**See:** docs/architecture/EXECUTION_MODE_STRATEGY.md
 
-**Deliverable:** Research agent with google_search completes end-to-end (real API test).
+**Deliverable (v1.1):** Standalone mode where vibe-cli can execute without Claude Code operator.
 
 ### Priority 2: Write Integration Tests
 **Why:** Verify what actually works vs. just structure.

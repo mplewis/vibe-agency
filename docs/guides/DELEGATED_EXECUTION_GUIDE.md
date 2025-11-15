@@ -28,8 +28,11 @@ Use `vibe-cli` to run with Claude Code integration:
 This will:
 1. Launch the orchestrator in delegated mode
 2. Monitor for intelligence requests
-3. Execute prompts via Anthropic API
-4. Stream results back to the orchestrator
+3. Delegate prompts to Claude Code operator (via STDOUT/STDIN)
+4. Forward responses back to the orchestrator
+
+**Note:** MVP uses DELEGATION ONLY mode. vibe-cli does NOT call Anthropic API directly.
+See: docs/architecture/EXECUTION_MODE_STRATEGY.md
 
 ### Option 2: Autonomous Mode (Legacy)
 
@@ -97,24 +100,34 @@ print(json.dumps({
 }))
 ```
 
-#### Step 2: vibe-cli intercepts request
+#### Step 2: vibe-cli delegates to Claude Code operator
 
 ```python
-# vibe-cli
+# vibe-cli (MVP - DELEGATION ONLY)
 if "---INTELLIGENCE_REQUEST_START---" in line:
     # Parse JSON request
     request = json.loads(buffer)
 
-    # Execute prompt via Anthropic API
-    result = client.messages.create(
-        model="claude-3-5-sonnet-20241022",
-        messages=[{"role": "user", "content": request["prompt"]}]
-    )
+    # Delegate to Claude Code operator (NOT direct API call!)
+    # Print delegation request to STDOUT
+    print("\n---DELEGATION_REQUEST_START---")
+    print(json.dumps({
+        "type": "INTELLIGENCE_DELEGATION",
+        "agent": request["agent"],
+        "task_id": request["task_id"],
+        "prompt": request["prompt"]
+    }))
+    print("---DELEGATION_REQUEST_END---")
 
-    # Send response back via STDIN
+    # Claude Code operator executes prompt and returns result
+    # vibe-cli reads response from STDIN
+    response_line = sys.stdin.readline()
+    result = json.loads(response_line)
+
+    # Forward response to orchestrator
     process.stdin.write(json.dumps({
         "type": "INTELLIGENCE_RESPONSE",
-        "result": json.loads(result.content[0].text)
+        "result": result["result"]
     }))
 ```
 
@@ -276,7 +289,8 @@ python agency_os/00_system/orchestrator/core_orchestrator.py \
 **Cause:** Orchestrator is waiting for intelligence response, but none was sent.
 
 **Solution:**
-- If using vibe-cli: Check that Anthropic API key is set
+- If using vibe-cli (MVP): Ensure Claude Code operator is responding to delegation requests
+- If using autonomous mode: Check that Anthropic API key is set
 - If running manually: Send a response via STDIN
 
 ### "Agent returned non-JSON response"
@@ -301,8 +315,10 @@ python agency_os/00_system/orchestrator/core_orchestrator.py \
 
 ## Environment Variables
 
-- `ANTHROPIC_API_KEY` - Required for vibe-cli and autonomous mode
+- `ANTHROPIC_API_KEY` - Required for autonomous mode ONLY (not needed for vibe-cli in MVP)
 - `LOG_LEVEL` - Set logging level (DEBUG, INFO, WARNING, ERROR)
+
+**Note:** MVP vibe-cli uses DELEGATION ONLY mode - Claude Code operator handles authentication.
 
 ---
 
@@ -321,13 +337,16 @@ python agency_os/00_system/orchestrator/core_orchestrator.py \
 
 A: Delegated mode is the "correct" architecture (Brain + Arm separation). Autonomous mode is kept for testing and backward compatibility.
 
-**Q: Can I use this without Claude Code?**
+**Q: Can I use vibe-cli without Claude Code?**
 
-A: Yes! `vibe-cli` works standalone with just an Anthropic API key. It doesn't require Claude Code to be running.
+A: Not in MVP! MVP vibe-cli uses DELEGATION ONLY mode - Claude Code operator is required.
+   Standalone mode (direct API calls) is deferred to v1.1.
+   See: docs/architecture/EXECUTION_MODE_STRATEGY.md
 
 **Q: Can Claude Code intercept intelligence requests in this chat?**
 
-A: Not yet! That requires a tighter integration. For now, use `vibe-cli` which handles the handoff autonomously. Future work: Claude MCP integration.
+A: YES! In MVP, vibe-cli prints delegation requests to STDOUT. Claude Code operator reads these,
+   executes prompts via Anthropic API, and returns results via STDIN. This IS the integration.
 
 **Q: What if prompt_runtime doesn't exist?**
 
