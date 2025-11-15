@@ -22,10 +22,13 @@
 
 **Architecture Reference:** See [ARCHITECTURE_V2.md](./ARCHITECTURE_V2.md) for conceptual model.
 
-**Core Flow:**
+**Core Flow (MVP - DELEGATION ONLY):**
 ```
-User → vibe-cli → Core Orchestrator → SDLC Phases → Agents → Claude API
+Claude Code (operator) ← STDOUT/STDIN → vibe-cli → Core Orchestrator → SDLC Phases → Agents
 ```
+
+**Note:** vibe-cli delegates intelligence requests to Claude Code operator.
+See: docs/architecture/EXECUTION_MODE_STRATEGY.md
 
 **5 SDLC Phases:**
 1. PLANNING (4 sub-states: RESEARCH → BUSINESS_VALIDATION → FEATURE_SPECIFICATION → ARCHITECTURE_DESIGN)
