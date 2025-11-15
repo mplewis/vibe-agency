@@ -1,0 +1,13 @@
+{
+  "project_id": "golden-test-registry",
+  "project_name": "Yoga Studio Booking System",
+  "phase": "PLANNING",
+  "current_agent": "VIBE_ALIGNER",
+  "created_at": "2025-11-15T10:00:00Z",
+  "artifacts": {},
+  "metadata": {
+    "description": "Online booking system for yoga classes with Stripe payments",
+    "tech_stack": ["Python", "FastAPI", "PostgreSQL", "Stripe API"],
+    "complexity": "medium"
+  }
+}

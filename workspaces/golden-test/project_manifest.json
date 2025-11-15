@@ -1,0 +1,32 @@
+{
+  "apiVersion": "agency.os/v1alpha1",
+  "kind": "Project",
+  "metadata": {
+    "projectId": "golden-test-registry",
+    "name": "Golden Path Test - Prompt Registry",
+    "description": "Test Prompt Registry integration with VIBE_ALIGNER",
+    "owner": "test-automation",
+    "createdAt": "2025-11-15T13:00:00Z",
+    "lastUpdatedAt": "2025-11-15T13:00:00Z"
+  },
+  "spec": {
+    "vibe": {
+      "target_scope": "v1.0",
+      "integration_type": "test",
+      "user_input": "I want to build an online booking system for my yoga studio. Students can browse class schedule, book classes online, pay with Stripe (one-time payment per class), admin can manage schedule, email confirmations. Target launch: 8 weeks, Budget: $15k, Team: Solo developer"
+    }
+  },
+  "status": {
+    "projectPhase": "PLANNING",
+    "planningSubState": "BUSINESS_VALIDATION",
+    "lastUpdate": "2025-11-15T13:00:00Z",
+    "message": "Golden Path Test - Testing Prompt Registry with Guardian Directives"
+  },
+  "budget": {
+    "max_cost_usd": 5.0,
+    "current_cost_usd": 0.0,
+    "alert_threshold": 0.80,
+    "cost_breakdown": {}
+  },
+  "artifacts": {}
+}
