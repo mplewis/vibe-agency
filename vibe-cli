@@ -16,53 +16,74 @@ Version: 1.0 (Delegation Mode - No Direct API Calls)
 """
 
 # ============================================================================
-# LAYER 2: AUTO-DEPENDENCY INSTALLER (Graceful Degradation)
+# LAYER 2: UV ENVIRONMENT CHECK (Fail Fast with Guidance)
 # ============================================================================
 import sys
-import subprocess
+from pathlib import Path
 
-def _ensure_dependencies():
+def _ensure_uv_environment():
     """
-    Auto-install missing dependencies with graceful degradation.
+    Ensure UV environment is set up (Layer 2 of 4-layer defense).
 
-    This prevents the 10x "ModuleNotFoundError" regression by:
-    1. Checking for required modules
-    2. Auto-installing missing packages via pip
-    3. Failing fast with clear error if auto-install fails
+    Post-UV migration strategy:
+    - Instead of auto-installing with pip (conflicts with uv.lock),
+      check if .venv exists and guide users to proper setup.
+    - This prevents pip/uv mixing and maintains deterministic builds.
+    - Users who follow Layer 1 (devcontainer) or Layer 3 (setup.sh)
+      never hit this check.
 
-    Layer 2 of 4-layer dependency defense strategy.
+    Layer 2 catches users who:
+    - Skip setup entirely
+    - Run vibe-cli directly without proper environment
+
+    Why not auto-install?
+    - pip install conflicts with uv.lock (non-deterministic)
+    - uv sync requires uv command (may not be available)
+    - Better to guide users to canonical setup: make install
+
+    Related: DEFENSE_VALIDATION_REPORT.md, MIGRATION_NOTES.md
     """
-    required_modules = [
-        ('yaml', 'pyyaml'),
-        ('bs4', 'beautifulsoup4'),
-        ('dotenv', 'python-dotenv'),
-    ]
+    repo_root = Path(__file__).parent
+    venv_path = repo_root / ".venv"
+    lock_path = repo_root / "uv.lock"
 
-    missing = []
-    for module_name, package_name in required_modules:
-        try:
-            __import__(module_name)
-        except ImportError:
-            missing.append(package_name)
+    # Check if UV environment exists
+    if not venv_path.exists():
+        print("❌ Error: UV environment not found", file=sys.stderr)
+        print("", file=sys.stderr)
+        print("It looks like dependencies aren't installed yet.", file=sys.stderr)
+        print("", file=sys.stderr)
+        print("Please run ONE of these commands:", file=sys.stderr)
+        print("  make install          # Recommended (uses Makefile)", file=sys.stderr)
+        print("  ./setup.sh            # Alternative (uses setup script)", file=sys.stderr)
+        print("  uv sync --all-extras  # Direct (if uv is installed)", file=sys.stderr)
+        print("", file=sys.stderr)
+        print("This will create a .venv/ directory with all dependencies", file=sys.stderr)
+        print("from the locked versions in uv.lock (deterministic builds).", file=sys.stderr)
+        print("", file=sys.stderr)
+        print("Why this error?", file=sys.stderr)
+        print("  vibe-agency uses UV for dependency management (10-15x faster than pip).", file=sys.stderr)
+        print("  Dependencies are locked in uv.lock for reproducibility.", file=sys.stderr)
+        print("  See: MIGRATION_NOTES.md for more info.", file=sys.stderr)
+        sys.exit(1)
 
-    if missing:
-        print(f"⚠️  Missing dependencies: {', '.join(missing)}", file=sys.stderr)
-        print("🔧 Auto-installing...", file=sys.stderr)
-        try:
-            subprocess.check_call(
-                [sys.executable, "-m", "pip", "install", "-q"] + missing,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.PIPE
-            )
-            print("✅ Dependencies installed successfully", file=sys.stderr)
-        except subprocess.CalledProcessError as e:
-            print("❌ Auto-install failed. Run manually:", file=sys.stderr)
-            print(f"   pip install {' '.join(missing)}", file=sys.stderr)
-            print(f"\nOr use: ./setup.sh", file=sys.stderr)
-            sys.exit(1)
+    # Check if we're running in the UV environment
+    # Note: Not strictly necessary (imports will fail if wrong env)
+    # but provides better error message
+    if not sys.prefix == str(venv_path):
+        # Running outside .venv - might be manual activation or system Python
+        # Don't fail hard, but warn (imports will fail if truly wrong)
+        import os
+        if not os.getenv("VIRTUAL_ENV"):  # Not in any venv
+            print("⚠️  Warning: Not running in UV environment", file=sys.stderr)
+            print("", file=sys.stderr)
+            print("Tip: Use 'uv run' to ensure correct environment:", file=sys.stderr)
+            print("  uv run ./vibe-cli run <project-id>", file=sys.stderr)
+            print("", file=sys.stderr)
+            # Don't exit - let imports fail naturally if deps are wrong
 
-# Execute dependency check BEFORE any other imports
-_ensure_dependencies()
+# Execute environment check BEFORE any other imports
+_ensure_uv_environment()
 
 # ============================================================================
 # IMPORTS (After Dependency Check)
@@ -70,6 +91,7 @@ _ensure_dependencies()
 import os
 import json
 import logging
+import subprocess
 import yaml
 from pathlib import Path
 from typing import Optional, Dict, Any, List
