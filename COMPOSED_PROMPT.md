@@ -80,966 +80,765 @@ You are **VIBE_ALIGNER**, a Senior Product Manager & Software Architect AI agent
 
 # === KNOWLEDGE BASE ===
 
-# Feasibility Analysis Engine - Technical constraints and v1.0 scope limits
-# FAE_constraints.yaml
-# Feasibility Analysis Engine - Technical Constraints Database
-# This database provides machine-readable rules to validate v1.0 project scope
-# and prevent common architectural anti-patterns.
-
-version: "1.0"
-last_updated: "2025-01-15"
-
-# SECTION 1: Feature-Scope Incompatibilities
-# These rules identify features that are too complex, resource-intensive,
-# or operationally burdensome for a typical v1.0 project.
-incompatibilities:
-  - id: "FAE-001"
-    type: "feature_scope_conflict"
-    feature: "real_time_video_streaming_self_hosted"
-    incompatible_with: "scope_v1.0"
-    reason: "Requires WebRTC implementation, STUN/TURN servers, signaling servers, and a media server (SFU/MCU) for scale. Non-trivial infrastructure. "
-    required_nfrs:
-      - "low_latency_<1s"
-      - "high_bandwidth_support"
-      - "high_availability"
-    recommended_scope: "v2.0_or_later"
-    alternatives_for_v1:
-      - "pre_recorded_video_upload"
-      - "embed_3rd_party_zoom_jitsi"
-      - "use_3rd_party_mux_wistia"
-
-  - id: "FAE-002"
-    type: "feature_scope_conflict"
-    feature: "real_time_chat_self_hosted"
-    reason: >
-      Ein 'Build'-Ansatz (Eigenbau) wird aufgrund extremer technischer Komplexität 
-      und prohibitiv hoher 3-Jahres-TCO (Total Cost of Ownership) nicht empfohlen.
-      Die geschätzte initiale Entwicklungszeit (z.B. 10.2 Personenmonate) ist trivial
-      im Vergleich zu den langfristigen Kosten und Risiken für die Wartung einer
-      skalierbaren, zustands-synchronisierten Echtzeit-Infrastruktur.
-    recommendation: >
-      Verwenden Sie eine 'Buy/Blend'-Strategie unter Nutzung einer verwalteten CPaaS-API
-      oder einer etablierten Open-Source-Lösung (z.B. Rocket.Chat, Mattermost).
-      Dies reduziert die Time-to-Market von 8-14 Monaten auf 2-6 Wochen.
-    evidence:
-      - source: "Gartner MQ for CPaaS 2024 / Gartner AIBS 2024"
-        date: "2024-Q3"
-        finding: >
-          Der Markt hat sich von 'Build vs. Buy' zu 'Buy, Build, Blend' entwickelt.[28]
-          90% der Unternehmen werden bis 2028 CPaaS nutzen.
-        url: "https://example.com/gartner-cpaas-2024"
-      - source: "InfoQ Analysis: Challenges of Realtime Chat"
-        date: "2025-Q1"
-        finding: >
-          Technische Komplexität ist extrem hoch: Erfordert getrennte Push- (z.B. Redis)
-          und Persistenz- (z.B. PostgreSQL) Layer, was zu Race Conditions
-          und Synchronisationsproblemen führt.
-        url: "https://example.com/infoq-chat-challenges"
-      - source: "TCO-Analyse 'Build vs. Buy' (Analog: Reporting Layer)"
-        date: "2025-Q2"
-        finding: >
-          3-Jahres-TCO 'Build': $850k - $1.65M (8-14 Monate Entwicklungszeit).
-          3-Jahres-TCO 'Buy' (API): $30k - $150k (2-6 Wochen Entwicklungszeit).
-        url: "https://example.com/tco-build-vs-buy-2025"
-
-  - id: "FAE-003"
-    type: "feature_scope_conflict"
-    feature: "real_time_collaborative_editor"
-    incompatible_with: "scope_v1.0"
-    reason: "Requires complex conflict resolution algorithms (CRDTs or Operational Transforms), which is a massive, specialized engineering investment. "
-    recommended_scope: "v3.0_or_specialized_product"
-    alternatives_for_v1:
-      - "standard_textarea_with_locking"
-      - "last_write_wins_optimistic_concurrency"
-
-  - id: "FAE-004"
-    type: "feature_scope_conflict"
-    feature: "ai_ml_recommendation_engine"
-    incompatible_with: "scope_v1.0"
-    reason: "Subject to 'cold start' problem (no user data to train). Requires a massive data pipeline and ML infrastructure."
-    recommended_scope: "v2.0_or_later"
-    alternatives_for_v1:
-      - "manually_curated_list_editors_picks"
-      - "most_popular_query"
-      - "use_3rd_party_amazon_personalize"
-
-  - id: "FAE-005"
-    type: "feature_scope_conflict"
-    feature: "custom_analytics_dashboard"
-    incompatible_with: "scope_v1.0"
-    reason: "High development cost for a feature that is often unused. The v1.0 goal is to discover KPIs, not pre-build dashboards."
-    recommended_scope: "v2.0"
-    alternatives_for_v1:
-      - "integrate_3rd_party_plausible_ga"
-      - "use_3rd_party_datapad_metabase"
-
-  - id: "FAE-006"
-    type: "feature_scope_conflict"
-    feature: "self_hosted_full_text_search"
-    incompatible_with: "scope_v1.0"
-    reason: "Requires complex, resource-intensive infrastructure (Elasticsearch, Solr) with high operational overhead. Requires complex configuration."
-    recommended_scope: "v2.0"
-    alternatives_for_v1:
-      - "sql_like_query"
-      - "postgresql_tsvector"
-      - "use_3rd_party_algolia_meilisearch"
-
-  - id: "FAE-007"
-    type: "feature_scope_conflict"
-    feature: "multi_language_localization_full"
-    incompatible_with: "scope_v1.0"
-    reason: "Adds 40-60% complexity to all UI components. Requires i18n framework, translation management, and RTL support. Retrofit is 'impossible'."
-    recommended_scope: "v1.5_or_v2.0"
-    alternatives_for_v1:
-      - "english_only_with_i18n_architecture_ready"
-
-  - id: "FAE-008"
-    type: "feature_scope_conflict"
-    feature: "complex_rbac_abac_permissions"
-    incompatible_with: "scope_v1.0"
-    reason: "Object-level permissions (ABAC) are 'enormously complex' and lead to 'role explosion'. Prone to security flaws."
-    recommended_scope: "v2.0_for_enterprise"
-    alternatives_for_v1:
-      - "simple_hardcoded_roles_admin_user"
-      - "team_based_owner_member_roles"
-
-  - id: "FAE-009"
-    type: "feature_scope_conflict"
-    feature: "offline_first_data_sync"
-    incompatible_with: "scope_v1.0"
-    reason: "Is a fundamental architecture, not a feature. Requires local DB, service worker sync, and complex conflict-resolution logic. A 'hard problem'."
-    recommended_scope: "v2.0_or_later"
-    alternatives_for_v1:
-      - "online_first_architecture"
-      - "static_asset_caching_only"
-
-  - id: "FAE-010"
-    type: "feature_scope_conflict"
-    feature: "microservice_architecture"
-    incompatible_with: "scope_v1.0"
-    reason: "Premature optimization. Adds massive operational, distributed systems, and transactional complexity (eventual consistency). Start with 'MonolithFirst'."
-    recommended_scope: "v2.0_when_team_scales"
-    alternatives_for_v1:
-      - "well_architected_monolith"
-
-  - id: "FAE-011"
-    type: "feature_scope_conflict"
-    feature: "custom_sso_saml_integration"
-    incompatible_with: "scope_v1.0"
-    reason: "Complex enterprise-only feature. Requires deep XML/SAML knowledge. Defer for v2.0."
-    recommended_scope: "v2.0_for_enterprise"
-    alternatives_for_v1:
-      - "oauth_social_login"
-      - "basic_email_password_auth"
-
-  - id: "FAE-012"
-    type: "feature_scope_conflict"
-    feature: "full_multi_tenancy_isolated_db"
-    incompatible_with: "scope_v1.0"
-    reason: "High operational overhead (managing N databases). Not needed for v1.0."
-    recommended_scope: "v2.0_for_enterprise"
-    alternatives_for_v1:
-      - "shared_database_with_tenant_id_column"
-
-  - id: "FAE-013"
-    type: "feature_scope_conflict"
-    feature: "dynamic_plugin_architecture"
-    incompatible_with: "scope_v1.0"
-    reason: "YAGNI (You Ain't Gonna Need It). Extreme over-engineering for a v1.0. Hard-code features instead."
-    recommended_scope: "v3.0"
-    alternatives_for_v1:
-      - "hard_coded_features"
-
-  - id: "FAE-014"
-    type: "feature_scope_conflict"
-    feature: "blockchain_feature_integration"
-    incompatible_with: "scope_v1.0"
-    reason: "Highly specialized, volatile, and rarely the simplest solution. A standard database is 99.9% more appropriate."
-    recommended_scope: "specialized_product_only"
-    alternatives_for_v1:
-      - "postgresql_database_with_audit_log"
-
-  - id: "FAE-015"
-    type: "feature_scope_conflict"
-    feature: "ai_content_moderation"
-    incompatible_with: "scope_v1.0"
-    reason: "Complex, expensive, and requires huge datasets. v1.0 has low volume."
-    recommended_scope: "v2.0"
-    alternatives_for_v1:
-      - "manual_admin_flag_and_review_system"
-      - "user_reporting_button"
-
-  - id: "FAE-016"
-    type: "feature_scope_conflict"
-    feature: "self_hosted_payment_gateway"
-    incompatible_with: "scope_v1.0"
-    reason: "Enforces full PCI DSS Level 1 compliance, a massive legal and security burden. Do not do this."
-    recommended_scope: "never_unless_core_business"
-    alternatives_for_v1:
-      - "use_3rd_party_stripe_paddle_paypal"
-
-  - id: "FAE-017"
-    type: "feature_scope_conflict"
-    feature: "custom_workflow_automation_engine"
-    incompatible_with: "scope_v1.0"
-    reason: "Building a 'Zapier-clone' is a full product, not a feature."
-    recommended_scope: "v3.0"
-    alternatives_for_v1:
-      - "integrate_with_zapier"
-      - "manual_admin_process"
-
-  - id: "FAE-018"
-    type: "feature_scope_conflict"
-    feature: "algorithmic_feed_timeline"
-    incompatible_with: "scope_v1.0"
-    reason: "Same as Recommendation Engine (FAE-004). Requires data you don't have. "
-    recommended_scope: "v2.0"
-    alternatives_for_v1:
-      - "reverse_chronological_feed"
-
-  - id: "FAE-019"
-    type: "feature_scope_conflict"
-    feature: "enterprise_billing_seat_management"
-    incompatible_with: "scope_v1.0"
-    reason: "Adds complexity for prorating, seat-swapping, and 'true-ups'. Defer until enterprise sales."
-    recommended_scope: "v2.0"
-    alternatives_for_v1:
-      - "simple_flat_rate_subscription"
-      - "per_user_billing_no_prorating"
-
-  - id: "FAE-020"
-    type: "feature_scope_conflict"
-    feature: "two_sided_marketplace_platform"
-    incompatible_with: "scope_v1.0"
-    reason: "Is two products (buyer and seller), not one. Doubles v1.0 scope and introduces 'chicken-and-egg' market problem."
-    recommended_scope: "v1.0_focus_on_one_side"
-    alternatives_for_v1:
-      - "focus_on_one_side_of_market_first"
-      - "single_vendor_saas_product"
-
-  - id: "FAE-021"
-    type: "feature_scope_conflict"
-    feature: "custom_theme_engine"
-    incompatible_with: "scope_v1.0"
-    reason: "Classic 'feature creep'. Adds huge complexity to UI components. YAGNI. "
-    recommended_scope: "v2.0"
-    alternatives_for_v1:
-      - "simple_dark_mode_toggle"
-      - "one_single_theme"
-
-  - id: "FAE-022"
-    type: "feature_scope_conflict"
-    feature: "gamification_engine"
-    incompatible_with: "scope_v1.0"
-    reason: "High complexity (rules engine, badges, points). Defer until core value proposition is validated."
-    recommended_scope: "v2.0"
-    alternatives_for_v1:
-      - "focus_on_core_product_value"
-
-# SECTION 2: NFR Conflicts
-# These rules identify contradictory Non-Functional Requirements (NFRs).
-# A project cannot be fast, cheap, and good all at once.
-nfr_conflicts:
-  - id: "FAE-NFR-001"
-    type: "nfr_conflict"
-    nfr_a: "real_time_performance_latency_<50ms"
-    nfr_b: "serverless_architecture"
-    reason: "Serverless has cold start latency (100-3000ms). Incompatible with hard real-time requirements. "
-    resolution_options:
-      - "Relax latency requirement to <500ms"
-      - "Use dedicated servers (increases cost)"
-      - "Use 3rd-party real-time service (Ably, Pusher)"
-      - "Use managed cloud service (AWS AppSync )"
-
-  - id: "FAE-NFR-002"
-    type: "nfr_conflict"
-    nfr_a: "high_availability_99.99%_plus"
-    nfr_b: "v1.0_budget"
-    reason: "Requires expensive, complex multi-region architecture and operation. Cost and complexity are non-linear."
-    resolution_options:
-      - "Accept 99.9% uptime (single-region, multi-zone) "
-      - "Use a managed PaaS (e.g., Heroku, Vercel) that abstracts this"
-
-  - id: "FAE-NFR-003"
-    type: "nfr_conflict"
-    nfr_a: "web_scale_scalability"
-    nfr_b: "v1.0_development_simplicity"
-    reason: "Building for web-scale (e.g., microservices) is premature optimization and adds immense complexity. A v1.0 should scale vertically first."
-    resolution_options:
-      - "Build a 'scalable monolith'"
-      - "Use a managed PaaS that auto-scales"
-      - "Focus on vertical scaling before horizontal"
-
-  - id: "FAE-NFR-004"
-    type: "nfr_conflict"
-    nfr_a: "high_security_compliance_hipaa_gdpr_pci"
-    nfr_b: "rapid_v1.0_development_<3months"
-    reason: "Compliance adds 6-12 weeks for audit logs, data encryption, access controls, and legal review."
-    resolution_options:
-      - "De-scope v1.0 to NOT handle regulated data"
-      - "Use compliant 3rd-party services to offload burden (e.g., Stripe )"
-      - "Delay launch for compliance review"
-
-  - id: "FAE-NFR-005"
-    type: "nfr_conflict"
-    nfr_a: "extreme_security_friction"
-    nfr_b: "high_usability_frictionless_ux"
-    reason: "Overly-strict security (e.g., frequent password rotation, aggressive session timeouts) leads to user 'password-fatigue' and 'decision-fatigue'."
-    resolution_options:
-      - "Use SSO/OAuth to reduce password burden "
-      - "Use magic links"
-      - "Implement 2FA but make it optional at launch"
-
-  - id: "FAE-NFR-006"
-    type: "nfr_conflict"
-    nfr_a: "high_internal_quality"
-    nfr_b: "rapid_feature_development"
-    reason: "This is a false conflict. Low internal quality (cruft) slows future development. High quality is an *enabler* of speed."
-    resolution_options:
-      - "Maintain high internal quality (tests, refactoring) to enable speed "
-      - "Distinguish 'strategic debt' (deferring v2.0) from 'bad debt' (cruft)"
-
-  - id: "FAE-NFR-007"
-    type: "nfr_conflict"
-    nfr_a: "high_scalability_horizontal"
-    nfr_b: "relational_db_acid_consistency"
-    reason: "Traditional relational databases are harder to scale horizontally. Distributed systems often require eventual consistency."
-    resolution_options:
-      - "Use a vertically-scaled monolith DB for v1.0"
-      - "Use a managed, scalable DB (e.g., Aurora, Spanner)"
-      - "Relax consistency requirements (use NoSQL)"
-
-  - id: "FAE-NFR-008"
-    type: "nfr_conflict"
-    nfr_a: "low_latency_performance"
-    nfr_b: "complex_orm_usage"
-    reason: "Object-Relational Mapping (ORM) tools can easily generate 'N+1' queries, leading to thousands of DB calls and high latency."
-    resolution_options:
-      - "Use the ORM but enable eager-loading (e.g., 'JOIN FETCH')"
-      - "Write custom, optimized SQL queries for performance-critical paths"
-      - "Use a data-loader pattern"
-
-  - id: "FAE-NFR-009"
-    type: "nfr_conflict"
-    nfr_a: "high_observability"
-    nfr_b: "v1.0_development_simplicity"
-    reason: "Full observability (distributed tracing, metrics, logging) requires complex setup (e.g., Prometheus, Grafana, Jaeger) and instrumenting all code."
-    resolution_options:
-      - "Use a 3rd-party APM tool (e.g., DataDog, Sentry) to simplify"
-      - "Rely on basic logging and uptime checks for v1.0"
-
-  - id: "FAE-NFR-010"
-    type: "nfr_conflict"
-    nfr_a: "low_cost"
-    nfr_b: "high_performance_dedicated_servers"
-    reason: "Dedicated servers offer the best performance but are the most expensive option."
-    resolution_options:
-      - "Use serverless (accepting latency)"
-      - "Use a managed PaaS (e.g., Heroku, Vercel)"
-      - "Use auto-scaling group (e.g., AWS EC2) to match load"
-
-# SECTION 3: Technology Stack Constraints
-# These rules define binary incompatibilities or mandatory infrastructure
-# requirements (Required Technical On-ramps - RTOs).
-tech_constraints:
-  - id: "FAE-TECH-001"
-    type: "tech_incompatibility"
-    technology: "websockets"
-    incompatible_with:
-      - "serverless_lambda_aws"
-      - "serverless_vercel_functions"
-      - "static_hosting_netlify_vercel"
-    reason: "WebSockets require persistent stateful connections. Serverless functions are stateless and have max execution times. "
-    workarounds:
-      - "Use 3rd-party service (Pusher, Ably) "
-      - "Use AWS API Gateway WebSocket "
-      - "Use Azure Web PubSub "
-
-  - id: "FAE-TECH-002"
-    type: "tech_incompatibility"
-    technology: "self_hosted_payment_form"
-    incompatible_with:
-      - "scope_v1.0"
-      - "rapid_v1.0_development_<3months"
-    reason: "Forces full PCI DSS Level 1 compliance (300+ controls), which is a massive security, legal, and infrastructure burden. "
-    workarounds:
-      - "Use Stripe Elements (iframe)"
-      - "Use Stripe Checkout (hosted page) "
-      - "Use PayPal redirect"
-
-  - id: "FAE-TECH-003"
-    type: "tech_rto"
-    technology: "webrtc"
-    requires_infrastructure:
-      - "signaling_server"
-      - "stun_server"
-      - "turn_server"
-    reason: "WebRTC requires these services for peer-to-peer connection negotiation and NAT traversal. "
-    workarounds:
-      - "Use a 3rd-party managed WebRTC service (e.g., Twilio Video)"
-
-  - id: "FAE-TECH-004"
-    type: "tech_rto"
-    technology: "hls_video_streaming"
-    requires_infrastructure:
-      - "media_server"
-      - "transcoding_service_ffmpeg"
-      - "cdn"
-    reason: "HLS requires video to be transcoded (e.g., with FFmpeg) into multiple bitrates and served from a CDN via a manifest file. "
-    workarounds:
-      - "Use 3rd-party video host (Vimeo, Wistia, Mux)"
-
-  - id: "FAE-TECH-005"
-    type: "tech_rto"
-    technology: "oauth_social_login"
-    requires_infrastructure:
-      - "oauth_provider_api_keys"
-      - "secure_callback_url_handler"
-      - "secure_token_storage"
-      - "account_linking_logic"
-    reason: "Requires correct implementation of complex OAuth 2.0/OIDC protocols and handling provider-specific quirks."
-    workarounds:
-      - "Use a 3rd-party auth provider (Auth0, Okta, Firebase Auth)"
-
-  - id: "FAE-TECH-006"
-    type: "tech_rto"
-    technology: "magic_link_passwordless"
-    requires_infrastructure:
-      - "robust_email_service_sendgrid_postmark"
-      - "secure_token_generation_and_storage"
-      - "token_state_management"
-    reason: "Creates a hard dependency on a 3rd-party email provider's deliverability. "
-    workarounds:
-      - "Use a 3rd-party auth provider (Descope, Auth0)"
-
-  - id: "FAE-TECH-007"
-    type: "tech_incompatibility"
-    technology: "monolithic_architecture"
-    incompatible_with:
-      - "polyglot_programming_stack"
-    reason: "Defeats the primary benefit of a monolith: a single, unified codebase, deployment, and testing model. "
-    workarounds:
-      - "Choose one primary backend language for the v1.0"
-      - "Adopt microservices (v2.0+) if polyglot is required"
-
-  - id: "FAE-TECH-008"
-    type: "tech_incompatibility"
-    technology: "hipaa_compliance"
-    incompatible_with:
-      - "standard_heroku_dyno"
-      - "standard_vercel_hosting"
-      - "non-hipaa-eligible_aws_services"
-    reason: "HIPAA requires a signed Business Associate Addendum (BAA) and use of specific compliant services."
-    workarounds:
-      - "Use only HIPAA-eligible AWS services"
-      - "Use HIPAA-compliant Heroku Shield"
-      - "De-scope v1.0 to not handle PHI"
-
-  - id: "FAE-TECH-009"
-    type: "tech_rto"
-    technology: "high_availability_99.9%_plus"
-    requires_infrastructure:
-      - "multi_zone_deployment"
-      - "load_balancer"
-      - "database_replication"
-    reason: "Requires redundancy across at least two availability zones to tolerate a single datacenter failure. "
-    workarounds:
-      - "Accept lower availability (single-zone) for v1.0"
-      - "Use a managed PaaS that provides this by default"
-
-  - id: "FAE-TECH-010"
-    type: "tech_incompatibility"
-    technology: "relational_database_orm"
-    incompatible_with:
-      - "schema-less_development"
-    reason: "ORMs (e.g., Prisma, TypeORM, SQLAlchemy) require a well-defined, static schema to function. They are incompatible with schema-less (e.g., MongoDB) design."
-    workarounds:
-      - "Use a NoSQL database with a native driver"
-      - "Define a schema (e.g., Mongoose) for your NoSQL DB"
-
-# SECTION 4: Dependency Complexity Chains
-# These rules define the "multiplicative" complexity of features.
-# Adding a "trigger" feature multiplies the complexity of the base feature.
-dependency_chains:
-  - id: "FAE-DEP-001"
-    feature: "user_authentication"
-    basic_dependencies:
-      - "user_database"
-      - "password_hashing_bcrypt"
-      - "session_management_jwt_or_cookie"
-    complexity_multipliers:
-      - trigger: "oauth_social_login"
-        multiplier: 2.0
-        adds_dependencies:
-          - "oauth_provider_integration"
-          - "token_management"
-          - "account_linking_logic"
-        reason: "Adds high complexity for OAuth 2.0 protocol and provider-specific quirks."
-      - trigger: "multi_factor_auth_mfa"
-        multiplier: 1.5
-        adds_dependencies:
-          - "sms_service_twilio_or_totp"
-          - "user_mfa_setup_flow"
-          - "recovery_code_logic"
-        reason: "Adds medium complexity for 3rd-party integration and new user flows."
-      - trigger: "magic_link_passwordless"
-        multiplier: 1.8
-        adds_dependencies:
-          - "robust_email_service"
-          - "secure_token_generation"
-          - "token_state_management"
-        reason: "Adds high complexity and high-risk dependency on email deliverability."
-      - trigger: "saml_sso"
-        multiplier: 5.0
-        adds_dependencies:
-          - "xml_parsing_library"
-          - "saml_identity_provider_config"
-          - "certificate_management"
-        reason: "Enterprise-grade v2.0+ feature. Extremely high complexity."
-
-  - id: "FAE-DEP-002"
-    feature: "payment_processing"
-    basic_dependencies:
-      - "stripe_checkout_sdk"
-      - "single_webhook_endpoint"
-      - "basic_order_table"
-    complexity_multipliers:
-      - trigger: "subscription_billing"
-        multiplier: 3.0
-        adds_dependencies:
-          - "subscription_logic_state_machine"
-          - "dunning_logic_failed_payments"
-          - "proration_logic"
-          - "plan_management_db"
-        reason: "Subscriptions are exponentially more complex than one-time payments. Adds logic for trials, failed payments, and cancellations. "
-      - trigger: "marketplace_platform_payments"
-        multiplier: 10.0
-        adds_dependencies:
-          - "stripe_connect_integration"
-          - "kyc_onboarding_flow"
-          - "payment_splitting_logic"
-          - "tax_reporting_1099_logic"
-        reason: "An order of magnitude more complex. Involves legal, tax, and complex fund-splitting."
-      - trigger: "multi_currency_support"
-        multiplier: 1.5
-        adds_dependencies:
-          - "currency_conversion_api"
-          - "locale_specific_pricing_ui"
-        reason: "Adds UI and financial complexity."
-
-  - id: "FAE-DEP-003"
-    feature: "basic_crud_feature"
-    basic_dependencies:
-      - "api_endpoints_crud"
-      - "database_table"
-      - "ui_form_and_table"
-    complexity_multipliers:
-      - trigger: "user_audit_log"
-        multiplier: 1.4
-        adds_dependencies:
-          - "audit_log_table"
-          - "logging_logic_on_all_mutations"
-        reason: "Requires intercepting every C/U/D operation to log 'who, what, when'."
-      - trigger: "real_time_updates"
-        multiplier: 2.5
-        adds_dependencies:
-          - "websocket_connection"
-          - "pub_sub_system"
-          - "ui_real_time_subscription"
-        reason: "Adds real-time infrastructure complexity to a simple CRUD app. "
-      - trigger: "offline_sync"
-        multiplier: 4.0
-        adds_dependencies:
-          - "local_database_indexeddb"
-          - "service_worker_sync_logic"
-          - "conflict_resolution_logic"
-        reason: "Adds 3-5 weeks of work. Fundamentally changes architecture. "
-
-  - id: "FAE-DEP-004"
-    feature: "user_profile"
-    basic_dependencies:
-      - "crud_user_name_email"
-      - "ui_profile_form"
-    complexity_multipliers:
-      - trigger: "avatar_image_upload"
-        multiplier: 1.5
-        adds_dependencies:
-          - "blob_storage_s3_or_gcs"
-          - "image_processing_library_sharp"
-        reason: "Requires file storage bucket and server-side image resizing/compression."
-      - trigger: "user_settings_notifications"
-        multiplier: 1.3
-        adds_dependencies:
-          - "user_settings_table"
-          - "logic_in_notification_service"
-        reason: "Requires checking user preferences before every email/push."
-
-  - id: "FAE-DEP-005"
-    feature: "admin_dashboard"
-    basic_dependencies:
-      - "read_only_data_tables"
-      - "admin_authentication_gate"
-    complexity_multipliers:
-      - trigger: "impersonation_mode"
-        multiplier: 2.0
-        adds_dependencies:
-          - "impersonation_auth_logic"
-          - "secure_session_swap"
-          - "audit_log_for_impersonation"
-        reason: "High-risk security feature. Requires careful implementation and logging."
-      - trigger: "manual_data_editing"
-        multiplier: 1.8
-        adds_dependencies:
-          - "admin_crud_apis"
-          - "data_validation_logic"
-          - "logging_of_admin_changes"
-        reason: "Turns read-only dashboard into a complex internal tool. High risk of data corruption."
-
-# SECTION 5: Time Estimates
-# Baseline time estimates for common, well-defined v1.0 features.
-# Assumes a single, experienced developer.
-feature_time_estimates:
-  - id: "FAE-TIME-001"
-    feature_type: "user_authentication_basic"
-    typical_time: "1-2 weeks"
-    complexity: "medium"
-    reason: "Includes registration, login, secure password reset, email validation."
-
-  - id: "FAE-TIME-002"
-    feature_type: "user_authentication_oauth"
-    typical_time: "1-2 weeks (additional)"
-    complexity: "medium-high"
-    reason: "OAuth 2.0 flow, provider key setup, callback handling, and account linking."
-
-  - id: "FAE-TIME-003"
-    feature_type: "payment_processing_stripe_checkout_one_time"
-    typical_time: "1 week"
-    complexity: "medium"
-    reason: "Includes Stripe Checkout integration, webhook for success, and local database update for order."
-
-  - id: "FAE-TIME-004"
-    feature_type: "payment_processing_stripe_subscription"
-    typical_time: "2-4 weeks"
-    complexity: "high"
-    reason: "Requires subscription logic, dunning (failed payments), multiple webhooks (create, cancel, fail), and plan management UI."
-
-  - id: "FAE-TIME-005"
-    feature_type: "real_time_chat_3rd_party"
-    typical_time: "1-2 weeks"
-    complexity: "medium"
-    reason: "Integrate 3rd-party SDK (e.g., Pusher), manage connection, build UI."
-
-  - id: "FAE-TIME-006"
-    feature_type: "real_time_chat_self_hosted"
-    typical_time: "10.2 person-months"
-    complexity: "very_high"
-    reason: "Survey-backed average. Non-trivial infra, WebSocket scaling, persistence, presence."
-
-  - id: "FAE-TIME-007"
-    feature_type: "basic_crud_api_and_ui"
-    typical_time: "3-5 days"
-    complexity: "low"
-    reason: "Standard work-unit. API endpoints (CRUD), DB table, UI forms/table. "
-
-  - id: "FAE-TIME-008"
-    feature_type: "offline_sync_feature"
-    typical_time: "3-5 weeks (additional)"
-    complexity: "very_high"
-    reason: "Per-feature cost. Adds conflict resolution, local DB, sync logic. "
-
-  - id: "FAE-TIME-009"
-    feature_type: "static_landing_page"
-    typical_time: "2-3 days"
-    complexity: "low"
-    reason: "Basic marketing page with CSS and content."
-
-  - id: "FAE-TIME-010"
-    feature_type: "user_profile_page"
-    typical_time: "2-4 days"
-    complexity: "low-medium"
-    reason: "CRUD for user data (name, avatar upload, etc.)."
-
-  - id: "FAE-TIME-011"
-    feature_type: "admin_dashboard_basic"
-    typical_time: "1-2 weeks"
-    complexity: "medium"
-    reason: "Read-only tables for users, payments, etc. Basic 'god-mode' to manage the app."
-
-  - id: "FAE-TIME-012"
-    feature_type: "email_notifications_basic"
-    typical_time: "3-5 days"
-    complexity: "low-medium"
-    reason: "Integrate 3rd-party email service (SendGrid, Postmark) for transactional emails (welcome, reset pass)."
-
-  - id: "FAE-TIME-013"
-    feature_type: "algorithmic_feed_v1"
-    typical_time: "2-3 days"
-    complexity: "low"
-    reason: "A simple reverse-chronological feed. SELECT * FROM posts ORDER BY created_at DESC."
-
-  - id: "FAE-TIME-014"
-    feature_type: "algorithmic_feed_v2"
-    typical_time: "3-6 months"
-    complexity: "very_high"
-    reason: "Same as Recommendation Engine. Requires data pipeline, ML model, and scoring. "
-
-  - id: "FAE-TIME-015"
-    feature_type: "i18n_ready_architecture"
-    typical_time: "1-2 days"
-    complexity: "low"
-    reason: "Setup i18n framework (e.g., i18next) and externalize all strings into a single en.json file."
-
-  - id: "FAE-TIME-016"
-    feature_type: "i18n_full_implementation"
-    typical_time: "1-3 weeks (additional per language)"
-    complexity: "medium-high"
-    reason: "Includes translation management, locale-specific formatting (dates, numbers), and UI/layout testing (especially for RTL)."
-
-  - id: "FAE-TIME-017"
-    feature_type: "database_setup_basic"
-    typical_time: "1-2 days"
-    complexity: "low"
-    reason: "Initialize database, schema, and basic ORM configuration."
-
-  - id: "FAE-TIME-018"
-    feature_type: "ci_cd_pipeline_basic"
-    typical_time: "2-4 days"
-    complexity: "medium"
-    reason: "Setup GitHub Actions/GitLab CI to lint, test, and deploy to a single environment."
-
-  - id: "FAE-TIME-019"
-    feature_type: "user_avatar_upload"
-    typical_time: "2-3 days"
-    complexity: "medium"
-    reason: "Requires blob storage (e.g., S3), image processing (resize/compress), and frontend upload logic."
-
-  - id: "FAE-TIME-020"
-    feature_type: "saml_sso_integration"
-    typical_time: "4-6 weeks"
-    complexity: "very_high"
-    reason: "Extremely complex enterprise feature. Requires XML parsing, certificate management, and testing with IdPs (Okta, Azure AD)."
+# Data contracts and schemas for all artifacts (feature_spec.json, etc.)
+# =================================================================
+# ORCHESTRATION_data_contracts.yaml
+# Defines JSON schemas for all artifacts passed between
+# workflow states.
+# Based on the analysis in Part 2 of this report.
+# =================================================================
+version: 1.0.0
+kind: SchemaCollection
+
+# 1. Governance rules for schema evolution
+# Based on [4, 10, 11, 12]
+schema_evolution_rules:
+ - type: "ADD_OPTIONAL_FIELD"
+   compatibility: "BACKWARD_COMPATIBLE"
+   version_bump: "MINOR"
+   allowed: true
+ - type: "ADD_FIELD_WITH_DEFAULT"
+   compatibility: "BACKWARD_COMPATIBLE"
+   version_bump: "MINOR"
+   allowed: true
+ - type: "ADD_REQUIRED_FIELD"
+   compatibility: "BREAKING_CHANGE"
+   version_bump: "MAJOR"
+   allowed: false # (Must be avoided for v1.0)
+ - type: "REMOVE_FIELD"
+   compatibility: "BREAKING_CHANGE"
+   version_bump: "MAJOR"
+   allowed: false # (Must be avoided for v1.0)
+ - type: "RENAME_FIELD"
+   compatibility: "BREAKING_CHANGE"
+   version_bump: "MAJOR"
+   allowed: false # (Use "Expand/Contract" pattern)
+ - type: "CHANGE_FIELD_TYPE"
+   compatibility: "BREAKING_CHANGE"
+   version_bump: "MAJOR"
+   allowed: false
+
+# 2. Schema definitions (excerpts of most important fields)
+schemas:
+
+ - name: "project_manifest.schema.json"
+   version: "1.1.0"
+   $id: "https://api.example.com/schemas/project_manifest.v1.1.0.json"
+   description: "The central contract containing workflow state and artifact links."
+   fields:
+     - name: "schema_version"
+       type: "string"
+       required: true
+     - name: "project_id"
+       type: "string(uuid)"
+       required: true
+     - name: "project_type"
+       type: "enum"
+       required: false
+       default: "commercial"
+       values: ["commercial", "portfolio", "demo", "nonprofit", "personal"]
+       description: "Project context type - determines workflow intensity (full vs quick mode)"
+     - name: "current_state"
+       type: "enum"
+       required: true
+       values:
+     - name: "links"
+       type: "object"
+       required: true
+       properties:
+         - { name: "code_gen_spec", type: "string(uri)" }
+         - { name: "test_plan", type: "string(uri)" }
+         - { name: "qa_report", type: "string(uri)" }
+         - { name: "deploy_receipt", type: "string(uri)" }
+
+ - name: "feature_spec.schema.json"
+   version: "1.0.0"
+   $id: "https://api.example.com/schemas/feature_spec.v1.0.0.json"
+   description: "Output of the PLANNING state. Defines validated feature specifications."
+   fields:
+     - name: "project"
+       type: "object"
+       required: true
+       properties:
+         - { name: "name", type: "string", description: "Project Name" }
+         - { name: "category", type: "enum", values: ["CLI Tool", "Web App", "Mobile App", "API Service"], description: "Project Category" }
+         - { name: "scale", type: "enum", values: ["Solo User", "Small Team", "Production"], description: "Project Scale" }
+         - { name: "target_scope", type: "enum", values: ["prototype", "mvp", "v1.0"], description: "Target Scope" }
+         - { name: "core_problem", type: "string", description: "1-2 sentence description of what problem this solves" }
+         - { name: "target_users", type: "string", description: "Who will use this" }
+     - name: "lean_canvas_summary"
+       type: "object"
+       required: false # Optional, as LEAN_CANVAS_VALIDATOR might be optional
+       properties:
+         - { name: "riskiest_assumptions", type: "array", items: "string", description: "Identified riskiest assumptions from Lean Canvas" }
+     - name: "features"
+       type: "array"
+       required: true
+       items:
+         type: "object"
+         properties:
+           - { name: "id", type: "string" }
+           - { name: "name", type: "string" }
+           - { name: "priority", type: "enum", values: ["must_have", "should_have", "could_have", "wont_have_v1"] }
+           - { name: "complexity_score", type: "integer" }
+           - { name: "estimated_effort", type: "string" }
+           - name: "input"
+             type: "object"
+             properties:
+               - { name: "format", type: "string" }
+               - { name: "example", type: "string" }
+               - { name: "constraints", type: "string" }
+           - name: "processing"
+             type: "object"
+             properties:
+               - { name: "description", type: "string" }
+               - { name: "external_dependencies", type: "array", items: "string" }
+               - { name: "side_effects", type: "array", items: "string" }
+           - name: "output"
+             type: "object"
+             properties:
+               - { name: "format", type: "string" }
+               - { name: "example", type: "string" }
+               - { name: "success_criteria", type: "string" }
+           - name: "dependencies"
+             type: "object"
+             properties:
+               - name: "required"
+                 type: "array"
+                 items:
+                   type: "object"
+                   properties:
+                     - { name: "component", type: "string" }
+                     - { name: "reason", type: "string" }
+                     - { name: "source", type: "string" }
+               - { name: "optional", type: "array", items: "string" }
+           - name: "fae_validation"
+             type: "object"
+             properties:
+               - { name: "passed", type: "boolean" }
+               - { name: "constraints_checked", type: "array", items: "string" }
+               - { name: "issues", type: "array", items: "string" }
+     - name: "nfr_requirements"
+       type: "array"
+       required: false # Optional, as NFR Triage might be skipped or not fully filled
+       items:
+         type: "object"
+         properties:
+           - { name: "nfr_id", type: "string" }
+           - { name: "category", type: "string" }
+           - { name: "target_level", type: "string" }
+           - { name: "reason", type: "string" }
+     - name: "scope_negotiation"
+       type: "object"
+       required: true
+       properties:
+         - { name: "total_complexity", type: "integer" }
+         - name: "complexity_breakdown"
+           type: "object"
+           properties:
+             - { name: "must_have", type: "integer" }
+             - { name: "should_have", type: "integer" }
+             - { name: "wont_have_v1", type: "integer" }
+         - { name: "timeline_estimate", type: "string" }
+         - { name: "v1_exclusions", type: "array", items: "string" }
+     - name: "validation"
+       type: "object"
+       required: true
+       properties:
+         - { name: "fae_passed", type: "boolean" }
+         - { name: "fdg_passed", type: "boolean" }
+         - { name: "apce_passed", type: "boolean" }
+         - { name: "all_features_complete", type: "boolean" }
+         - { name: "ready_for_genesis", type: "boolean" }
+     - name: "metadata"
+       type: "object"
+       required: true
+       properties:
+         - { name: "vibe_version", type: "string" }
+         - { name: "created_at", type: "string" }
+         - { name: "user_educated", type: "boolean" }
+         - { name: "scope_negotiated", type: "boolean" }
+
+ - name: "lean_canvas_summary.schema.json"
+   version: "1.0.0"
+   $id: "https://api.example.com/schemas/lean_canvas_summary.v1.0.0.json"
+   description: "Output von LEAN_CANVAS_VALIDATOR, Input für VIBE_ALIGNER"
+   fields:
+     - name: "version"
+       type: "string"
+       required: true
+       default: "1.0"
+     - name: "canvas_fields"
+       type: "object"
+       required: true
+       properties:
+         - { name: "problem", type: "string", description: "Top 3 problems customer has" }
+         - { name: "customer_segments", type: "string", description: "Target customers and users" }
+         - { name: "unique_value_proposition", type: "string", description: "Single, clear, compelling message" }
+         - { name: "solution", type: "string", description: "Top 3 features" }
+         - { name: "channels", type: "string", description: "Path to customers" }
+         - { name: "revenue_streams", type: "string", description: "How will you make money" }
+         - { name: "cost_structure", type: "string", description: "Customer acquisition costs, distribution costs, etc" }
+         - { name: "key_metrics", type: "string", description: "Key activities you measure" }
+         - { name: "unfair_advantage", type: "string", description: "Something that cannot be easily copied or bought" }
+     - name: "riskiest_assumptions"
+       type: "array"
+       required: true
+       items:
+         type: "object"
+         properties:
+           - { name: "assumption", type: "string", description: "The assumption being made" }
+           - { name: "why_risky", type: "string", description: "Why this assumption is risky" }
+           - { name: "validation_method", type: "string", description: "How to validate this assumption" }
+     - name: "readiness"
+       type: "object"
+       required: true
+       properties:
+         - name: "status"
+           type: "enum"
+           required: true
+           values: ["READY", "NOT_READY"]
+           description: "Whether the business validation is complete and ready for feature specification"
+         - name: "confidence_level"
+           type: "enum"
+           required: true
+           values: ["high", "medium", "low"]
+           description: "Confidence level in the business model"
+         - name: "missing_inputs"
+           type: "array"
+           required: false
+           items: "string"
+           description: "List of missing or unclear inputs that need clarification"
+
+ - name: "code_gen_spec.schema.json"
+   version: "1.0.0"
+   $id: "https://api.example.com/schemas/code_gen_spec.v1.0.0.json"
+   description: "Input for the CODING state. Defines the L1-L4 context for the AI."
+   fields:
+     - name: "schema_version"
+       type: "string"
+       required: true
+     - name: "structured_specification" # L1
+       type: "object"
+       required: true
+       properties:
+         - { name: "architecture_ref", type: "string(uri)" }
+     - name: "database_context" # L2
+       type: "object"
+       required: true
+       properties:
+         - { name: "db_schema_ref", type: "string(uri)" }
+     - name: "task_context" # L3
+       type: "object"
+       required: true
+       properties:
+         - { name: "intent", type: "string" }
+         - { name: "scope", type: "object" }
+         - { name: "acceptance_criteria", type: "array" }
+     - name: "system_context" # L4
+       type: "object"
+       required: true
+       properties:
+         - { name: "knowledge_graph_query", type: "string" }
+
+ - name: "test_plan.schema.json"
+   version: "1.0.0"
+   $id: "https://api.example.com/schemas/test_plan.v1.0.0.json"
+   description: "Input for the TESTING state. Defines the test scope."
+   fields:
+     - name: "schema_version"
+       type: "string"
+       required: true
+     - name: "test_pyramid_config"
+       type: "object"
+       required: true
+       properties:
+         - { name: "unit_tests", type: "object" }
+         - { name: "integration_tests", type: "object" }
+         - { name: "e2e_tests", type: "object" }
+     - name: "deferred_tests_v1"
+       type: "array"
+       required: true
+       items: "string" # z.B. "Load", "Penetration" 
+     - name: "hitl_requirements"
+       type: "object"
+       required: true
+       properties:
+         - { name: "usability_acceptance_criteria", type: "string" }
+
+ - name: "qa_report.schema.json"
+   version: "1.0.0"
+   $id: "https://api.example.com/schemas/qa_report.v1.0.0.json"
+   description: "Output des TESTING-Zustands. Dient als Exit-Gate für die HITL-Genehmigung."
+   fields:
+     - name: "schema_version"
+       type: "string"
+       required: true
+     - name: "status"
+       type: "enum"
+       required: true
+       values: ["PASSED", "FAILED", "PARTIAL"]
+     - name: "critical_path_pass_rate"
+       type: "number"
+       required: true
+     - name: "blocker_bugs_open"
+       type: "integer"
+       required: true
+     - name: "coverage_on_new_code"
+       type: "number"
+       required: true
+     - name: "manual_ux_review_completed"
+       type: "boolean"
+       required: true
+     - name: "sast_check_passed"
+       type: "boolean"
+       required: true
+     - name: "sca_check_passed"
+       type: "boolean"
+       required: true
+
+ - name: "deploy_receipt.schema.json"
+   version: "1.0.0"
+   $id: "https://api.example.com/schemas/deploy_receipt.v1.0.0.json"
+   description: "Output des DEPLOYMENT-Zustands. Dient als Beweis des Deployments."
+   fields:
+     - name: "schema_version"
+       type: "string"
+       required: true
+     - name: "status"
+       type: "enum"
+       required: true
+       values: ["SUCCESS", "ROLLED_BACK", "IN_PROGRESS"]
+     - name: "artifact_version_deployed"
+       type: "string"
+       required: true
+     - name: "db_migration_status"
+       type: "enum"
+       required: true
+       values: ["APPLIED", "SKIPPED", "FAILED"]
+     - name: "health_check_status"
+       type: "enum"
+       required: true
+       values: ["OK", "DEGRADED", "FAILED"]
+     - name: "golden_signal_values" # Gemessen während "Soak Time" 
+       type: "object"
+       required: true
+       properties:
+         - { name: "latency_p95_ms", type: "integer" }
+         - { name: "error_rate_percent", type: "number" }
+
+ - name: "bug_report.schema.json"
+   version: "1.0.0"
+   $id: "https://api.example.com/schemas/bug_report.v1.0.0.json"
+   description: "Input für den MAINTENANCE-Zustand. Löst den Triage-Workflow aus."
+   fields:
+     - name: "schema_version"
+       type: "string"
+       required: true
+     - name: "severity"
+       type: "enum"
+       required: true
+       values: ["P1_Critical", "P2_High", "P3_Medium", "P4_Low", "P5_Cosmetic"]
+     - name: "category"
+       type: "enum"
+       required: true
+       values: ["Security", "Performance", "Functional", "UI", "Data"]
+     - name: "context"
+       type: "object"
+       required: true
+       properties:
+         - { name: "PII_impact", type: "boolean", default: false }
+     - name: "reproducible"
+       type: "boolean"
+       required: true
+     - name: "correlated_trace_id"
+       type: "string" # Kritisch für Observability
+       required: false
+
+ - name: "audit_report.schema.json"
+   version: "1.0.0"
+   $id: "https://api.example.com/schemas/audit_report.v1.0.0.json"
+   description: "Output of AUDITOR quality gate checks. Contains audit findings and pass/fail status."
+   added_in: "GAD-002 Phase 4"
+   fields:
+     - name: "schema_version"
+       type: "string"
+       required: true
+       default: "1.0"
+     - name: "check_type"
+       type: "string"
+       required: true
+       description: "Type of audit check performed (e.g., prompt_security_scan, code_security_scan)"
+     - name: "severity"
+       type: "enum"
+       required: true
+       values: ["critical", "high", "medium", "info"]
+       description: "Severity level of this audit check"
+     - name: "blocking"
+       type: "boolean"
+       required: true
+       description: "Whether this audit can block state transitions"
+     - name: "status"
+       type: "enum"
+       required: true
+       values: ["PASS", "FAIL", "ERROR", "UNKNOWN"]
+       description: "Audit result status"
+     - name: "findings"
+       type: "array"
+       required: false
+       items:
+         type: "object"
+         properties:
+           - { name: "check_id", type: "string", description: "Check ID from AUDIT_CHECKLIST (e.g., SM-1.1)" }
+           - { name: "severity", type: "enum", values: ["critical", "high", "medium", "low", "info"] }
+           - { name: "category", type: "string", description: "Category (e.g., State Machine, Data Contracts)" }
+           - { name: "description", type: "string", description: "Description of the finding" }
+           - { name: "evidence", type: "string", description: "Evidence/location of the issue" }
+           - { name: "recommendation", type: "string", required: false }
+     - name: "target_files"
+       type: "array"
+       required: false
+       items: "string"
+       description: "Files that were audited"
+     - name: "timestamp"
+       type: "string"
+       required: true
+       description: "ISO 8601 timestamp of when audit was performed"
+     - name: "error"
+       type: "string"
+       required: false
+       description: "Error message if audit execution failed"
+     - name: "metadata"
+       type: "object"
+       required: false
+       properties:
+         - { name: "auditor_version", type: "string" }
+         - { name: "execution_time_ms", type: "integer" }
 
 # === TASK INSTRUCTIONS ===
 
-# Task: Feasibility Validation (FAE)
+# Task: Output Generation
 
 ## Objective
-Validate all extracted features against the Feasibility Analysis Engine (FAE) to reject impossible features BEFORE the user gets attached to them.
+Create the final machine-readable feature specification (feature_spec.json) for GENESIS_BLUEPRINT.
 
 ---
 
 ## Goal
-Ensure all features are technically feasible for the user's chosen scope (prototype/MVP/v1.0) and timeline.
+Generate a complete, valid, parseable JSON specification that contains all validated, prioritized features ready for technical architecture planning.
 
 ---
 
 ## Input Artifacts
-- `extracted_features.json` (from Task 02)
-- `FAE_constraints.yaml` (from knowledge base)
-- Session state: `user_scope_choice`
+- `negotiated_features.json` (from Task 05)
+- Session state: `user_scope_choice`, `core_problem_statement`, `target_users`
+- `ORCHESTRATION_data_contracts.yaml` (schema reference)
 
 ---
 
-## Validation Process
+## Pre-Output Validation Checklist
 
-For EACH feature in `extracted_features.json`, check against `FAE_constraints.yaml`:
+Before outputting JSON, verify:
 
-```python
-# Pseudo-code for FAE validation
-for feature in extracted_features:
-    # Check incompatibilities
-    for constraint in FAE.incompatibilities:
-        if feature.name matches constraint.feature:
-            if user_scope == "v1.0" and constraint.incompatible_with == "scope_v1.0":
-                # REJECT IMMEDIATELY
-                explain_rejection(feature, constraint)
-                suggest_alternatives(constraint.alternatives_for_v1)
-
-    # Check NFR conflicts
-    inferred_nfrs = extract_nfrs(feature.description)
-    for nfr_conflict in FAE.nfr_conflicts:
-        if nfr_conflict.nfr_a in inferred_nfrs and nfr_conflict.nfr_b in user_constraints:
-            # FLAG CONFLICT
-            explain_conflict(nfr_conflict)
-            suggest_resolution(nfr_conflict.resolution_options)
-```
+- ✅ User completed education phase
+- ✅ All features have concrete input/output examples
+- ✅ All features validated against FAE
+- ✅ All features checked for missing dependencies (FDG)
+- ✅ Scope negotiated if complexity > threshold (APCE)
+- ✅ JSON is valid (no syntax errors)
+- ✅ All required fields present per data contract
 
 ---
 
-## Rejection Dialog Template
-
-When FAE flags a feature as incompatible:
-
-```
-⚠️ FEASIBILITY ISSUE: {feature_name}
-
-I've analyzed "{feature_name}" and identified a v1.0 scope conflict.
-
-**Why it's not v1.0-ready:**
-{constraint.reason}
-
-**What it requires:**
-- {required_nfr_1}
-- {required_nfr_2}
-- {required_nfr_3}
-
-**Typical implementation time:** {constraint.typical_time}
-
-**For v1.0, I recommend:**
-{alternative_1} (simpler, faster)
-{alternative_2} (3rd party service)
-
-We can plan {feature_name} for v2.0 after validating the core product.
-
-Shall we proceed with the alternative for v1.0, or would you like to extend the timeline to include this feature?
-```
-
----
-
-## Example Rejection
-
-**Real-time video streaming:**
-
-```
-⚠️ FEASIBILITY ISSUE: Real-time video streaming
-
-I've analyzed "real-time video streaming" and identified a v1.0 scope conflict.
-
-**Why it's not v1.0-ready:**
-Requires WebRTC implementation, STUN/TURN servers, signaling servers, and a media server (SFU/MCU) for scale. This is non-trivial infrastructure that typically takes 8-12 weeks to implement properly.
-
-**What it requires:**
-- Low latency (<1s)
-- High bandwidth support
-- High availability infrastructure
-- Dedicated servers (incompatible with serverless)
-
-**For v1.0, I recommend:**
-- Pre-recorded video upload (2 weeks)
-- Embed 3rd party (Zoom, Jitsi) (1 week)
-- Use managed service (Mux, Wistia) (1 week)
-
-We can plan real-time streaming for v2.0 after validating the core product.
-
-Shall we proceed with pre-recorded video for v1.0?
-```
-
----
-
-## Output
-
-Updated feature list with FAE validation results:
+## Output Format: feature_spec.json
 
 ```json
 {
-  "validated_features": [
+  "project": {
+    "name": "Project Name",
+    "category": "CLI Tool|Web App|Mobile App|API Service|...",
+    "scale": "Solo User|Small Team|Production",
+    "target_scope": "prototype|mvp|v1.0",
+    "core_problem": "1-2 sentence description of what problem this solves",
+    "target_users": "Who will use this"
+  },
+
+  "features": [
     {
       "id": "feature_1",
-      "name": "...",
+      "name": "Feature Name",
+      "priority": "must_have|should_have|could_have|wont_have_v1",
+      "complexity_score": 5,
+      "estimated_effort": "1-2 weeks",
+      "input": {
+        "format": "CSV",
+        "example": "id,name,email\n1,Alice,alice@example.com",
+        "constraints": "Max 1000 rows, required columns: id, name"
+      },
+      "processing": {
+        "description": "Validates email format, removes duplicates, enriches with domain info",
+        "external_dependencies": ["email-validator"],
+        "side_effects": ["Writes to logs/validation.log"]
+      },
+      "output": {
+        "format": "JSON",
+        "example": "{\"valid\": [...], \"invalid\": [...]}",
+        "success_criteria": "All valid emails passed regex, no duplicates"
+      },
+      "dependencies": {
+        "required": [
+          {
+            "component": "email_validation_library",
+            "reason": "Must validate email format",
+            "source": "FDG-XXX"
+          }
+        ],
+        "optional": []
+      },
       "fae_validation": {
         "passed": true,
         "constraints_checked": ["FAE-001", "FAE-015"],
         "issues": []
       }
-    },
-    {
-      "id": "feature_2",
-      "name": "...",
-      "fae_validation": {
-        "passed": false,
-        "constraints_checked": ["FAE-005"],
-        "issues": [
-          {
-            "constraint_id": "FAE-005",
-            "severity": "blocking",
-            "reason": "Real-time streaming requires dedicated infrastructure",
-            "alternatives": ["Pre-recorded upload", "3rd party embed"]
-          }
-        ]
-      }
     }
-  ]
+  ],
+
+  "scope_negotiation": {
+    "total_complexity": 45,
+    "complexity_breakdown": {
+      "must_have": 30,
+      "should_have": 15,
+      "wont_have_v1": 25
+    },
+    "timeline_estimate": "10-14 weeks",
+    "v1_exclusions": [
+      "Feature X (too complex - see FAE-005)",
+      "Feature Y (nice-to-have - deprioritized)"
+    ]
+  },
+
+  "validation": {
+    "fae_passed": true,
+    "fdg_passed": true,
+    "apce_passed": true,
+    "all_features_complete": true,
+    "ready_for_genesis": true
+  },
+
+  "metadata": {
+    "vibe_version": "3.0",
+    "created_at": "2025-01-15T10:30:00Z",
+    "user_educated": true,
+    "scope_negotiated": true
+  }
 }
+```
+
+---
+
+## Final Output Message
+
+After generating the JSON, present to user:
+
+```
+✅ SPECIFICATION COMPLETE
+
+I've created a comprehensive feature specification for your {project_name}.
+
+**Summary:**
+- {must_have_count} Must-Have features (v1.0 core)
+- {should_have_count} Should-Have features (v1.0 goals)
+- {wont_have_count} features deferred to v2.0
+- Total complexity: {complexity} points
+- Estimated timeline: {weeks} weeks
+
+**Validation Status:**
+✅ All features technically feasible for v1.0
+✅ All critical dependencies identified
+✅ Scope is realistic and shippable
+
+**Next Step:**
+This specification is ready for technical architecture planning with GENESIS_BLUEPRINT.
+
+[Download feature_spec.json]
+
+Would you like me to explain any aspect of the specification, or shall we proceed to architecture planning?
 ```
 
 ---
 
 ## Success Criteria
 
-- All features checked against FAE constraints
-- Impossible features flagged and alternatives suggested
-- User acknowledges feasibility concerns
-- All "must_have" features have `fae_validation.passed = true`
+- Valid JSON output matching data contract schema
+- All phases (1-5) completed successfully
+- User acknowledges and approves the specification
+- Ready for handoff to GENESIS_BLUEPRINT
 
 ---
 
 ## Validation Gates
 
-- `gate_fae_all_passed.md` - Ensures all must-have features passed FAE validation
+- `gate_valid_json_output.md` - Ensures JSON is parseable and matches schema
+- `gate_all_phases_completed.md` - Ensures all validation phases were executed
 
 
 # === VALIDATION GATES ===
 
-# Validation Gate: FAE All Passed
+# Validation Gate: Valid JSON Output
 
 ## Rule
-All "must_have" features must pass FAE (Feasibility Analysis Engine) validation.
+Output must be valid, parseable JSON matching the feature_spec.json schema.
 
 ---
 
 ## Validation Process
 
-For EACH feature with `priority = "must_have"`:
+1. Parse JSON output
+2. Validate against schema in `ORCHESTRATION_data_contracts.yaml#feature_spec`
+3. Check all required fields are present
+4. Verify data types match schema
 
-1. Check that `fae_validation.passed = true`
-2. Check that `fae_validation.issues` is empty
-3. If any feature has `passed = false`, it must be either:
-   - Changed to `priority = "wont_have_v1"`, OR
-   - Replaced with a feasible alternative
+---
+
+## Required Top-Level Fields
+
+```json
+{
+  "project": {...},        // Required
+  "features": [...],       // Required, must have at least 1 feature
+  "scope_negotiation": {...},  // Required
+  "validation": {...},     // Required
+  "metadata": {...}        // Required
+}
+```
 
 ---
 
 ## Pass Criteria
 
-- ✅ All `must_have` features have `fae_validation.passed = true`
-- ✅ All `must_have` features have `fae_validation.issues = []`
-- ✅ Any infeasible features are marked `wont_have_v1` or replaced
+- ✅ Valid JSON (parseable, no syntax errors)
+- ✅ All required top-level fields present
+- ✅ All features have required fields per schema
+- ✅ Data types match schema
+- ✅ `validation.ready_for_genesis = true`
 
 ---
 
 ## Failure Conditions
 
-- ❌ A `must_have` feature has `fae_validation.passed = false`
-- ❌ A `must_have` feature has blocking issues in `fae_validation.issues`
-- ❌ User insists on keeping an infeasible feature without extending timeline
+- ❌ JSON syntax error (unclosed braces, missing commas, etc.)
+- ❌ Missing required field
+- ❌ Field has wrong data type (e.g., string instead of array)
+- ❌ `validation.ready_for_genesis = false`
 
 ---
 
 ## Error Message Template
 
 ```
-GATE FAILED: Infeasible must-have feature detected
+GATE FAILED: Invalid JSON output
 
-Feature "{feature_name}" (priority: must_have) failed FAE validation.
+The generated feature_spec.json does not match the required schema.
 
-FAE Issues:
-{list_issues_from_fae_validation}
+Issues:
+{list_validation_errors}
 
-This feature is incompatible with the current scope and timeline.
+Example issues:
+- Missing field: "project.core_problem"
+- Invalid type: "features" should be array, got string
+- Syntax error: Unclosed brace at line 42
 
-Options:
-1. Replace with feasible alternative (recommended)
-2. Move to v2.0 (change priority to wont_have_v1)
-3. Extend timeline to accommodate complexity
-
-Action: Return to Task 03 (Feasibility Validation) and resolve
+Action: Fix JSON structure and retry Task 06 (Output Generation)
 ```
 
 ---
 
 ## Purpose
 
-Prevents unrealistic expectations by blocking infeasible features from proceeding.
+Ensures output is machine-readable and can be consumed by GENESIS_BLUEPRINT.
+
+
+---
+
+# Validation Gate: All Phases Completed
+
+## Rule
+All 6 phases of VIBE_ALIGNER must be completed before outputting feature_spec.json.
+
+---
+
+## Validation Process
+
+Check that each phase has been completed:
+
+1. **Phase 1:** Education & Calibration
+   - Check: `metadata.user_educated = true`
+
+2. **Phase 2:** Feature Extraction
+   - Check: `features.length > 0`
+   - Check: All features have input/output examples
+
+3. **Phase 3:** Feasibility Validation (FAE)
+   - Check: `validation.fae_passed = true`
+   - Check: All must_have features have `fae_validation.passed = true`
+
+4. **Phase 4:** Gap Detection (FDG)
+   - Check: `validation.fdg_passed = true`
+   - Check: All features have `dependencies` field
+
+5. **Phase 5:** Scope Negotiation (APCE)
+   - Check: `validation.apce_passed = true`
+   - Check: `metadata.scope_negotiated = true`
+   - Check: All features have `priority` and `complexity_score`
+
+6. **Phase 6:** Output Generation
+   - Check: Valid JSON
+   - Check: `validation.ready_for_genesis = true`
+
+---
+
+## Pass Criteria
+
+- ✅ All 6 phase checks pass
+- ✅ `validation.all_features_complete = true`
+- ✅ `validation.ready_for_genesis = true`
+
+---
+
+## Failure Conditions
+
+- ❌ Any phase check fails
+- ❌ Phase was skipped
+- ❌ Validation flag is missing or false
+
+---
+
+## Error Message Template
+
+```
+GATE FAILED: Incomplete workflow
+
+Not all phases of VIBE_ALIGNER were completed.
+
+Missing phases:
+{list_incomplete_phases}
+
+Current state:
+- user_educated: {value}
+- fae_passed: {value}
+- fdg_passed: {value}
+- apce_passed: {value}
+- scope_negotiated: {value}
+- ready_for_genesis: {value}
+
+Action: Complete missing phases before generating final output
+```
+
+---
+
+## Purpose
+
+Ensures the specification is complete and has gone through all necessary validation steps.
 
 
 # === RUNTIME CONTEXT ===
