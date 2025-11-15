@@ -39,15 +39,16 @@ For conceptual understanding, see [ARCHITECTURE_V2.md](./ARCHITECTURE_V2.md).
 **Decision:** Stays at repo root (`/system_steward_framework/`)
 
 **Why:**
-- Meta-framework (governs AOS design, not user projects)
-- Different lifecycle (evolves slower than AOS)
-- Different invocation (manual sessions, not orchestrator-driven)
-- Intentional separation of concerns
+- SSF = Meta-governance (defines rules for AOS)
+- AOS = Product execution (applies rules to user projects)
+- Guardian Directives bridge the two (injected at composition-time)
+- No orchestrator calls (SSF agents invoked manually)
 
 **Integration:**
-- Guardian Directives → Injected via Prompt Registry
-- SOPs → Loaded via Prompt Registry for HITL workflows
-- No runtime integration (not called by orchestrator)
+- **Design-time:** SSF defines rules (Guardian Directives, SOPs)
+- **Composition-time:** Prompt Registry injects SSF rules into AOS prompts
+- **Runtime:** Claude Code enforces rules (intelligence layer)
+- **No orchestrator calls to SSF agents** (manual sessions only)
 
 **Status:** Implemented, separation documented
 
@@ -57,13 +58,18 @@ For conceptual understanding, see [ARCHITECTURE_V2.md](./ARCHITECTURE_V2.md).
 **Decision:** Stays in `01_planning_framework/agents/research/`
 
 **Why:**
-- Currently only used by PLANNING phase
-- Optional step (not all projects need research)
-- If future phases need research, they call it via Registry (shared utility pattern)
+- Currently only PLANNING phase uses research (validated)
+- Future: Other phases MAY use research (TBD)
+- If cross-phase usage emerges → Refactor to `00_system/agents/` (Phase N)
+- Current location OK for MVP (YAGNI principle)
 
-**Future:** If becomes truly cross-cutting, consider moving to `00_system/agents/` (but not now - YAGNI)
+**Future Intent:**
+- Research capability COULD be useful for CODE_GENERATOR (tech comparisons)
+- Research capability COULD be useful for QA_VALIDATOR (security advisories)
+- BUT: No concrete use case yet, so keep in planning/ until proven need
+- When moved: Update imports, maintain backward compatibility
 
-**Status:** Implemented, location validated
+**Status:** Implemented, location validated for current scope
 
 ---
 
@@ -520,8 +526,19 @@ class PromptRegistry:
 - [ ] Guardian Directives loader
 - [ ] Context enrichment
 - [ ] Tool/SOP injection
-- [ ] Unit tests
+- [ ] Unit tests (see Test Specification below)
 - [ ] Integration test (VIBE_ALIGNER with governance)
+
+**Test Specification:**
+- [ ] **test_governance_injection**: Guardian Directives appear in composed prompt
+- [ ] **test_context_enrichment**: Manifest data present in output
+- [ ] **test_tool_injection**: Tools only appear when requested
+- [ ] **test_sop_injection**: SOPs only appear when requested
+- [ ] **test_composition_order**: Governance → Context → Tools → SOPs → Agent
+- [ ] **test_backward_compatibility**: PromptRuntime still works independently
+- [ ] **test_missing_workspace**: Graceful error when workspace doesn't exist
+- [ ] **test_missing_agent**: Graceful error when agent doesn't exist
+- [ ] **test_optional_params**: All inject_* params work when omitted
 
 ### Phase 2: Integration (1 day)
 - [ ] Update vibe-cli to use Registry
@@ -543,6 +560,47 @@ class PromptRegistry:
 
 ---
 
+## 🚀 Rollout Strategy (Prompt Registry)
+
+### Phase 1: Build Registry (Parallel Implementation)
+- New file `prompt_registry.py`, no changes to existing code
+- PromptRuntime still works (no breaking changes)
+- Both paths functional
+
+**Risk:** Low (no existing code touched)
+
+### Phase 2: Gradual Migration
+- **Step 1:** vibe-cli uses Registry (low risk, limited blast radius)
+- **Step 2:** Orchestrator STILL uses PromptRuntime (high risk, deferred)
+- **Step 3:** Test both paths work in isolation
+
+**Risk:** Medium (two code paths, potential divergence)
+
+### Phase 3: Full Cutover
+- **Step 1:** Update orchestrator to use Registry
+- **Step 2:** Keep PromptRuntime for 1 release (backward compatibility)
+- **Step 3:** Integration tests cover all workflows
+
+**Risk:** High (changes critical path)
+
+**Rollback Plan:** Revert orchestrator changes, fall back to PromptRuntime
+
+### Phase 4: Deprecation
+- Remove direct PromptRuntime calls from CLI/orchestrator
+- Keep PromptRuntime.py (Registry uses it internally)
+- Registry is only public interface
+
+**What Breaks During Transition:**
+- Custom scripts calling PromptRuntime directly (if any exist)
+- Manual prompt composition workflows
+
+**Mitigation:**
+- Search codebase for `PromptRuntime` imports before Phase 3
+- Add deprecation warnings in Phase 2
+- Document migration path for custom scripts
+
+---
+
 ## 🔗 Related Documents
 
 - **[ARCHITECTURE_V2.md](./ARCHITECTURE_V2.md)** - Conceptual model, design principles
@@ -552,9 +610,42 @@ class PromptRegistry:
 
 ---
 
-## ✅ Verification
+## ✅ Verification Protocol
 
-**How to verify this document is current:**
+### Frequency
+**Before every PR that touches architecture**
+
+### Owner
+**PR author + reviewer**
+
+### Process
+
+1. **Run Tests**
+   ```bash
+   pytest tests/ -v  # All must pass
+   ```
+
+2. **Check Folder Structure**
+   ```bash
+   ls -R agency_os/  # Must match Folder Structure section above
+   ```
+
+3. **Verify Claims**
+   ```bash
+   # Grep claims in docs exist in code
+   grep -r "PromptRegistry" agency_os/  # Should find references after MVP
+   ```
+
+4. **Update Verification Date**
+   - Update "Last Verified" date in both ARCHITECTURE_V2.md and SSOT.md
+
+### If Verification Fails
+
+- **Option A:** Update docs to match code (if code is correct)
+- **Option B:** Update code to match docs (if docs are design intent)
+- **Never merge with mismatched docs**
+
+### Quick Verification Commands
 
 ```bash
 # 1. Check file structure matches
@@ -570,7 +661,7 @@ grep -r "PromptRegistry" agency_os/  # Should find references after MVP
 diff <(grep "^### " ARCHITECTURE_V2.md) <(grep "^### " SSOT.md)
 ```
 
-**Last Verified:** 2025-11-15
+**Last Verified:** 2025-11-15 (Enhanced with professional review feedback)
 **Next Review:** After Prompt Registry implementation
 
 ---
