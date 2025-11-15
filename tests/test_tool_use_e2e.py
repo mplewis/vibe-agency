@@ -48,28 +48,25 @@ class TestToolUseE2E:
 
     @pytest.fixture
     def vibe_cli(self):
-        """Initialize VibeCLI instance"""
-        api_key = os.environ.get('ANTHROPIC_API_KEY')
-        if not api_key:
-            pytest.skip("ANTHROPIC_API_KEY not set - skipping real API test")
-
-        return VibeCLI(repo_root=repo_root, anthropic_api_key=api_key)
+        """Initialize VibeCLI instance (works WITHOUT API key via mocks)"""
+        # Use dummy key for testing - real API calls will be mocked
+        return VibeCLI(repo_root=repo_root, anthropic_api_key="test-key-dummy")
 
     @pytest.fixture
     def mock_tool_executor(self):
-        """Mock tool executor for tests without Google API keys"""
-        with patch('tool_executor.ToolExecutor') as mock:
-            executor = mock.return_value
-            executor.execute_tool = Mock(return_value={
-                "results": [
-                    {
-                        "title": "AI Startups 2024 - TechCrunch",
-                        "snippet": "Top AI startups in 2024 include OpenAI, Anthropic, and Mistral.",
-                        "url": "https://techcrunch.com/ai-startups-2024"
-                    }
-                ]
-            })
-            yield executor
+        """Mock tool executor for tests"""
+        # Return a simple mock - don't patch the import
+        executor = Mock()
+        executor.execute_tool = Mock(return_value={
+            "results": [
+                {
+                    "title": "AI Startups 2024 - TechCrunch",
+                    "snippet": "Top AI startups in 2024 include OpenAI, Anthropic, and Mistral.",
+                    "url": "https://techcrunch.com/ai-startups-2024"
+                }
+            ]
+        })
+        return executor
 
     def test_load_tools_for_agent_market_researcher(self, vibe_cli):
         """Test: _load_tools_for_agent() loads correct tools for MARKET_RESEARCHER"""
@@ -125,93 +122,114 @@ class TestToolUseE2E:
 
     def test_execute_tools_with_mock(self, vibe_cli, mock_tool_executor):
         """Test: _execute_tools() executes tools and formats results correctly"""
-        tool_use_blocks = [
-            {
-                "type": "tool_use",
-                "id": "toolu_123",
-                "name": "google_search",
-                "input": {"query": "AI startups 2024"}
-            }
-        ]
-
-        results = vibe_cli._execute_tools(tool_use_blocks)
-
-        assert len(results) == 1
-        assert results[0]['type'] == 'tool_result'
-        assert results[0]['tool_use_id'] == 'toolu_123'
-
-        # Verify content is JSON string
-        content = json.loads(results[0]['content'])
-        assert 'results' in content
-
-    @pytest.mark.skipif(
-        not os.environ.get('ANTHROPIC_API_KEY'),
-        reason="ANTHROPIC_API_KEY not set"
-    )
-    def test_multi_turn_conversation_with_real_api(self, vibe_cli, mock_tool_executor):
-        """
-        Test: Multi-turn conversation with real Anthropic API
-
-        This tests the complete tool use loop:
-        1. Send prompt for market research
-        2. API responds with tool_use (google_search)
-        3. Execute tool locally (mocked)
-        4. Send tool_result back to API
-        5. API responds with final answer
-        """
-        # Simple prompt that should trigger tool use
-        prompt = """
-        You are a market research analyst.
-
-        Find the top 3 AI startups in 2024 using google_search.
-        Return your findings as JSON with this format:
-        {
-            "startups": [
-                {"name": "...", "description": "..."}
+        # Patch the ToolExecutor import in vibe_cli
+        with patch('vibe_cli.ToolExecutor', return_value=mock_tool_executor):
+            tool_use_blocks = [
+                {
+                    "type": "tool_use",
+                    "id": "toolu_123",
+                    "name": "google_search",
+                    "input": {"query": "AI startups 2024"}
+                }
             ]
-        }
+
+            results = vibe_cli._execute_tools(tool_use_blocks)
+
+            assert len(results) == 1
+            assert results[0]['type'] == 'tool_result'
+            assert results[0]['tool_use_id'] == 'toolu_123'
+
+            # Verify content is JSON string
+            content = json.loads(results[0]['content'])
+            assert 'results' in content
+
+    def test_multi_turn_conversation_with_mocked_api(self, vibe_cli, mock_tool_executor):
         """
+        Test: Multi-turn conversation with MOCKED Anthropic API
 
-        result = vibe_cli._execute_prompt(
-            prompt=prompt,
-            agent="MARKET_RESEARCHER",
-            task_id="test_task"
-        )
+        This tests the complete tool use loop WITHOUT requiring API key:
+        1. Send prompt for market research
+        2. Mock API responds with tool_use (google_search)
+        3. Execute tool locally (mocked)
+        4. Send tool_result back to API (mocked)
+        5. Mock API responds with final answer
+        """
+        # Patch tool executor
+        with patch('vibe_cli.ToolExecutor', return_value=mock_tool_executor):
+            # Mock the Anthropic API client
+            mock_client = MagicMock()
+            vibe_cli.client = mock_client
 
-        # Verify result format
-        assert isinstance(result, dict), "Result should be a dictionary"
+            # First API call - responds with tool_use
+            mock_tool_block = MagicMock()
+            mock_tool_block.type = 'tool_use'
+            mock_tool_block.id = 'toolu_123'
+            mock_tool_block.name = 'google_search'
+            mock_tool_block.input = {'query': 'AI startups 2024'}
 
-        # Result should either be valid JSON or contain expected fields
-        if "text" in result:
-            # Agent returned non-JSON text
-            assert isinstance(result["text"], str)
-            assert len(result["text"]) > 0
-        else:
-            # Agent returned JSON - verify structure
-            # (exact structure depends on agent response, so flexible check)
-            assert len(result) > 0
+            mock_response_1 = MagicMock()
+            mock_response_1.stop_reason = 'tool_use'
+            mock_response_1.content = [mock_tool_block]
 
-    @pytest.mark.skipif(
-        not os.environ.get('ANTHROPIC_API_KEY'),
-        reason="ANTHROPIC_API_KEY not set"
-    )
+            # Second API call - responds with final answer
+            mock_text_block = MagicMock()
+            mock_text_block.type = 'text'
+            mock_text_block.text = '{"startups": [{"name": "OpenAI", "description": "Leading AI company"}]}'
+
+            mock_response_2 = MagicMock()
+            mock_response_2.stop_reason = 'end_turn'
+            mock_response_2.content = [mock_text_block]
+
+            # Configure mock to return responses in sequence
+            mock_client.messages.create.side_effect = [mock_response_1, mock_response_2]
+
+            # Execute
+            prompt = "Find top AI startups using google_search"
+            result = vibe_cli._execute_prompt(
+                prompt=prompt,
+                agent="MARKET_RESEARCHER",
+                task_id="test_task"
+            )
+
+            # Verify result
+            assert isinstance(result, dict)
+            assert 'startups' in result
+            assert len(result['startups']) > 0
+
+            # Verify API was called twice (initial + after tool use)
+            assert mock_client.messages.create.call_count == 2
+
     def test_agent_without_tools_works(self, vibe_cli):
         """Test: Agents without tools use simple request/response (no tool loop)"""
-        prompt = """
-        You are VIBE_ALIGNER.
+        # Mock API client
+        mock_client = MagicMock()
+        vibe_cli.client = mock_client
 
-        Return this JSON:
-        {"status": "ok", "message": "Test passed"}
-        """
+        # Mock response (no tools)
+        mock_text_block = MagicMock()
+        mock_text_block.type = 'text'
+        mock_text_block.text = '{"status": "ok", "message": "Test passed"}'
 
+        mock_response = MagicMock()
+        mock_response.stop_reason = 'end_turn'
+        mock_response.content = [mock_text_block]
+
+        mock_client.messages.create.return_value = mock_response
+
+        # Execute
+        prompt = "Return JSON: {\"status\": \"ok\"}"
         result = vibe_cli._execute_prompt(
             prompt=prompt,
             agent="VIBE_ALIGNER",
             task_id="test_task"
         )
 
-        # Should complete without tool use
+        # Verify
         assert isinstance(result, dict)
+        assert result['status'] == 'ok'
+
+        # Verify API was called once (no tool loop)
+        assert mock_client.messages.create.call_count == 1
 
     def test_extract_final_response_json(self, vibe_cli):
         """Test: _extract_final_response() parses JSON correctly"""
@@ -241,27 +259,41 @@ class TestToolUseE2E:
 
     def test_max_turns_limit(self, vibe_cli):
         """Test: Conversation stops after max_turns to prevent infinite loops"""
-        # Mock client that always returns tool_use
-        mock_response = Mock()
-        mock_response.stop_reason = "tool_use"
-        mock_tool_block = Mock()
+        # Mock client
+        mock_client = MagicMock()
+        vibe_cli.client = mock_client
+
+        # Mock that always returns tool_use (infinite loop scenario)
+        mock_tool_block = MagicMock()
         mock_tool_block.type = 'tool_use'
         mock_tool_block.id = 'toolu_123'
         mock_tool_block.name = 'google_search'
         mock_tool_block.input = {'query': 'test'}
+
+        mock_response = MagicMock()
+        mock_response.stop_reason = "tool_use"
         mock_response.content = [mock_tool_block]
 
-        with patch.object(vibe_cli.client.messages, 'create', return_value=mock_response):
-            with patch.object(vibe_cli, '_execute_tools', return_value=[]):
-                result = vibe_cli._execute_prompt(
-                    prompt="Test",
-                    agent="MARKET_RESEARCHER",
-                    task_id="test"
-                )
+        mock_client.messages.create.return_value = mock_response
 
-        # Should hit max_turns and return error
+        # Mock tool executor
+        with patch.object(vibe_cli, '_execute_tools', return_value=[{
+            "type": "tool_result",
+            "tool_use_id": "toolu_123",
+            "content": "{\"result\": \"test\"}"
+        }]):
+            result = vibe_cli._execute_prompt(
+                prompt="Test",
+                agent="MARKET_RESEARCHER",
+                task_id="test"
+            )
+
+        # Should hit max_turns (10) and return error
         assert "error" in result
         assert "Max conversation turns" in result["error"]
+
+        # Verify we hit max_turns (10 API calls)
+        assert mock_client.messages.create.call_count == 10
 
 
 def test_integration_vibe_cli_initialization():
