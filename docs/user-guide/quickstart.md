@@ -50,7 +50,7 @@
 ```bash
 git clone https://github.com/kimeisele/vibe-agency.git
 cd vibe-agency
-pip install pyyaml anthropic
+make install    # Sets up everything (UV, dependencies, hooks)
 ```
 
 ---

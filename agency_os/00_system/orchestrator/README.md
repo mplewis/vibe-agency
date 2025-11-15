@@ -285,15 +285,22 @@ TEST_FACT_VALIDATOR_FAILURE=1 printf "y\nn\n" | python3 agency_os/00_system/orch
 
 ## Dependencies
 
-Install dependencies:
+Install all dependencies (recommended):
 
 ```bash
-pip install -r requirements.txt
+make install    # Sets up UV environment, installs from uv.lock
 ```
 
-**Requirements:**
+Or manually:
+
+```bash
+uv sync --all-extras    # Install from lockfile (deterministic)
+```
+
+**Key Dependencies:**
 - `PyYAML>=6.0` - YAML parsing for workflow design
 - `anthropic>=0.18.0` - Anthropic Claude API (Phase 3)
+- See `pyproject.toml` for complete list
 
 ---
 

@@ -175,8 +175,9 @@ If auto-install fails, use the manual setup script:
 Or install manually:
 
 ```bash
-pip install -r requirements.txt
-python3 validate_knowledge_index.py
+make install  # Recommended (uses UV)
+# OR
+./setup.sh    # Alternative setup script
 ```
 
 ### Layer 4: CI Validation (Continuous Enforcement)
