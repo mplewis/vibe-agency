@@ -1,0 +1,12 @@
+I want to build an online booking system for my yoga studio.
+
+Requirements:
+- Students can browse class schedule
+- Book classes online
+- Pay with Stripe (one-time payment per class)
+- Admin can manage schedule
+- Email confirmations
+
+Target launch: 8 weeks
+Budget: $15k
+Team: Solo developer (me)
