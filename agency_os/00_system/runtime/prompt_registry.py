@@ -46,14 +46,11 @@ except ImportError:
 
 # Import workspace utilities
 _REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
-sys.path.insert(0, str(_REPO_ROOT / 'scripts'))
+sys.path.insert(0, str(_REPO_ROOT / "scripts"))
 
 try:
-    from workspace_utils import (
-        resolve_manifest_path,
-        load_workspace_manifest,
-        get_active_workspace
-    )
+    from workspace_utils import resolve_manifest_path, load_workspace_manifest, get_active_workspace
+
     WORKSPACE_UTILS_AVAILABLE = True
 except ImportError as e:
     logging.warning(f"workspace_utils not available: {e}")
@@ -65,16 +62,19 @@ logger = logging.getLogger(__name__)
 
 class PromptRegistryError(Exception):
     """Base exception for PromptRegistry errors"""
+
     pass
 
 
 class GovernanceLoadError(PromptRegistryError):
     """Raised when Guardian Directives can't be loaded"""
+
     pass
 
 
 class ContextEnrichmentError(PromptRegistryError):
     """Raised when workspace context enrichment fails"""
+
     pass
 
 
@@ -98,7 +98,7 @@ class PromptRegistry:
         inject_governance: bool = True,
         inject_tools: Optional[List[str]] = None,
         inject_sops: Optional[List[str]] = None,
-        context: Optional[Dict[str, Any]] = None
+        context: Optional[Dict[str, Any]] = None,
     ) -> str:
         """
         Compose a governed prompt with all injections.
@@ -201,10 +201,7 @@ class PromptRegistry:
 
         # Load from file
         directives_path = (
-            _REPO_ROOT /
-            "system_steward_framework" /
-            "knowledge" /
-            "guardian_directives.yaml"
+            _REPO_ROOT / "system_steward_framework" / "knowledge" / "guardian_directives.yaml"
         )
 
         if not directives_path.exists():
@@ -218,16 +215,12 @@ class PromptRegistry:
             with open(directives_path) as f:
                 data = yaml.safe_load(f)
         except yaml.YAMLError as e:
-            raise GovernanceLoadError(
-                f"Invalid YAML in Guardian Directives: {e}"
-            ) from e
+            raise GovernanceLoadError(f"Invalid YAML in Guardian Directives: {e}") from e
 
         # Use injection template from YAML
         template = data.get("injection_template", "")
         if not template:
-            raise GovernanceLoadError(
-                "Guardian Directives YAML missing 'injection_template' field"
-            )
+            raise GovernanceLoadError("Guardian Directives YAML missing 'injection_template' field")
 
         # Cache for future calls
         cls._guardian_directives_cache = template.strip()
@@ -272,7 +265,7 @@ class PromptRegistry:
             lines.append(f"- Current Phase: `{manifest_data.get('current_phase', 'unknown')}`")
 
             # Artifacts summary
-            artifacts = manifest_data.get('artifacts', {})
+            artifacts = manifest_data.get("artifacts", {})
             if artifacts:
                 lines.append(f"- Artifacts: {len(artifacts)} available")
                 for key in list(artifacts.keys())[:5]:  # Show first 5
@@ -281,7 +274,7 @@ class PromptRegistry:
                     lines.append(f"  - ... and {len(artifacts) - 5} more")
 
             # Budget tracking
-            budget_used = manifest_data.get('budget_tracking', {}).get('total_tokens_used', 0)
+            budget_used = manifest_data.get("budget_tracking", {}).get("total_tokens_used", 0)
             if budget_used:
                 lines.append(f"- Budget Used: {budget_used:,} tokens")
 
@@ -312,12 +305,12 @@ class PromptRegistry:
         """
         # Load tool definitions
         tool_defs_path = (
-            _REPO_ROOT /
-            "agency_os" /
-            "00_system" /
-            "orchestrator" /
-            "tools" /
-            "tool_definitions.yaml"
+            _REPO_ROOT
+            / "agency_os"
+            / "00_system"
+            / "orchestrator"
+            / "tools"
+            / "tool_definitions.yaml"
         )
 
         if not tool_defs_path.exists():
@@ -347,15 +340,19 @@ class PromptRegistry:
             lines.append(f"**Description:** {tool_def.get('description', 'No description')}\n")
 
             # Parameters
-            params = tool_def.get('parameters', {})
+            params = tool_def.get("parameters", {})
             if params:
                 lines.append("\n**Parameters:**")
                 for param_name, param_spec in params.items():
-                    required = " (required)" if param_spec.get('required', False) else " (optional)"
-                    param_type = param_spec.get('type', 'any')
-                    param_desc = param_spec.get('description', '')
-                    default = f", default: `{param_spec['default']}`" if 'default' in param_spec else ""
-                    lines.append(f"- `{param_name}` ({param_type}){required}: {param_desc}{default}")
+                    required = " (required)" if param_spec.get("required", False) else " (optional)"
+                    param_type = param_spec.get("type", "any")
+                    param_desc = param_spec.get("description", "")
+                    default = (
+                        f", default: `{param_spec['default']}`" if "default" in param_spec else ""
+                    )
+                    lines.append(
+                        f"- `{param_name}` ({param_type}){required}: {param_desc}{default}"
+                    )
 
             lines.append("\n---\n")
 
@@ -437,10 +434,7 @@ if __name__ == "__main__":
     import sys
 
     # Example usage
-    context = {
-        "test_mode": True,
-        "example_key": "example_value"
-    }
+    context = {"test_mode": True, "example_key": "example_value"}
 
     # Test composition with all injections
     composed_prompt = PromptRegistry.compose(
@@ -450,7 +444,7 @@ if __name__ == "__main__":
         inject_governance=True,
         inject_tools=["google_search"],
         inject_sops=["SOP_001"],
-        context=context
+        context=context,
     )
 
     # Output to file for inspection

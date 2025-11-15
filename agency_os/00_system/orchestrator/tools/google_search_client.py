@@ -7,6 +7,7 @@ from typing import List, Dict
 # Load .env file if it exists
 try:
     from dotenv import load_dotenv
+
     load_dotenv()
 except ImportError:
     pass  # python-dotenv not installed, use environment variables only
@@ -16,8 +17,8 @@ class GoogleSearchClient:
     """Wrapper for Google Custom Search JSON API"""
 
     def __init__(self):
-        self.api_key = os.getenv('GOOGLE_SEARCH_API_KEY')
-        self.search_engine_id = os.getenv('GOOGLE_SEARCH_ENGINE_ID')
+        self.api_key = os.getenv("GOOGLE_SEARCH_API_KEY")
+        self.search_engine_id = os.getenv("GOOGLE_SEARCH_ENGINE_ID")
 
         if not self.api_key or not self.search_engine_id:
             raise ValueError("Missing GOOGLE_SEARCH_API_KEY or GOOGLE_SEARCH_ENGINE_ID")
@@ -36,10 +37,10 @@ class GoogleSearchClient:
             List of dicts: [{"title": ..., "snippet": ..., "url": ...}, ...]
         """
         params = {
-            'key': self.api_key,
-            'cx': self.search_engine_id,
-            'q': query,
-            'num': min(num_results, 10)  # API max is 10
+            "key": self.api_key,
+            "cx": self.search_engine_id,
+            "q": query,
+            "num": min(num_results, 10),  # API max is 10
         }
 
         try:
@@ -49,12 +50,14 @@ class GoogleSearchClient:
 
             # Parse results
             results = []
-            for item in data.get('items', []):
-                results.append({
-                    'title': item.get('title', ''),
-                    'snippet': item.get('snippet', ''),
-                    'url': item.get('link', '')
-                })
+            for item in data.get("items", []):
+                results.append(
+                    {
+                        "title": item.get("title", ""),
+                        "snippet": item.get("snippet", ""),
+                        "url": item.get("link", ""),
+                    }
+                )
 
             return results
 
@@ -63,9 +66,9 @@ class GoogleSearchClient:
             error_detail = "Unknown error"
             try:
                 error_json = e.response.json()
-                if 'error' in error_json:
-                    error_detail = error_json['error'].get('message', str(error_json['error']))
-                    error_code = error_json['error'].get('code', 'unknown')
+                if "error" in error_json:
+                    error_detail = error_json["error"].get("message", str(error_json["error"]))
+                    error_code = error_json["error"].get("code", "unknown")
                     raise RuntimeError(
                         f"Google Search API error ({error_code}): {error_detail}\n"
                         f"Possible causes:\n"

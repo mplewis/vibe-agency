@@ -29,18 +29,18 @@ from dataclasses import dataclass
 
 # Configure logging early (before any logger usage)
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
 # CRITICAL FIX #1: Import workspace utilities
 # Add scripts directory to path to enable workspace_utils import
 _REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
-sys.path.insert(0, str(_REPO_ROOT / 'scripts'))
+sys.path.insert(0, str(_REPO_ROOT / "scripts"))
 
 try:
     from workspace_utils import resolve_artifact_base_path, get_active_workspace
+
     WORKSPACE_UTILS_AVAILABLE = True
 except ImportError as e:
     logger.warning(f"workspace_utils not available: {e}")
@@ -50,32 +50,38 @@ except ImportError as e:
 # Custom Exceptions
 class PromptRuntimeError(Exception):
     """Base exception for all PromptRuntime errors"""
+
     pass
 
 
 class AgentNotFoundError(PromptRuntimeError):
     """Raised when agent_id not found in AGENT_REGISTRY"""
+
     pass
 
 
 class TaskNotFoundError(PromptRuntimeError):
     """Raised when task files not found"""
+
     pass
 
 
 class MalformedYAMLError(PromptRuntimeError):
     """Raised when YAML parsing fails"""
+
     pass
 
 
 class CompositionError(PromptRuntimeError):
     """Raised when prompt composition fails"""
+
     pass
 
 
 @dataclass
 class CompositionSpec:
     """Parsed _composition.yaml structure"""
+
     composition_version: str
     agent_id: str
     agent_version: str
@@ -89,6 +95,7 @@ class CompositionSpec:
 @dataclass
 class TaskMetadata:
     """Parsed task_*.meta.yaml structure"""
+
     task_id: str
     phase: int
     description: str
@@ -136,23 +143,23 @@ class PromptRuntime:
             CompositionError: If prompt composition fails
         """
         try:
-            print(f"\n{'='*60}")
+            print(f"\n{'=' * 60}")
             print(f"Executing: {agent_id}.{task_id}")
-            print(f"{'='*60}\n")
+            print(f"{'=' * 60}\n")
             logger.info(f"Starting composition: {agent_id}.{task_id}")
 
             # CRITICAL FIX #1: Resolve workspace paths BEFORE composition
             if WORKSPACE_UTILS_AVAILABLE:
-                workspace_name = context.get('workspace_name', get_active_workspace())
+                workspace_name = context.get("workspace_name", get_active_workspace())
                 artifact_base = resolve_artifact_base_path(workspace_name)
 
                 # Inject resolved paths into context
-                context['_resolved_workspace'] = workspace_name
-                context['_resolved_artifact_base_path'] = str(artifact_base)
-                context['_resolved_planning_path'] = str(artifact_base / 'planning')
-                context['_resolved_coding_path'] = str(artifact_base / 'coding')
-                context['_resolved_qa_path'] = str(artifact_base / 'qa')
-                context['_resolved_deployment_path'] = str(artifact_base / 'deployment')
+                context["_resolved_workspace"] = workspace_name
+                context["_resolved_artifact_base_path"] = str(artifact_base)
+                context["_resolved_planning_path"] = str(artifact_base / "planning")
+                context["_resolved_coding_path"] = str(artifact_base / "coding")
+                context["_resolved_qa_path"] = str(artifact_base / "qa")
+                context["_resolved_deployment_path"] = str(artifact_base / "deployment")
 
                 print(f"✓ Workspace context resolved: {workspace_name}")
                 print(f"  Artifact base: {artifact_base}")
@@ -182,7 +189,7 @@ class PromptRuntime:
                 task_id=task_id,
                 task_meta=task_meta,
                 knowledge_files=knowledge_files,
-                runtime_context=context
+                runtime_context=context,
             )
 
             # Validate prompt size
@@ -200,9 +207,9 @@ class PromptRuntime:
                 print(f"✓ Validation gates loaded: {', '.join(task_meta.validation_gates)}")
                 logger.debug(f"Validation gates: {task_meta.validation_gates}")
 
-            print(f"\n{'='*60}")
+            print(f"\n{'=' * 60}")
             print("COMPOSITION COMPLETE")
-            print(f"{'='*60}\n")
+            print(f"{'=' * 60}\n")
 
             logger.info(f"Composition successful: {agent_id}.{task_id} ({prompt_size:,} chars)")
             return final_prompt
@@ -212,9 +219,7 @@ class PromptRuntime:
             raise
         except Exception as e:
             logger.error(f"Unexpected error during composition: {e}", exc_info=True)
-            raise CompositionError(
-                f"Failed to compose prompt for {agent_id}.{task_id}: {e}"
-            ) from e
+            raise CompositionError(f"Failed to compose prompt for {agent_id}.{task_id}: {e}") from e
 
     def _load_composition_spec(self, agent_id: str) -> CompositionSpec:
         """
@@ -271,7 +276,7 @@ class PromptRuntime:
             variables=data.get("variables", {}),
             conflict_resolution=data.get("conflict_resolution", {}),
             metadata=data.get("metadata", {}),
-            tools=tools_list if tools_list else None
+            tools=tools_list if tools_list else None,
         )
 
     def _load_task_metadata(self, agent_id: str, task_id: str) -> TaskMetadata:
@@ -321,9 +326,7 @@ class PromptRuntime:
                 data = yaml.safe_load(f)
         except yaml.YAMLError as e:
             raise MalformedYAMLError(
-                f"Invalid YAML syntax in {meta_file}\n"
-                f"Error: {e}\n"
-                f"Fix: Check YAML syntax"
+                f"Invalid YAML syntax in {meta_file}\nError: {e}\nFix: Check YAML syntax"
             ) from e
 
         # Validate required fields
@@ -343,7 +346,7 @@ class PromptRuntime:
             outputs=data.get("outputs", []),
             validation_gates=data.get("validation_gates", []),
             estimated_complexity=data.get("estimated_complexity", "unknown"),
-            estimated_tokens=data.get("estimated_tokens", 0)
+            estimated_tokens=data.get("estimated_tokens", 0),
         )
 
     def _resolve_knowledge_deps(self, agent_id: str, task_meta: TaskMetadata) -> List[str]:
@@ -398,7 +401,7 @@ class PromptRuntime:
         task_id: str,
         task_meta: TaskMetadata,
         knowledge_files: List[str],
-        runtime_context: Dict[str, Any]
+        runtime_context: Dict[str, Any],
     ) -> str:
         """
         Compose the final prompt by combining fragments according to composition_order.
@@ -419,9 +422,7 @@ class PromptRuntime:
             elif step_type == "tools":
                 if composition_spec.tools:
                     tools_section = self._compose_tools_section(
-                        source=source,
-                        available_tools=composition_spec.tools,
-                        agent_path=agent_path
+                        source=source, available_tools=composition_spec.tools, agent_path=agent_path
                     )
                     composed_parts.append(f"# === AVAILABLE TOOLS ===\n\n{tools_section}")
 
@@ -458,7 +459,7 @@ class PromptRuntime:
                 composed_parts.append(f"# === RUNTIME CONTEXT ===\n\n{context_str}")
 
         # Combine all parts with separators
-        final_prompt = "\n\n" + "="*60 + "\n\n".join(composed_parts)
+        final_prompt = "\n\n" + "=" * 60 + "\n\n".join(composed_parts)
 
         return final_prompt
 
@@ -495,29 +496,25 @@ class PromptRuntime:
             "VIBE_ALIGNER": "agency_os/01_planning_framework/agents/VIBE_ALIGNER",
             "GENESIS_BLUEPRINT": "agency_os/01_planning_framework/agents/GENESIS_BLUEPRINT",
             "GENESIS_UPDATE": "agency_os/01_planning_framework/agents/GENESIS_UPDATE",
-
             # Research Agents (GAD-003)
             "MARKET_RESEARCHER": "agency_os/01_planning_framework/agents/research/MARKET_RESEARCHER",
             "TECH_RESEARCHER": "agency_os/01_planning_framework/agents/research/TECH_RESEARCHER",
             "FACT_VALIDATOR": "agency_os/01_planning_framework/agents/research/FACT_VALIDATOR",
-
             # Other Frameworks
             "CODE_GENERATOR": "agency_os/02_code_gen_framework/agents/CODE_GENERATOR",
             "QA_VALIDATOR": "agency_os/03_qa_framework/agents/QA_VALIDATOR",
             "DEPLOY_MANAGER": "agency_os/04_deploy_framework/agents/DEPLOY_MANAGER",
             "BUG_TRIAGE": "agency_os/05_maintenance_framework/agents/BUG_TRIAGE",
-
             # System Steward Framework
             "SSF_ROUTER": "system_steward_framework/agents/SSF_ROUTER",
             "AUDITOR": "system_steward_framework/agents/AUDITOR",
             "LEAD_ARCHITECT": "system_steward_framework/agents/LEAD_ARCHITECT",
-
             # System Agents
             "AGENCY_OS_ORCHESTRATOR": "agency_os/00_system/agents/AGENCY_OS_ORCHESTRATOR",
         }
 
         if agent_id not in AGENT_REGISTRY:
-            available = '\n  - '.join(sorted(AGENT_REGISTRY.keys()))
+            available = "\n  - ".join(sorted(AGENT_REGISTRY.keys()))
             raise AgentNotFoundError(
                 f"Agent not found: '{agent_id}'\n\n"
                 f"Available agents:\n  - {available}\n\n"
@@ -542,7 +539,9 @@ class PromptRuntime:
         with open(path) as f:
             return f.read()
 
-    def _compose_tools_section(self, source: str, available_tools: List[str], agent_path: Path) -> str:
+    def _compose_tools_section(
+        self, source: str, available_tools: List[str], agent_path: Path
+    ) -> str:
         """
         Compose the tools section of the prompt (GAD-003 Phase 2)
 
@@ -575,7 +574,9 @@ class PromptRuntime:
 
         # Filter to only requested tools
         tools_dict = all_tools.get("tools", {})
-        filtered_tools = {name: tool for name, tool in tools_dict.items() if name in available_tools}
+        filtered_tools = {
+            name: tool for name, tool in tools_dict.items() if name in available_tools
+        }
 
         if not filtered_tools:
             return "*(No tools available for this agent)*"
@@ -589,18 +590,22 @@ class PromptRuntime:
             lines.append(f"**Description:** {tool_def.get('description', 'No description')}\n")
 
             # Parameters
-            params = tool_def.get('parameters', {})
+            params = tool_def.get("parameters", {})
             if params:
                 lines.append("\n**Parameters:**")
                 for param_name, param_spec in params.items():
-                    required = " (required)" if param_spec.get('required', False) else " (optional)"
-                    param_type = param_spec.get('type', 'any')
-                    param_desc = param_spec.get('description', '')
-                    default = f", default: `{param_spec['default']}`" if 'default' in param_spec else ""
-                    lines.append(f"- `{param_name}` ({param_type}){required}: {param_desc}{default}")
+                    required = " (required)" if param_spec.get("required", False) else " (optional)"
+                    param_type = param_spec.get("type", "any")
+                    param_desc = param_spec.get("description", "")
+                    default = (
+                        f", default: `{param_spec['default']}`" if "default" in param_spec else ""
+                    )
+                    lines.append(
+                        f"- `{param_name}` ({param_type}){required}: {param_desc}{default}"
+                    )
 
             # Returns
-            returns = tool_def.get('returns', {})
+            returns = tool_def.get("returns", {})
             if returns:
                 lines.append(f"\n**Returns:** {returns.get('description', 'No description')}")
 
@@ -611,10 +616,10 @@ class PromptRuntime:
         lines.append("To call a tool, use the following XML format in your response:\n")
         lines.append("```xml")
         lines.append('<tool_use name="tool_name">')
-        lines.append('  <parameters>')
-        lines.append('    <param_name>value</param_name>')
-        lines.append('  </parameters>')
-        lines.append('</tool_use>')
+        lines.append("  <parameters>")
+        lines.append("    <param_name>value</param_name>")
+        lines.append("  </parameters>")
+        lines.append("</tool_use>")
         lines.append("```\n")
         lines.append("You will receive the tool result, then you can continue your analysis.\n")
 
@@ -634,10 +639,8 @@ if __name__ == "__main__":
     context = {
         "project_id": "test_project_001",
         "current_phase": "PLANNING",
-        "artifacts": {
-            "feature_spec": "workspaces/test/artifacts/planning/feature_spec.json"
-        },
-        "workspace_path": "workspaces/test/"
+        "artifacts": {"feature_spec": "workspaces/test/artifacts/planning/feature_spec.json"},
+        "workspace_path": "workspaces/test/",
     }
 
     # Test composition
@@ -645,7 +648,7 @@ if __name__ == "__main__":
     composed_prompt = runtime.execute_task(
         agent_id="GENESIS_BLUEPRINT",
         task_id="01_select_core_modules",  # Matches task_01_select_core_modules.md
-        context=context
+        context=context,
     )
 
     # Output to file for inspection

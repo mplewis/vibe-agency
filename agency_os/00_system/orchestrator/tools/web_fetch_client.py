@@ -20,40 +20,30 @@ class WebFetchClient:
         """
         try:
             # Fetch
-            headers = {'User-Agent': 'VIBE-Agency-Research-Bot/1.0'}
+            headers = {"User-Agent": "VIBE-Agency-Research-Bot/1.0"}
             response = requests.get(url, headers=headers, timeout=15)
             response.raise_for_status()
 
             # Parse
-            soup = BeautifulSoup(response.content, 'html.parser')
+            soup = BeautifulSoup(response.content, "html.parser")
 
             # Extract title
-            title = soup.find('title')
+            title = soup.find("title")
             title_text = title.get_text() if title else "Untitled"
 
             # Extract main content (heuristic: remove script/style tags)
-            for tag in soup(['script', 'style', 'nav', 'footer', 'header']):
+            for tag in soup(["script", "style", "nav", "footer", "header"]):
                 tag.decompose()
 
-            content = soup.get_text(separator='\n', strip=True)
+            content = soup.get_text(separator="\n", strip=True)
 
             # Truncate to 10k chars (prevent context overflow)
             content = content[:10000]
 
-            return {
-                'url': url,
-                'title': title_text,
-                'content': content,
-                'error': None
-            }
+            return {"url": url, "title": title_text, "content": content, "error": None}
 
         except Exception as e:
-            return {
-                'url': url,
-                'title': None,
-                'content': None,
-                'error': str(e)
-            }
+            return {"url": url, "title": None, "content": None, "error": str(e)}
 
 
 # CLI test

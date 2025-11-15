@@ -44,13 +44,11 @@ class CodingHandler:
         logger.info("💻 Starting CODING phase")
 
         # Load feature spec from PLANNING
-        feature_spec = self.orchestrator.load_artifact(
-            manifest.project_id,
-            'feature_spec.json'
-        )
+        feature_spec = self.orchestrator.load_artifact(manifest.project_id, "feature_spec.json")
 
         if not feature_spec:
             from core_orchestrator import ArtifactNotFoundError
+
             raise ArtifactNotFoundError(
                 "feature_spec.json not found - PLANNING phase must complete first"
             )
@@ -59,11 +57,11 @@ class CodingHandler:
 
         # Build initial context for CODE_GENERATOR
         code_gen_context = {
-            'project_id': manifest.project_id,
-            'current_phase': manifest.current_phase.value,
-            'code_gen_spec_ref': feature_spec.get('code_gen_spec_ref', {}),
-            'feature_spec': feature_spec,
-            'artifacts': {}  # Will accumulate artifacts from each task
+            "project_id": manifest.project_id,
+            "current_phase": manifest.current_phase.value,
+            "code_gen_spec_ref": feature_spec.get("code_gen_spec_ref", {}),
+            "feature_spec": feature_spec,
+            "artifacts": {},  # Will accumulate artifacts from each task
         }
 
         # =====================================================================
@@ -75,11 +73,11 @@ class CodingHandler:
             agent_name="CODE_GENERATOR",
             task_id="task_01_spec_analysis_validation",
             inputs=code_gen_context,
-            manifest=manifest
+            manifest=manifest,
         )
 
         # Check if spec is valid
-        if not validation_result.get('spec_valid', False):
+        if not validation_result.get("spec_valid", False):
             logger.error("❌ Feature spec validation FAILED")
             logger.error(f"   Issues: {validation_result.get('validation_errors', [])}")
             raise ValueError(
@@ -88,7 +86,7 @@ class CodingHandler:
             )
 
         logger.info("✅ Spec validation passed")
-        code_gen_context['artifacts']['validation_result'] = validation_result
+        code_gen_context["artifacts"]["validation_result"] = validation_result
 
         # =====================================================================
         # Task 2: Code Generation
@@ -99,11 +97,11 @@ class CodingHandler:
             agent_name="CODE_GENERATOR",
             task_id="task_02_code_generation",
             inputs=code_gen_context,
-            manifest=manifest
+            manifest=manifest,
         )
 
         logger.info(f"✅ Generated {len(generated_code.get('files', []))} code files")
-        code_gen_context['artifacts']['generated_code'] = generated_code
+        code_gen_context["artifacts"]["generated_code"] = generated_code
 
         # =====================================================================
         # Task 3: Test Generation
@@ -114,12 +112,12 @@ class CodingHandler:
             agent_name="CODE_GENERATOR",
             task_id="task_03_test_generation",
             inputs=code_gen_context,
-            manifest=manifest
+            manifest=manifest,
         )
 
-        test_coverage = generated_tests.get('coverage_percent', 0)
+        test_coverage = generated_tests.get("coverage_percent", 0)
         logger.info(f"✅ Generated tests with {test_coverage}% coverage")
-        code_gen_context['artifacts']['generated_tests'] = generated_tests
+        code_gen_context["artifacts"]["generated_tests"] = generated_tests
 
         # =====================================================================
         # Task 4: Documentation Generation
@@ -130,11 +128,11 @@ class CodingHandler:
             agent_name="CODE_GENERATOR",
             task_id="task_04_documentation_generation",
             inputs=code_gen_context,
-            manifest=manifest
+            manifest=manifest,
         )
 
         logger.info(f"✅ Generated {len(generated_docs.get('docs', []))} documentation files")
-        code_gen_context['artifacts']['generated_documentation'] = generated_docs
+        code_gen_context["artifacts"]["generated_documentation"] = generated_docs
 
         # =====================================================================
         # Task 5: Quality Assurance & Packaging
@@ -145,17 +143,16 @@ class CodingHandler:
             agent_name="CODE_GENERATOR",
             task_id="task_05_quality_assurance_packaging",
             inputs=code_gen_context,
-            manifest=manifest
+            manifest=manifest,
         )
 
         # Check quality gates
-        quality_gates_passed = artifact_bundle.get('quality_gates_passed', False)
+        quality_gates_passed = artifact_bundle.get("quality_gates_passed", False)
         if not quality_gates_passed:
             logger.error("❌ Quality gates FAILED")
             logger.error(f"   Failed gates: {artifact_bundle.get('failed_gates', [])}")
             raise ValueError(
-                f"Code generation quality gates failed: "
-                f"{artifact_bundle.get('failed_gates', [])}"
+                f"Code generation quality gates failed: {artifact_bundle.get('failed_gates', [])}"
             )
 
         logger.info("✅ Quality gates passed, artifact bundle ready")
@@ -166,43 +163,43 @@ class CodingHandler:
 
         # Create code_gen_spec.json summary
         code_gen_spec = {
-            'version': '1.0',
-            'schema_version': '1.0',
-            'source_feature_spec': 'artifacts/planning/feature_spec.json',
-            'generated_at': self._get_timestamp(),
-            'phase': 'CODING',
-            'validation_result': validation_result,
-            'artifact_bundle': artifact_bundle,
-            'statistics': {
-                'total_files': len(generated_code.get('files', [])),
-                'total_tests': len(generated_tests.get('tests', [])),
-                'test_coverage_percent': test_coverage,
-                'total_docs': len(generated_docs.get('docs', [])),
-                'quality_gates_passed': quality_gates_passed
+            "version": "1.0",
+            "schema_version": "1.0",
+            "source_feature_spec": "artifacts/planning/feature_spec.json",
+            "generated_at": self._get_timestamp(),
+            "phase": "CODING",
+            "validation_result": validation_result,
+            "artifact_bundle": artifact_bundle,
+            "statistics": {
+                "total_files": len(generated_code.get("files", [])),
+                "total_tests": len(generated_tests.get("tests", [])),
+                "test_coverage_percent": test_coverage,
+                "total_docs": len(generated_docs.get("docs", [])),
+                "quality_gates_passed": quality_gates_passed,
             },
-            'metadata': {
-                'code_generator_version': '1.0',
-                'orchestrator_version': '1.0'
-            }
+            "metadata": {"code_generator_version": "1.0", "orchestrator_version": "1.0"},
         }
 
         # Save code_gen_spec artifact
         self.orchestrator.save_artifact(
             manifest.project_id,
-            'code_gen_spec.json',
+            "code_gen_spec.json",
             code_gen_spec,
-            validate=False  # TODO: Add schema validation in Phase 4
+            validate=False,  # TODO: Add schema validation in Phase 4
         )
 
-        manifest.artifacts['code_gen_spec'] = code_gen_spec
+        manifest.artifacts["code_gen_spec"] = code_gen_spec
 
         logger.info("✅ CODING complete → code_gen_spec.json created")
         logger.info(f"   Files: {code_gen_spec['statistics']['total_files']}")
-        logger.info(f"   Tests: {code_gen_spec['statistics']['total_tests']} ({test_coverage}% coverage)")
+        logger.info(
+            f"   Tests: {code_gen_spec['statistics']['total_tests']} ({test_coverage}% coverage)"
+        )
         logger.info(f"   Docs: {code_gen_spec['statistics']['total_docs']}")
 
         # Transition to TESTING
         from core_orchestrator import ProjectPhase
+
         manifest.current_phase = ProjectPhase.TESTING
 
     def _get_timestamp(self) -> str:

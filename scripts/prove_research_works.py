@@ -16,7 +16,7 @@ REPO_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 sys.path.insert(0, str(REPO_ROOT / "agency_os" / "00_system" / "orchestrator" / "tools"))
 
-print("="* 70)
+print("=" * 70)
 print("RESEARCH TOOLS PROOF (Claude Code WebSearch Backend)")
 print("=" * 70)
 print()
@@ -29,6 +29,7 @@ print("-" * 70)
 
 try:
     from web_fetch_client import WebFetchClient
+
     client = WebFetchClient()
     print("✅ WebFetchClient initialized")
 
@@ -47,6 +48,7 @@ print("-" * 70)
 
 try:
     from tool_executor import ToolExecutor
+
     executor = ToolExecutor()
     print("✅ ToolExecutor initialized")
     print("   (Tools loaded on-demand based on available API keys)")

@@ -7,14 +7,14 @@ LEAN_CANVAS_VALIDATOR → VIBE_ALIGNER → GENESIS_BLUEPRINT
 
 This validates that the hardened planning framework works end-to-end.
 """
+
 import sys
 from pathlib import Path
 import importlib.util
 
 # Load prompt runtime
 spec = importlib.util.spec_from_file_location(
-    "prompt_runtime",
-    "agency_os/00_system/runtime/prompt_runtime.py"
+    "prompt_runtime", "agency_os/00_system/runtime/prompt_runtime.py"
 )
 prompt_runtime = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(prompt_runtime)
@@ -23,9 +23,9 @@ PromptRuntime = prompt_runtime.PromptRuntime
 
 def test_lean_canvas_to_vibe_aligner():
     """Test integration: LEAN_CANVAS_VALIDATOR → VIBE_ALIGNER"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST: LEAN_CANVAS_VALIDATOR → VIBE_ALIGNER Integration")
-    print("="*60)
+    print("=" * 60)
 
     runtime = PromptRuntime()
 
@@ -40,22 +40,21 @@ def test_lean_canvas_to_vibe_aligner():
             "solution_mvp": "Time tracker + invoice template generator",
             "riskiest_assumptions": [
                 "Designers will pay $20/month for time tracking",
-                "Time tracking data is sufficient for accurate invoicing"
-            ]
-        }
+                "Time tracking data is sufficient for accurate invoicing",
+            ],
+        },
     }
 
     try:
         # Test VIBE_ALIGNER can consume lean_canvas output
         prompt = runtime.execute_task(
-            agent_id="VIBE_ALIGNER",
-            task_id="02_feature_extraction",
-            context=lean_canvas_context
+            agent_id="VIBE_ALIGNER", task_id="02_feature_extraction", context=lean_canvas_context
         )
 
         assert len(prompt) > 10000, "Prompt too short"
-        assert "lean_canvas" in prompt.lower() or "riskiest" in prompt.lower(), \
+        assert "lean_canvas" in prompt.lower() or "riskiest" in prompt.lower(), (
             "Prompt should reference lean canvas context"
+        )
 
         print("✅ PASS: VIBE_ALIGNER can consume LEAN_CANVAS output")
         return True
@@ -67,9 +66,9 @@ def test_lean_canvas_to_vibe_aligner():
 
 def test_vibe_aligner_to_genesis():
     """Test integration: VIBE_ALIGNER → GENESIS_BLUEPRINT"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST: VIBE_ALIGNER → GENESIS_BLUEPRINT Integration")
-    print("="*60)
+    print("=" * 60)
 
     runtime = PromptRuntime()
 
@@ -78,30 +77,15 @@ def test_vibe_aligner_to_genesis():
         "project_id": "test_integration_001",
         "workspace": "test",
         "feature_spec": {
-            "project": {
-                "name": "InvoiceQuick",
-                "category": "Web App",
-                "scale": "Solo User"
-            },
+            "project": {"name": "InvoiceQuick", "category": "Web App", "scale": "Solo User"},
             "features": [
-                {
-                    "id": "F001",
-                    "name": "Time Tracking",
-                    "priority": "must_have"
-                },
-                {
-                    "id": "F002",
-                    "name": "Invoice Generation",
-                    "priority": "must_have"
-                }
+                {"id": "F001", "name": "Time Tracking", "priority": "must_have"},
+                {"id": "F002", "name": "Invoice Generation", "priority": "must_have"},
             ],
             "nfr_requirements": [
-                {
-                    "category_id": "NFR-SEC",
-                    "response": "Basic auth, no PII storage"
-                }
-            ]
-        }
+                {"category_id": "NFR-SEC", "response": "Basic auth, no PII storage"}
+            ],
+        },
     }
 
     try:
@@ -109,12 +93,13 @@ def test_vibe_aligner_to_genesis():
         prompt = runtime.execute_task(
             agent_id="GENESIS_BLUEPRINT",
             task_id="01_select_core_modules",
-            context=vibe_aligner_context
+            context=vibe_aligner_context,
         )
 
         assert len(prompt) > 5000, "Prompt too short"
-        assert "feature_spec" in prompt.lower() or "nfr" in prompt.lower(), \
+        assert "feature_spec" in prompt.lower() or "nfr" in prompt.lower(), (
             "Prompt should reference feature_spec context"
+        )
 
         print("✅ PASS: GENESIS_BLUEPRINT can consume VIBE_ALIGNER output")
         return True
@@ -126,9 +111,9 @@ def test_vibe_aligner_to_genesis():
 
 def test_lean_canvas_validator_structure():
     """Test that LEAN_CANVAS_VALIDATOR agent structure is complete"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST: LEAN_CANVAS_VALIDATOR Agent Structure")
-    print("="*60)
+    print("=" * 60)
 
     agent_dir = Path("agency_os/01_planning_framework/agents/LEAN_CANVAS_VALIDATOR")
 
@@ -142,7 +127,7 @@ def test_lean_canvas_validator_structure():
         "tasks/task_02_risk_analysis.meta.yaml",
         "tasks/task_03_handoff.md",
         "tasks/task_03_handoff.meta.yaml",
-        "gates/gate_lean_canvas_complete.md"
+        "gates/gate_lean_canvas_complete.md",
     ]
 
     missing = []
@@ -161,14 +146,14 @@ def test_lean_canvas_validator_structure():
 
 def test_new_knowledge_bases_exist():
     """Test that new knowledge bases from hardening implementation exist"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST: New Knowledge Bases Exist")
-    print("="*60)
+    print("=" * 60)
 
     required_kb = [
         "system_steward_framework/knowledge/PRODUCT_QUALITY_METRICS.yaml",
         "system_steward_framework/knowledge/NFR_CATALOG.yaml",
-        "system_steward_framework/knowledge/architecture/PROMPT_SECURITY_GUIDELINES.md"
+        "system_steward_framework/knowledge/architecture/PROMPT_SECURITY_GUIDELINES.md",
     ]
 
     missing = []
@@ -185,10 +170,10 @@ def test_new_knowledge_bases_exist():
 
 
 def main():
-    print("="*60)
+    print("=" * 60)
     print("INTEGRATION TEST SUITE")
     print("Testing Hardened Planning Framework")
-    print("="*60)
+    print("=" * 60)
 
     tests = [
         ("LEAN_CANVAS_VALIDATOR Structure", test_lean_canvas_validator_structure),
@@ -205,12 +190,13 @@ def main():
         except Exception as e:
             print(f"\n❌ {test_name}: EXCEPTION - {e}")
             import traceback
+
             traceback.print_exc()
             results.append((test_name, False))
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("INTEGRATION TEST RESULTS")
-    print("="*60)
+    print("=" * 60)
 
     passed = sum(1 for _, success in results if success)
     failed = len(results) - passed

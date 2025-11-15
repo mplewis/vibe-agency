@@ -20,10 +20,7 @@ from pathlib import Path
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from orchestrator.core_orchestrator import (
-    CoreOrchestrator,
-    ProjectPhase
-)
+from orchestrator.core_orchestrator import CoreOrchestrator, ProjectPhase
 
 
 def test_phase3_sdlc_flow():
@@ -54,7 +51,7 @@ def test_phase3_sdlc_flow():
         project_id=test_project_id,
         description="Phase 3 SDLC Flow Test Project",
         user_prompt="Test the complete SDLC flow with stub handlers",
-        max_budget_usd=5.0
+        max_budget_usd=5.0,
     )
 
     print(f"✅ Project created: {test_project_id}")
@@ -122,8 +119,8 @@ def test_phase3_sdlc_flow():
     print("\n🤖 For this test, simulating approval...\n")
 
     # Simulate QA approval
-    manifest.artifacts['qa_approved'] = True
-    manifest.artifacts['qa_approver'] = 'test_script'
+    manifest.artifacts["qa_approved"] = True
+    manifest.artifacts["qa_approver"] = "test_script"
     orchestrator.save_project_manifest(manifest)
 
     # Test Phase 5: DEPLOYMENT
@@ -158,13 +155,19 @@ def test_phase3_sdlc_flow():
     print(f"   Project ID: {manifest.project_id}")
     print(f"   Final Phase: {manifest.current_phase.value}")
     print(f"   Artifacts Created: {len(manifest.artifacts)}")
-    print(f"   Budget Used: ${manifest.budget.get('current_cost_usd', 0):.2f} / ${manifest.budget['max_cost_usd']:.2f}")
+    print(
+        f"   Budget Used: ${manifest.budget.get('current_cost_usd', 0):.2f} / ${manifest.budget['max_cost_usd']:.2f}"
+    )
     print(f"   Workspace: {test_workspace}")
 
     # List all artifacts
     print("\n📦 Artifacts:")
     for artifact_name in sorted(manifest.artifacts.keys()):
-        if artifact_name.endswith('_spec') or artifact_name.endswith('_report') or artifact_name.endswith('_receipt'):
+        if (
+            artifact_name.endswith("_spec")
+            or artifact_name.endswith("_report")
+            or artifact_name.endswith("_receipt")
+        ):
             print(f"   ✓ {artifact_name}")
 
     print("\n" + "=" * 80)
@@ -181,5 +184,6 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"\n❌ TEST FAILED WITH ERROR: {e}\n")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)

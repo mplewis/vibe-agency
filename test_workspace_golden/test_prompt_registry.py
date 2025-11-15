@@ -7,8 +7,8 @@ Tests if PromptRegistry correctly loads and injects Guardian Directives
 import sys
 
 # Add agency_os to path
-sys.path.insert(0, '/home/user/vibe-agency')
-sys.path.insert(0, '/home/user/vibe-agency/agency_os/00_system/runtime')
+sys.path.insert(0, "/home/user/vibe-agency")
+sys.path.insert(0, "/home/user/vibe-agency/agency_os/00_system/runtime")
 
 print("=" * 80)
 print("GOLDEN PATH TEST - Prompt Registry Integration")
@@ -20,6 +20,7 @@ print("TEST 1: Import PromptRegistry")
 print("-" * 80)
 try:
     from prompt_registry import PromptRegistry
+
     print("✅ PASS: PromptRegistry imported successfully")
     print(f"   Location: {PromptRegistry.__module__}")
 except ImportError as e:
@@ -36,6 +37,7 @@ try:
 except Exception as e:
     print(f"❌ FAIL: Cannot initialize PromptRegistry: {e}")
     import traceback
+
     traceback.print_exc()
     sys.exit(1)
 print()
@@ -54,6 +56,7 @@ try:
 except Exception as e:
     print(f"❌ FAIL: Cannot load Guardian Directives: {e}")
     import traceback
+
     traceback.print_exc()
     sys.exit(1)
 print()
@@ -67,14 +70,10 @@ try:
     test_task = "EDUCATE_USER"
     test_context = {
         "user_input": "I want to build a yoga booking system",
-        "project_phase": "PLANNING"
+        "project_phase": "PLANNING",
     }
 
-    prompt = registry.compose(
-        agent_name=test_agent,
-        task_name=test_task,
-        context=test_context
-    )
+    prompt = registry.compose(agent_name=test_agent, task_name=test_task, context=test_context)
 
     if prompt:
         print("✅ PASS: compose() returned prompt")
@@ -91,7 +90,7 @@ try:
         print()
         print("   Prompt snippet (first 500 chars):")
         print("   " + "-" * 76)
-        for line in prompt[:500].split('\n'):
+        for line in prompt[:500].split("\n"):
             print(f"   {line}")
         print("   " + "-" * 76)
     else:
@@ -101,6 +100,7 @@ try:
 except Exception as e:
     print(f"❌ FAIL: compose() error: {e}")
     import traceback
+
     traceback.print_exc()
     sys.exit(1)
 print()
@@ -111,8 +111,13 @@ print("-" * 80)
 try:
     # Check if prompt contains governance keywords
     governance_keywords = [
-        "constraint", "requirement", "rule", "policy",
-        "governance", "compliance", "standard"
+        "constraint",
+        "requirement",
+        "rule",
+        "policy",
+        "governance",
+        "compliance",
+        "standard",
     ]
 
     found_keywords = []

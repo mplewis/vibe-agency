@@ -2,6 +2,7 @@
 """
 Quick test: Can we compose VIBE_ALIGNER prompt?
 """
+
 import sys
 import os
 from pathlib import Path
@@ -23,11 +24,9 @@ print(f"✓ Found prompt_runtime at {runtime_path.absolute()}")
 
 # Import prompt runtime (can't use normal import due to 00_ directory name)
 import importlib.util
+
 try:
-    spec = importlib.util.spec_from_file_location(
-        "prompt_runtime",
-        str(runtime_path)
-    )
+    spec = importlib.util.spec_from_file_location("prompt_runtime", str(runtime_path))
     prompt_runtime = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(prompt_runtime)
     PromptRuntime = prompt_runtime.PromptRuntime
@@ -35,8 +34,10 @@ try:
 except Exception as e:
     print(f"❌ ERROR loading prompt_runtime: {e}")
     import traceback
+
     traceback.print_exc()
     sys.exit(1)
+
 
 def test_vibe_aligner():
     print("=" * 60)
@@ -52,8 +53,8 @@ def test_vibe_aligner():
             context={
                 "project_id": "test_project_001",
                 "workspace": "test",
-                "user_requirements": "I want a booking system for my yoga studio"
-            }
+                "user_requirements": "I want a booking system for my yoga studio",
+            },
         )
 
         print("\n✅ SUCCESS!")
@@ -62,7 +63,7 @@ def test_vibe_aligner():
 
         # Save to file
         output_file = Path("VIBE_ALIGNER_TEST.md")
-        with open(output_file, 'w') as f:
+        with open(output_file, "w") as f:
             f.write(prompt)
         print(f"\n   Saved to: {output_file}")
 
@@ -71,8 +72,10 @@ def test_vibe_aligner():
     except Exception as e:
         print(f"\n❌ ERROR: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 if __name__ == "__main__":
     success = test_vibe_aligner()

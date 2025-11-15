@@ -20,21 +20,21 @@ from datetime import datetime
 
 # Import the runtime
 import importlib.util
+
 spec = importlib.util.spec_from_file_location(
-    "prompt_runtime",
-    Path(__file__).parent / "agency_os/00_system/runtime/prompt_runtime.py"
+    "prompt_runtime", Path(__file__).parent / "agency_os/00_system/runtime/prompt_runtime.py"
 )
 prompt_runtime = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(prompt_runtime)
 PromptRuntime = prompt_runtime.PromptRuntime
 
 # CRITICAL FIX #2: Import workspace utilities
-sys.path.insert(0, str(Path(__file__).parent / 'scripts'))
+sys.path.insert(0, str(Path(__file__).parent / "scripts"))
 from workspace_utils import (
     get_workspace_by_name,
     list_active_workspaces,
     get_active_workspace,
-    set_active_workspace
+    set_active_workspace,
 )
 
 
@@ -92,6 +92,7 @@ def list_tasks(agent_id: str):
         meta_file = tasks_dir / f"task_{task_id}.meta.yaml"
         if meta_file.exists():
             import yaml
+
             with open(meta_file) as f:
                 meta = yaml.safe_load(f)
                 description = meta.get("description", "No description")
@@ -122,11 +123,7 @@ def generate_prompt(agent_id: str, task_id: str, output_file: str = "COMPOSED_PR
 
     try:
         # Compose the prompt
-        composed_prompt = runtime.execute_task(
-            agent_id=agent_id,
-            task_id=task_id,
-            context=context
-        )
+        composed_prompt = runtime.execute_task(agent_id=agent_id, task_id=task_id, context=context)
 
         # Save to file
         output_path = Path(output_file)
@@ -199,7 +196,7 @@ def list_workspaces():
         return
 
     for ws in workspaces:
-        prefix = "→" if ws['name'] == current_workspace else " "
+        prefix = "→" if ws["name"] == current_workspace else " "
         print(f"{prefix} {ws['name']} ({ws['type']})")
         print(f"    {ws['description']}")
         print(f"    Manifest: {ws['manifestPath']}")
@@ -229,11 +226,11 @@ def approve_qa(project_id: str):
         print("Make sure the project_id is correct and the orchestrator has run.\n")
         return
 
-    with open(manifest_path, 'r') as f:
+    with open(manifest_path, "r") as f:
         manifest = json.load(f)
 
     # Validate state
-    if manifest.get('current_phase') != 'AWAITING_QA_APPROVAL':
+    if manifest.get("current_phase") != "AWAITING_QA_APPROVAL":
         print("❌ ERROR: Project is not awaiting QA approval")
         print(f"   Current phase: {manifest.get('current_phase')}\n")
         return
@@ -241,7 +238,7 @@ def approve_qa(project_id: str):
     # Load QA report to show user
     qa_report_path = Path(f"workspaces/{project_id}/artifacts/testing/qa_report.json")
     if qa_report_path.exists():
-        with open(qa_report_path, 'r') as f:
+        with open(qa_report_path, "r") as f:
             qa_report = json.load(f)
 
         print("QA Report Summary:")
@@ -259,12 +256,12 @@ def approve_qa(project_id: str):
         return
 
     # Set approval flags
-    manifest['artifacts']['qa_approved'] = True
-    manifest['artifacts']['qa_approver'] = getpass.getuser()
-    manifest['artifacts']['qa_approved_at'] = datetime.utcnow().isoformat() + "Z"
+    manifest["artifacts"]["qa_approved"] = True
+    manifest["artifacts"]["qa_approver"] = getpass.getuser()
+    manifest["artifacts"]["qa_approved_at"] = datetime.utcnow().isoformat() + "Z"
 
     # Save manifest
-    with open(manifest_path, 'w') as f:
+    with open(manifest_path, "w") as f:
         json.dump(manifest, f, indent=2)
 
     print("\n" + "=" * 60)
@@ -273,7 +270,9 @@ def approve_qa(project_id: str):
     print(f"Approver: {manifest['artifacts']['qa_approver']}")
     print(f"Approved at: {manifest['artifacts']['qa_approved_at']}")
     print("\nNext steps:")
-    print(f"  1. Resume orchestrator: python -m agency_os.00_system.orchestrator.core_orchestrator resume {project_id}")
+    print(
+        f"  1. Resume orchestrator: python -m agency_os.00_system.orchestrator.core_orchestrator resume {project_id}"
+    )
     print("  2. Orchestrator will proceed to DEPLOYMENT phase\n")
 
 
@@ -295,11 +294,11 @@ def reject_qa(project_id: str, reason: str = None):
         print(f"❌ ERROR: Project manifest not found at {manifest_path}\n")
         return
 
-    with open(manifest_path, 'r') as f:
+    with open(manifest_path, "r") as f:
         manifest = json.load(f)
 
     # Validate state
-    if manifest.get('current_phase') != 'AWAITING_QA_APPROVAL':
+    if manifest.get("current_phase") != "AWAITING_QA_APPROVAL":
         print("❌ ERROR: Project is not awaiting QA approval")
         print(f"   Current phase: {manifest.get('current_phase')}\n")
         return
@@ -318,15 +317,15 @@ def reject_qa(project_id: str, reason: str = None):
         return
 
     # Set rejection flags and transition back to CODING
-    manifest['artifacts']['qa_approved'] = False
-    manifest['artifacts']['qa_rejected'] = True
-    manifest['artifacts']['qa_rejection_reason'] = reason
-    manifest['artifacts']['qa_rejector'] = getpass.getuser()
-    manifest['artifacts']['qa_rejected_at'] = datetime.utcnow().isoformat() + "Z"
-    manifest['current_phase'] = 'CODING'  # Error loop: back to CODING
+    manifest["artifacts"]["qa_approved"] = False
+    manifest["artifacts"]["qa_rejected"] = True
+    manifest["artifacts"]["qa_rejection_reason"] = reason
+    manifest["artifacts"]["qa_rejector"] = getpass.getuser()
+    manifest["artifacts"]["qa_rejected_at"] = datetime.utcnow().isoformat() + "Z"
+    manifest["current_phase"] = "CODING"  # Error loop: back to CODING
 
     # Save manifest
-    with open(manifest_path, 'w') as f:
+    with open(manifest_path, "w") as f:
         json.dump(manifest, f, indent=2)
 
     print("\n" + "=" * 60)
@@ -336,7 +335,9 @@ def reject_qa(project_id: str, reason: str = None):
     print(f"Reason: {reason}")
     print("New phase: CODING (error loop)\n")
     print("\nNext steps:")
-    print(f"  1. Resume orchestrator: python -m agency_os.00_system.orchestrator.core_orchestrator resume {project_id}")
+    print(
+        f"  1. Resume orchestrator: python -m agency_os.00_system.orchestrator.core_orchestrator resume {project_id}"
+    )
     print("  2. Orchestrator will re-execute CODING phase to fix issues\n")
 
 
@@ -354,7 +355,7 @@ Examples:
   ./vibe-cli.py generate GENESIS_BLUEPRINT 01_select_core_modules
   ./vibe-cli.py approve-qa my_app
   ./vibe-cli.py reject-qa my_app --reason "Tests failing"
-        """
+        """,
     )
 
     subparsers = parser.add_subparsers(dest="command", help="Command to execute")
@@ -367,7 +368,9 @@ Examples:
 
     # workspace command (CRITICAL FIX #2)
     workspace_parser = subparsers.add_parser("workspace", help="Set active workspace")
-    workspace_parser.add_argument("workspace_name", help="Workspace to activate (e.g., prabhupad_os)")
+    workspace_parser.add_argument(
+        "workspace_name", help="Workspace to activate (e.g., prabhupad_os)"
+    )
 
     # tasks command
     tasks_parser = subparsers.add_parser("tasks", help="List tasks for an agent")
@@ -377,11 +380,17 @@ Examples:
     gen_parser = subparsers.add_parser("generate", help="Generate a composed prompt")
     gen_parser.add_argument("agent_id", help="Agent ID (e.g., VIBE_ALIGNER)")
     gen_parser.add_argument("task_id", help="Task ID (e.g., 02_feature_extraction)")
-    gen_parser.add_argument("-o", "--output", default="COMPOSED_PROMPT.md",
-                           help="Output file (default: COMPOSED_PROMPT.md)")
+    gen_parser.add_argument(
+        "-o",
+        "--output",
+        default="COMPOSED_PROMPT.md",
+        help="Output file (default: COMPOSED_PROMPT.md)",
+    )
 
     # approve-qa command (HITL - GAD-002 Decision 8)
-    approve_parser = subparsers.add_parser("approve-qa", help="Approve QA and proceed to deployment")
+    approve_parser = subparsers.add_parser(
+        "approve-qa", help="Approve QA and proceed to deployment"
+    )
     approve_parser.add_argument("project_id", help="Project ID (e.g., my_app)")
 
     # reject-qa command (HITL - GAD-002 Decision 8)

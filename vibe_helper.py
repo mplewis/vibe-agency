@@ -17,8 +17,7 @@ import importlib.util
 
 # Load prompt runtime
 spec = importlib.util.spec_from_file_location(
-    "prompt_runtime",
-    Path(__file__).parent / "agency_os/00_system/runtime/prompt_runtime.py"
+    "prompt_runtime", Path(__file__).parent / "agency_os/00_system/runtime/prompt_runtime.py"
 )
 prompt_runtime = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(prompt_runtime)
@@ -50,11 +49,7 @@ def compose_prompt(agent_id: str, task_id: str, context: dict = None) -> str:
             "phase": "PLANNING",
         }
 
-    return runtime.execute_task(
-        agent_id=agent_id,
-        task_id=task_id,
-        context=context
-    )
+    return runtime.execute_task(agent_id=agent_id, task_id=task_id, context=context)
 
 
 def list_agents() -> dict:
@@ -96,5 +91,5 @@ if __name__ == "__main__":
     print(f"Composing prompt for {agent_id}.{task_id}...")
     prompt = compose_prompt(agent_id, task_id)
     print(f"\nPrompt composed ({len(prompt)} chars)")
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print(prompt)

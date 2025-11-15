@@ -22,7 +22,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from core_orchestrator import CoreOrchestrator, ProjectManifest, ProjectPhase
 
-logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
+logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -34,9 +34,9 @@ def test_core_orchestrator_initialization():
     orchestrator = CoreOrchestrator(repo_root)
 
     # Verify AUDITOR methods exist
-    assert hasattr(orchestrator, 'invoke_auditor'), "invoke_auditor method not found"
-    assert hasattr(orchestrator, 'apply_quality_gates'), "apply_quality_gates method not found"
-    assert hasattr(orchestrator, 'run_horizontal_audits'), "run_horizontal_audits method not found"
+    assert hasattr(orchestrator, "invoke_auditor"), "invoke_auditor method not found"
+    assert hasattr(orchestrator, "apply_quality_gates"), "apply_quality_gates method not found"
+    assert hasattr(orchestrator, "run_horizontal_audits"), "run_horizontal_audits method not found"
 
     logger.info("✅ Test 1 PASSED: All AUDITOR methods present")
 
@@ -52,12 +52,12 @@ def test_workflow_has_quality_gates():
     transition_found = False
     quality_gates_found = False
 
-    for transition in orchestrator.workflow.get('transitions', []):
-        if transition['name'] == 'T1_StartCoding':
+    for transition in orchestrator.workflow.get("transitions", []):
+        if transition["name"] == "T1_StartCoding":
             transition_found = True
-            if 'quality_gates' in transition:
+            if "quality_gates" in transition:
                 quality_gates_found = True
-                quality_gates = transition['quality_gates']
+                quality_gates = transition["quality_gates"]
                 logger.info(f"   Found {len(quality_gates)} quality gates for T1_StartCoding:")
                 for gate in quality_gates:
                     logger.info(f"     - {gate.get('check')} (blocking={gate.get('blocking')})")
@@ -80,12 +80,12 @@ def test_workflow_has_horizontal_audits():
     state_found = False
     audits_found = False
 
-    for state in orchestrator.workflow.get('states', []):
-        if state['name'] == 'PLANNING':
+    for state in orchestrator.workflow.get("states", []):
+        if state["name"] == "PLANNING":
             state_found = True
-            if 'horizontal_audits' in state:
+            if "horizontal_audits" in state:
                 audits_found = True
-                audits = state['horizontal_audits']
+                audits = state["horizontal_audits"]
                 logger.info(f"   Found {len(audits)} horizontal audits for PLANNING:")
                 for audit in audits:
                     logger.info(f"     - {audit.get('name')} (blocking={audit.get('blocking')})")
@@ -106,9 +106,7 @@ def test_audit_context_building():
 
     # Create mock manifest
     manifest = ProjectManifest(
-        project_id="test-project-123",
-        name="Test Project",
-        current_phase=ProjectPhase.PLANNING
+        project_id="test-project-123", name="Test Project", current_phase=ProjectPhase.PLANNING
     )
 
     # Test different check types
@@ -116,15 +114,15 @@ def test_audit_context_building():
         "prompt_security_scan",
         "data_privacy_scan",
         "code_security_scan",
-        "license_compliance_scan"
+        "license_compliance_scan",
     ]
 
     for check_type in check_types:
         context = orchestrator._build_audit_context(check_type, manifest)
 
-        assert 'audit_mode' in context, f"audit_mode missing for {check_type}"
-        assert 'project_id' in context, f"project_id missing for {check_type}"
-        assert 'target_files' in context, f"target_files missing for {check_type}"
+        assert "audit_mode" in context, f"audit_mode missing for {check_type}"
+        assert "project_id" in context, f"project_id missing for {check_type}"
+        assert "target_files" in context, f"target_files missing for {check_type}"
 
         logger.info(f"   ✓ {check_type}: {len(context.get('target_files', []))} target files")
 
@@ -139,22 +137,25 @@ def test_data_contracts_has_audit_schema():
     contracts_path = repo_root / "agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml"
 
     import yaml
-    with open(contracts_path, 'r') as f:
+
+    with open(contracts_path, "r") as f:
         contracts = yaml.safe_load(f)
 
     # Check if audit_report.schema.json exists
     schema_found = False
-    for schema in contracts.get('schemas', []):
-        if schema['name'] == 'audit_report.schema.json':
+    for schema in contracts.get("schemas", []):
+        if schema["name"] == "audit_report.schema.json":
             schema_found = True
             logger.info(f"   Found audit_report schema (version {schema['version']})")
 
             # Verify key fields
-            fields = {field['name'] for field in schema.get('fields', [])}
-            required_fields = ['check_type', 'severity', 'blocking', 'status', 'timestamp']
+            fields = {field["name"] for field in schema.get("fields", [])}
+            required_fields = ["check_type", "severity", "blocking", "status", "timestamp"]
 
             for req_field in required_fields:
-                assert req_field in fields, f"Required field '{req_field}' missing from audit_report schema"
+                assert req_field in fields, (
+                    f"Required field '{req_field}' missing from audit_report schema"
+                )
                 logger.info(f"     ✓ {req_field}")
 
             break
@@ -173,14 +174,15 @@ def test_coding_handler_has_code_generator():
 
     # Verify it's not the stub version
     import inspect
+
     source = inspect.getsource(CodingHandler.execute)
 
     # Check for CODE_GENERATOR task calls
-    assert 'task_01_spec_analysis_validation' in source, "Task 1 not found in CodingHandler"
-    assert 'task_02_code_generation' in source, "Task 2 not found in CodingHandler"
-    assert 'task_03_test_generation' in source, "Task 3 not found in CodingHandler"
-    assert 'task_04_documentation_generation' in source, "Task 4 not found in CodingHandler"
-    assert 'task_05_quality_assurance_packaging' in source, "Task 5 not found in CodingHandler"
+    assert "task_01_spec_analysis_validation" in source, "Task 1 not found in CodingHandler"
+    assert "task_02_code_generation" in source, "Task 2 not found in CodingHandler"
+    assert "task_03_test_generation" in source, "Task 3 not found in CodingHandler"
+    assert "task_04_documentation_generation" in source, "Task 4 not found in CodingHandler"
+    assert "task_05_quality_assurance_packaging" in source, "Task 5 not found in CodingHandler"
 
     logger.info("   ✓ All 5 CODE_GENERATOR tasks present")
     logger.info("✅ Test 6 PASSED: CodingHandler has full CODE_GENERATOR integration")
@@ -188,9 +190,9 @@ def test_coding_handler_has_code_generator():
 
 def main():
     """Run all smoke tests"""
-    print("="*70)
+    print("=" * 70)
     print("PHASE 4 SMOKE TESTS: Governance Integration (GAD-002)")
-    print("="*70)
+    print("=" * 70)
     print()
 
     try:
@@ -202,9 +204,9 @@ def main():
         test_coding_handler_has_code_generator()
 
         print()
-        print("="*70)
+        print("=" * 70)
         print("✅ ALL PHASE 4 SMOKE TESTS PASSED")
-        print("="*70)
+        print("=" * 70)
         print()
         print("Phase 4 Implementation Status:")
         print("  ✅ AUDITOR integration (invoke_auditor)")
@@ -224,6 +226,7 @@ def main():
     except Exception as e:
         logger.error(f"\n❌ UNEXPECTED ERROR: {e}")
         import traceback
+
         traceback.print_exc()
         return 1
 

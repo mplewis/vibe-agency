@@ -24,12 +24,7 @@ from pathlib import Path
 repo_root = Path(__file__).parent.parent
 sys.path.insert(0, str(repo_root / "agency_os" / "00_system" / "orchestrator"))
 
-from core_orchestrator import (
-    CoreOrchestrator,
-    ProjectPhase,
-    PlanningSubState,
-    ProjectManifest
-)
+from core_orchestrator import CoreOrchestrator, ProjectPhase, PlanningSubState, ProjectManifest
 
 
 class TestOrchestratorStateMachine:
@@ -54,7 +49,7 @@ class TestOrchestratorStateMachine:
         """Initialize orchestrator with temp workspace"""
         return CoreOrchestrator(
             repo_root=repo_root,
-            execution_mode="autonomous"  # Use autonomous for testing (no API calls)
+            execution_mode="autonomous",  # Use autonomous for testing (no API calls)
         )
 
     @pytest.fixture
@@ -66,7 +61,7 @@ class TestOrchestratorStateMachine:
             current_phase=ProjectPhase.PLANNING,
             artifacts={},
             budget={"max_cost": 10.0},
-            metadata={}
+            metadata={},
         )
 
     def test_project_phase_enum_values(self):
@@ -94,10 +89,12 @@ class TestOrchestratorStateMachine:
             "project_id": basic_manifest.project_id,
             "name": basic_manifest.name,
             "current_phase": basic_manifest.current_phase.value,
-            "current_sub_state": basic_manifest.current_sub_state.value if basic_manifest.current_sub_state else None,
+            "current_sub_state": (
+                basic_manifest.current_sub_state.value if basic_manifest.current_sub_state else None
+            ),
             "artifacts": basic_manifest.artifacts,
             "budget": basic_manifest.budget,
-            "metadata": basic_manifest.metadata
+            "metadata": basic_manifest.metadata,
         }
 
         assert manifest_dict["project_id"] == "test_project"
@@ -111,10 +108,10 @@ class TestOrchestratorStateMachine:
 
         feature_spec = {
             "project": {"name": "Test"},
-            "features": [{"id": "feat_001", "name": "Test Feature"}]
+            "features": [{"id": "feat_001", "name": "Test Feature"}],
         }
 
-        with open(feature_spec_path, 'w') as f:
+        with open(feature_spec_path, "w") as f:
             json.dump(feature_spec, f)
 
         # Transition
@@ -131,12 +128,9 @@ class TestOrchestratorStateMachine:
         code_spec_path = temp_workspace / "artifacts" / "coding" / "code_gen_spec.json"
         code_spec_path.parent.mkdir(parents=True, exist_ok=True)
 
-        code_spec = {
-            "generated_files": ["src/main.py", "src/utils.py"],
-            "status": "complete"
-        }
+        code_spec = {"generated_files": ["src/main.py", "src/utils.py"], "status": "complete"}
 
-        with open(code_spec_path, 'w') as f:
+        with open(code_spec_path, "w") as f:
             json.dump(code_spec, f)
 
         # Transition
@@ -153,13 +147,9 @@ class TestOrchestratorStateMachine:
         qa_report_path = temp_workspace / "artifacts" / "testing" / "qa_report.json"
         qa_report_path.parent.mkdir(parents=True, exist_ok=True)
 
-        qa_report = {
-            "status": "PASSED",
-            "tests_passed": 10,
-            "tests_failed": 0
-        }
+        qa_report = {"status": "PASSED", "tests_passed": 10, "tests_failed": 0}
 
-        with open(qa_report_path, 'w') as f:
+        with open(qa_report_path, "w") as f:
             json.dump(qa_report, f)
 
         # Transition
@@ -251,7 +241,7 @@ class TestOrchestratorStateMachine:
             ProjectPhase.TESTING,
             ProjectPhase.AWAITING_QA_APPROVAL,
             ProjectPhase.DEPLOYMENT,
-            ProjectPhase.PRODUCTION
+            ProjectPhase.PRODUCTION,
         ]
 
         for i, phase in enumerate(phases):
@@ -271,7 +261,7 @@ class TestOrchestratorStateMachine:
             assert basic_manifest.current_phase == phase
 
             # Log progress
-            print(f"Phase {i+1}/{len(phases)}: {phase.value} ✓")
+            print(f"Phase {i + 1}/{len(phases)}: {phase.value} ✓")
 
     def test_error_loop_qa_reject_to_coding(self, basic_manifest):
         """Test: QA rejection creates error loop TESTING → CODING"""
@@ -310,10 +300,7 @@ class TestOrchestratorStateMachine:
 
 def test_orchestrator_state_machine_basic():
     """Test: Basic orchestrator state machine works"""
-    orchestrator = CoreOrchestrator(
-        repo_root=repo_root,
-        execution_mode="autonomous"
-    )
+    orchestrator = CoreOrchestrator(repo_root=repo_root, execution_mode="autonomous")
 
     assert orchestrator.repo_root == repo_root
     assert orchestrator.execution_mode == "autonomous"

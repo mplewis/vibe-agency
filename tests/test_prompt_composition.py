@@ -5,6 +5,7 @@ Integration Tests: Prompt Composition System
 Tests that ALL agents can compose their prompts correctly.
 No LLM calls - just validates that composition works.
 """
+
 import sys
 import os
 from pathlib import Path
@@ -25,10 +26,7 @@ print(f"✓ Found prompt_runtime at {runtime_path.absolute()}")
 
 # Load prompt runtime
 try:
-    spec = importlib.util.spec_from_file_location(
-        "prompt_runtime",
-        str(runtime_path)
-    )
+    spec = importlib.util.spec_from_file_location("prompt_runtime", str(runtime_path))
     prompt_runtime = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(prompt_runtime)
     PromptRuntime = prompt_runtime.PromptRuntime
@@ -36,6 +34,7 @@ try:
 except Exception as e:
     print(f"❌ ERROR loading prompt_runtime: {e}")
     import traceback
+
     traceback.print_exc()
     sys.exit(1)
 
@@ -48,16 +47,14 @@ def test_agent_prompt_composition(agent_id: str, task_id: str) -> bool:
         prompt = runtime.execute_task(
             agent_id=agent_id,
             task_id=task_id,
-            context={
-                "project_id": "test",
-                "workspace": "test",
-                "user_input": "test input"
-            }
+            context={"project_id": "test", "workspace": "test", "user_input": "test input"},
         )
 
         # Validate prompt
         assert len(prompt) > 100, "Prompt too short"
-        assert "CORE PERSONALITY" in prompt or "personality" in prompt.lower(), "Missing personality section"
+        assert "CORE PERSONALITY" in prompt or "personality" in prompt.lower(), (
+            "Missing personality section"
+        )
 
         print(f"✅ {agent_id}/{task_id}: OK ({len(prompt)} chars)")
         return True
@@ -83,26 +80,22 @@ def main():
         ("GENESIS_BLUEPRINT", "03_generate_config_schema"),
         ("GENESIS_BLUEPRINT", "04_validate_architecture"),
         ("GENESIS_BLUEPRINT", "05_handoff"),
-
         # Code Generation Framework
         ("CODE_GENERATOR", "01_spec_analysis_validation"),
         ("CODE_GENERATOR", "02_code_generation"),
         ("CODE_GENERATOR", "03_test_generation"),
         ("CODE_GENERATOR", "04_documentation_generation"),
         ("CODE_GENERATOR", "05_quality_assurance_packaging"),
-
         # QA Framework
         ("QA_VALIDATOR", "01_setup_environment"),
         ("QA_VALIDATOR", "02_automated_test_execution"),
         ("QA_VALIDATOR", "03_static_analysis"),
         ("QA_VALIDATOR", "04_report_generation"),
-
         # Deploy Framework
         ("DEPLOY_MANAGER", "01_pre_deployment_checks"),
         ("DEPLOY_MANAGER", "02_deployment_execution"),
         ("DEPLOY_MANAGER", "03_post_deployment_validation"),
         ("DEPLOY_MANAGER", "04_report_generation"),
-
         # Maintenance Framework
         ("BUG_TRIAGE", "01_bug_analysis_classification"),
         ("BUG_TRIAGE", "02_remediation_path_determination"),

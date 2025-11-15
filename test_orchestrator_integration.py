@@ -29,7 +29,7 @@ cmd = [
     "/home/user/vibe-agency",
     "golden-test-registry",
     "--mode=delegated",
-    "--log-level=INFO"
+    "--log-level=INFO",
 ]
 
 print(f"Command: {' '.join(cmd)}")
@@ -39,11 +39,7 @@ print("-" * 80)
 # Run and capture output
 try:
     proc = subprocess.Popen(
-        cmd,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        stdin=subprocess.PIPE,
-        text=True
+        cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE, text=True
     )
 
     # Read output for 5 seconds or until we get INTELLIGENCE_REQUEST
@@ -59,7 +55,7 @@ try:
         if not line:
             break
         output_lines.append(line)
-        print(line, end='')
+        print(line, end="")
 
         if "<INTELLIGENCE_REQUEST>" in line:
             found_request = True
@@ -69,7 +65,7 @@ try:
                 if not line:
                     break
                 output_lines.append(line)
-                print(line, end='')
+                print(line, end="")
                 if "</INTELLIGENCE_REQUEST>" in line:
                     break
 
@@ -81,7 +77,7 @@ try:
     print()
 
     # Analyze results
-    full_output = ''.join(output_lines)
+    full_output = "".join(output_lines)
 
     print("=" * 80)
     print("ANALYSIS")
@@ -104,7 +100,9 @@ try:
 
         # Check prompt size
         if len(full_output) > 10000:
-            print(f"✅ PASS: Large prompt ({len(full_output):,} chars - likely includes governance)")
+            print(
+                f"✅ PASS: Large prompt ({len(full_output):,} chars - likely includes governance)"
+            )
         else:
             print(f"⚠️  WARNING: Small prompt ({len(full_output):,} chars)")
 
@@ -121,4 +119,5 @@ except subprocess.TimeoutExpired:
 except Exception as e:
     print(f"❌ ERROR: {e}")
     import traceback
+
     traceback.print_exc()
