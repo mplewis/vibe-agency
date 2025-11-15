@@ -4,6 +4,13 @@ import os
 import requests
 from typing import List, Dict
 
+# Load .env file if it exists
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass  # python-dotenv not installed, use environment variables only
+
 
 class GoogleSearchClient:
     """Wrapper for Google Custom Search JSON API"""
