@@ -1,0 +1,409 @@
+{
+  "phase": "05_scope_negotiation",
+  "framework_version": "1.1.0",
+  "project_type": "internal_refactoring",
+  "abstraction_level": "META",
+  "apce_version": "1.0",
+  "meta_note": "Dogfooding VIBE_ALIGNER on vibe-agency itself - Scope Negotiation for v1.0 architecture improvements",
+
+  "negotiated_features": [
+    {
+      "feature_id": "arch_004",
+      "feature_name": "Add architecture tests (pytest infrastructure)",
+      "priority": "must_have",
+      "priority_rationale": "CRITICAL - Foundation for all other work. Enables verification during refactoring. Blocks 4 other features (GAP-001).",
+      "complexity_score": 8,
+      "complexity_breakdown": {
+        "base_complexity": 5,
+        "multipliers": [
+          {
+            "type": "ci_cd_integration",
+            "multiplier": 1.6,
+            "reason": "Requires GitHub Actions workflow setup and test coverage enforcement"
+          }
+        ],
+        "final_complexity": 8
+      },
+      "estimated_effort": "2-4 days",
+      "implementation_order": 1,
+      "dependencies": [],
+      "enables": ["arch_001", "arch_002", "arch_005", "arch_007"]
+    },
+    {
+      "feature_id": "arch_005",
+      "feature_name": "Fix documentation contradictions",
+      "priority": "must_have",
+      "priority_rationale": "CRITICAL - Anti-hallucination protocol. Prevents AI assistants from repeating false 'Complete ✅' claims.",
+      "complexity_score": 3,
+      "complexity_breakdown": {
+        "base_complexity": 3,
+        "multipliers": [],
+        "final_complexity": 3
+      },
+      "estimated_effort": "1-2 days",
+      "implementation_order": 2,
+      "dependencies": ["arch_004"],
+      "enables": []
+    },
+    {
+      "feature_id": "arch_006",
+      "feature_name": "Make API stub optional flag",
+      "priority": "must_have",
+      "priority_rationale": "CRITICAL - Clarifies primary execution mode (Claude Code operator) vs fallback (API stub). Resolves architectural confusion.",
+      "complexity_score": 2,
+      "complexity_breakdown": {
+        "base_complexity": 2,
+        "multipliers": [],
+        "final_complexity": 2
+      },
+      "estimated_effort": "1 day (4-6 hours)",
+      "implementation_order": 5,
+      "dependencies": ["arch_001"],
+      "enables": []
+    },
+    {
+      "feature_id": "arch_001",
+      "feature_name": "Separate vibe-cli concerns (operator mode vs API mode)",
+      "priority": "should_have",
+      "priority_rationale": "IMPORTANT - Improves maintainability and clarity. Enables easier testing and future extensions. Not blocking but highly valuable.",
+      "complexity_score": 5,
+      "complexity_breakdown": {
+        "base_complexity": 5,
+        "multipliers": [],
+        "final_complexity": 5
+      },
+      "estimated_effort": "1-2 days",
+      "implementation_order": 3,
+      "dependencies": ["arch_004"],
+      "enables": ["arch_006"]
+    },
+    {
+      "feature_id": "arch_002",
+      "feature_name": "Clarify orchestrator role (state machine ONLY, no business logic)",
+      "priority": "should_have",
+      "priority_rationale": "IMPORTANT - Separation of concerns. Makes tool use loop implementation cleaner. Not critical for v1.0 but sets up better architecture.",
+      "complexity_score": 8,
+      "complexity_breakdown": {
+        "base_complexity": 8,
+        "multipliers": [],
+        "final_complexity": 8
+      },
+      "estimated_effort": "2-3 days",
+      "implementation_order": 4,
+      "dependencies": ["arch_004", "arch_001"],
+      "enables": ["arch_007"]
+    },
+    {
+      "feature_id": "arch_007",
+      "feature_name": "Complete tool use loop (Anthropic native API)",
+      "priority": "should_have",
+      "priority_rationale": "IMPORTANT - Completes GAD-003. Makes research agents with tools fully functional. High value but can follow other refactoring.",
+      "complexity_score": 5,
+      "complexity_breakdown": {
+        "base_complexity": 5,
+        "multipliers": [],
+        "final_complexity": 5
+      },
+      "estimated_effort": "3-4 hours",
+      "implementation_order": 6,
+      "dependencies": ["arch_004", "arch_002"],
+      "enables": ["research_agents_functional"]
+    },
+    {
+      "feature_id": "arch_008",
+      "feature_name": "Dogfood VIBE_ALIGNER on vibe-agency (meta)",
+      "priority": "in_progress",
+      "priority_rationale": "META - This IS the process generating the spec for all other features. Task 05 of 6 currently executing.",
+      "complexity_score": 5,
+      "complexity_breakdown": {
+        "base_complexity": 5,
+        "multipliers": [],
+        "final_complexity": 5
+      },
+      "estimated_effort": "2-3 hours total (Tasks 01-06)",
+      "implementation_order": 0,
+      "dependencies": [],
+      "enables": ["all_other_arch_features"],
+      "meta_note": "VIBE_ALIGNER Tasks 01-05 complete, Task 06 pending"
+    },
+    {
+      "feature_id": "arch_003",
+      "feature_name": "Modularize research agents (support external plugins)",
+      "priority": "wont_have_v1",
+      "priority_rationale": "Moved to v2.0 - FAE-013 violation (YAGNI). Plugin architecture is premature optimization before research agents are proven functional.",
+      "complexity_score": 21,
+      "complexity_breakdown": {
+        "base_complexity": 13,
+        "multipliers": [
+          {
+            "type": "plugin_architecture",
+            "multiplier": 1.6,
+            "reason": "Dynamic plugin loading, versioning, compatibility"
+          }
+        ],
+        "final_complexity": 21
+      },
+      "estimated_effort": "1-2 weeks",
+      "implementation_order": null,
+      "dependencies": ["arch_007"],
+      "reason_excluded": "FAE-013 (YAGNI): Research agents not yet functional. Build extensibility AFTER proving core value. Saves 1-2 weeks on v1.0 timeline.",
+      "deferred_to": "v2.0"
+    }
+  ],
+
+  "scope_negotiation": {
+    "negotiation_triggered": false,
+    "trigger_reason": "NONE - Scope well within v1.0 limits after FAE validation removed arch_003",
+    "total_complexity_v1": 36,
+    "complexity_breakdown": {
+      "must_have": 13,
+      "must_have_features": ["arch_004", "arch_005", "arch_006"],
+      "must_have_effort": "4-7 days",
+      "should_have": 18,
+      "should_have_features": ["arch_001", "arch_002", "arch_007"],
+      "should_have_effort": "3-5 days",
+      "in_progress": 5,
+      "in_progress_features": ["arch_008"],
+      "in_progress_effort": "2-3 hours (remaining: Task 06 only)",
+      "wont_have_v1": 21,
+      "wont_have_features": ["arch_003"],
+      "wont_have_reason": "FAE-013 YAGNI violation, deferred to v2.0"
+    },
+    "timeline_estimate": {
+      "v1_0_must_have": "4-7 days",
+      "v1_0_should_have": "3-5 days (can overlap with must_have)",
+      "v1_0_total": "1.5-2.5 weeks (single developer)",
+      "v1_0_with_parallel_work": "1.0-2.0 weeks (with parallel tasks)",
+      "v2_0_deferred": "1-2 weeks (arch_003)",
+      "timeline_health": "EXCELLENT - Well within v1.0 reasonable scope"
+    },
+    "scope_health_check": {
+      "status": "HEALTHY",
+      "v1_threshold": "40-60 points",
+      "current_v1_complexity": 36,
+      "headroom": 4,
+      "percentage_of_threshold": "60% (low end of v1.0 range)",
+      "risk_level": "LOW",
+      "recommendation": "v1.0 scope is conservative and achievable. No negotiation needed."
+    },
+    "v1_exclusions": [
+      {
+        "feature_id": "arch_003",
+        "feature_name": "Modularize research agents (plugins)",
+        "reason": "FAE-013 YAGNI - Premature optimization before core functionality proven",
+        "complexity_saved": 21,
+        "time_saved": "1-2 weeks",
+        "deferred_to": "v2.0"
+      }
+    ],
+    "scope_adjustments": [
+      {
+        "adjustment_type": "FEATURE_DEFERRAL",
+        "feature_affected": "arch_003",
+        "rationale": "FAE validation in Task 03 blocked this feature. Research agents not yet functional (tool use loop incomplete). Build extensibility AFTER proving core value.",
+        "impact": "Reduced v1.0 scope from 57 points to 36 points (-37% complexity)",
+        "timeline_impact": "Reduced v1.0 timeline from 3-4.5 weeks to 1.5-2.5 weeks (-40% time)"
+      }
+    ]
+  },
+
+  "prioritization_rationale": {
+    "must_have_criteria": [
+      "CRITICAL priority from GAP analysis",
+      "Blocks multiple other features",
+      "Foundation for anti-hallucination protocol",
+      "Resolves architectural confusion"
+    ],
+    "must_have_justification": {
+      "arch_004": "Blocks 4 features. Cannot verify refactoring without tests. CRITICAL PATH.",
+      "arch_005": "Anti-hallucination protocol. Prevents false 'Complete ✅' claims. Critical for quality.",
+      "arch_006": "Resolves primary vs fallback mode confusion. Simple 1-day implementation with high clarity value."
+    },
+    "should_have_criteria": [
+      "IMPORTANT priority from GAP analysis",
+      "Improves architecture quality",
+      "Enables future work (e.g., arch_007 enables research agents)",
+      "Not blocking but high value"
+    ],
+    "should_have_justification": {
+      "arch_001": "Separation of concerns. Makes testing easier. Enables arch_006.",
+      "arch_002": "Clarifies orchestrator role. Makes arch_007 implementation cleaner.",
+      "arch_007": "Completes GAD-003. Makes research agents functional. High value but not critical for v1.0 architecture refactoring."
+    },
+    "wont_have_v1_criteria": [
+      "FAE validation blocked feature",
+      "YAGNI (You Ain't Gonna Need It) for v1.0",
+      "Premature optimization before core value proven"
+    ]
+  },
+
+  "implementation_strategy": {
+    "phase_1_foundation": {
+      "timeline": "Week 1 (4-7 days)",
+      "features": ["arch_004", "arch_005", "arch_006"],
+      "complexity": 13,
+      "rationale": "Establish test infrastructure, fix documentation, clarify execution modes FIRST",
+      "deliverables": [
+        "pytest infrastructure with >80% coverage",
+        "GitHub Actions CI workflow",
+        "Documentation audit with verification dates",
+        "--mode flag (operator|api) with default to operator"
+      ],
+      "success_criteria": [
+        "All tests pass",
+        "No 'Complete ✅' without test evidence",
+        "Mode selection clear (Claude Code = primary)"
+      ]
+    },
+    "phase_2_architecture_cleanup": {
+      "timeline": "Week 2 (3-5 days, can overlap with Phase 1)",
+      "features": ["arch_001", "arch_002"],
+      "complexity": 13,
+      "rationale": "Refactor vibe-cli and orchestrator WITH test coverage to verify correctness",
+      "deliverables": [
+        "vibe-cli separated into operator mode vs API mode classes",
+        "Orchestrator reduced to pure state machine",
+        "Tool execution service extracted from orchestrator"
+      ],
+      "success_criteria": [
+        "All tests pass after refactoring",
+        "Code complexity reduced",
+        "Separation of concerns enforced"
+      ]
+    },
+    "phase_3_tool_integration": {
+      "timeline": "Week 2-3 (3-4 hours)",
+      "features": ["arch_007"],
+      "complexity": 5,
+      "rationale": "Complete tool use loop using Anthropic native API (Option B from GAD-003)",
+      "deliverables": [
+        "Anthropic SDK integration",
+        "Multi-turn tool conversation (request → tool_use → execute → TOOL_RESULT → repeat)",
+        "End-to-end test: research agent with google_search completes workflow"
+      ],
+      "success_criteria": [
+        "Research agents with tools work end-to-end",
+        "Real Anthropic API test passes",
+        "GAD-003 marked complete"
+      ]
+    },
+    "parallel_work_opportunities": [
+      {
+        "parallel_group": "foundation",
+        "features": ["arch_004", "arch_005"],
+        "timeline_savings": "1-2 days",
+        "note": "arch_005 (doc fixes) can start while arch_004 (tests) being written incrementally"
+      },
+      {
+        "parallel_group": "mode_clarification",
+        "features": ["arch_001", "arch_006"],
+        "timeline_savings": "0.5-1 day",
+        "note": "Both are about clarifying operator mode vs API mode, can be implemented together"
+      }
+    ]
+  },
+
+  "risk_assessment": {
+    "scope_risks": [
+      {
+        "risk_id": "RISK-001",
+        "description": "Test infrastructure (arch_004) takes longer than estimated",
+        "likelihood": "MEDIUM",
+        "impact": "HIGH (blocks 4 other features)",
+        "mitigation": "Implement tests incrementally. Start with critical paths (orchestrator state machine, VIBE_ALIGNER e2e). Unblock arch_001/arch_002 as soon as basic coverage exists."
+      },
+      {
+        "risk_id": "RISK-002",
+        "description": "Tool use loop (arch_007) encounters Anthropic API changes",
+        "likelihood": "LOW",
+        "impact": "MEDIUM",
+        "mitigation": "Use official Anthropic SDK (well-maintained). Defer arch_007 to end of v1.0 so other work can proceed."
+      },
+      {
+        "risk_id": "RISK-003",
+        "description": "Scope creep - new features proposed during implementation",
+        "likelihood": "MEDIUM",
+        "impact": "MEDIUM",
+        "mitigation": "Enforce CLAUDE.md protocol: 'No new features until core is verified.' Defer all new requests to v2.0 backlog."
+      }
+    ],
+    "timeline_confidence": {
+      "optimistic": "1.0 weeks (with parallel work, no blockers)",
+      "realistic": "1.5-2.0 weeks (some serial work, minor issues)",
+      "pessimistic": "2.5-3.0 weeks (test infrastructure takes longer)",
+      "confidence_level": "HIGH - Scope is conservative, complexity is low"
+    }
+  },
+
+  "validation_gate_status": {
+    "gate": "gate_complexity_within_threshold",
+    "status": "PASS",
+    "scope_choice": "v1.0",
+    "threshold_range": "40-60 points",
+    "total_complexity": 36,
+    "threshold_status": "WELL_WITHIN (60% of low end)",
+    "must_have_complexity": 13,
+    "should_have_complexity": 18,
+    "wont_have_v1_complexity": 21,
+    "negotiation_required": false,
+    "gate_result": "PASS - Total complexity (36) well within v1.0 threshold (40-60). No negotiation needed. Scope is healthy and achievable."
+  },
+
+  "meta_observations": {
+    "fae_effectiveness_validated": {
+      "observation": "FAE validation in Task 03 blocked arch_003 (21 points), reducing v1.0 scope from 57 to 36 points",
+      "impact": "Saved 1-2 weeks by preventing premature optimization",
+      "meta_validation": "Proves FAE prevents scope creep BEFORE it becomes a problem"
+    },
+    "apce_triggered": {
+      "triggered": false,
+      "reason": "Scope already optimized by FAE in Task 03. APCE confirms scope is healthy (36 < 40-60 threshold).",
+      "insight": "FAE (feasibility) and APCE (complexity) work together - FAE prevents impossible features, APCE validates total scope"
+    },
+    "scope_negotiation_not_needed": {
+      "observation": "No negotiation dialog required - scope was already adjusted in Task 03 (FAE blocked arch_003)",
+      "insight": "VIBE_ALIGNER workflow prevents scope issues early (feasibility check BEFORE complexity scoring)",
+      "meta_validation": "Proves VIBE_ALIGNER task order is correct (FAE → FDG → APCE)"
+    },
+    "dogfooding_success": {
+      "observation": "Using APCE to validate vibe-agency refactoring proves APCE works for architecture tasks, not just user features",
+      "adaptation": "Complexity scoring works for refactoring tasks (tests = 8, doc cleanup = 3, etc.)",
+      "meta_validation": "APCE is framework-agnostic - applies to any complexity estimation"
+    }
+  },
+
+  "recommendations": [
+    {
+      "priority": "CRITICAL",
+      "recommendation": "Proceed with v1.0 scope as negotiated - no changes needed",
+      "rationale": "Total complexity (36) is conservative and achievable. Timeline (1.5-2.5 weeks) is realistic. All critical features included."
+    },
+    {
+      "priority": "HIGH",
+      "recommendation": "Implement in dependency order: arch_004 → arch_001/arch_005 → arch_002 → arch_006 → arch_007",
+      "rationale": "Respects prerequisite chain from Gap Detection. Each feature builds on previous ones."
+    },
+    {
+      "priority": "HIGH",
+      "recommendation": "Use parallel work opportunities to compress timeline to 1.0-2.0 weeks",
+      "rationale": "arch_005 and arch_006 can overlap with other work. Parallel execution saves 1-2 days."
+    },
+    {
+      "priority": "MEDIUM",
+      "recommendation": "Keep arch_003 (plugins) in v2.0 backlog for re-evaluation after arch_007 completes",
+      "rationale": "Once research agents are functional (arch_007), plugin architecture becomes more valuable. Re-assess in v2.0 planning."
+    },
+    {
+      "priority": "LOW",
+      "recommendation": "Consider adding buffer time for unexpected issues with test infrastructure (arch_004)",
+      "rationale": "Test infrastructure often takes longer than estimated. Having 2.5-3 week buffer in pessimistic case provides safety margin."
+    }
+  ],
+
+  "next_steps": {
+    "immediate": "Complete VIBE_ALIGNER Task 06 (Output Generation - feature_spec.json)",
+    "after_task_06": "Commit all VIBE_ALIGNER artifacts (Tasks 01-06) and merge to main",
+    "after_merge": "Begin v1.0 implementation starting with arch_004 (test infrastructure)",
+    "success_criteria": "All 6 VIBE_ALIGNER tasks complete, feature_spec.json generated, dogfooding proven successful"
+  }
+}

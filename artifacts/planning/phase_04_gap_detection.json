@@ -1,0 +1,540 @@
+{
+  "phase": "04_gap_detection",
+  "framework_version": "1.1.0",
+  "project_type": "internal_refactoring",
+  "abstraction_level": "META",
+  "fdg_version": "1.0",
+  "meta_note": "Dogfooding VIBE_ALIGNER on vibe-agency itself - Gap Detection for v1.0 architecture improvements",
+
+  "features_with_dependencies": [
+    {
+      "feature_id": "arch_001",
+      "feature_name": "Separate vibe-cli concerns (operator mode vs API mode)",
+      "implementation_order": 3,
+      "dependencies": {
+        "required_before_implementation": [
+          {
+            "component": "arch_004",
+            "reason": "Need test infrastructure BEFORE refactoring so we can verify correctness during code changes",
+            "missing_consequence": "Cannot verify refactoring didn't break existing functionality",
+            "type": "prerequisite"
+          }
+        ],
+        "required_components": [
+          {
+            "component": "vibe_cli_operator_mode_class",
+            "reason": "Extract operator mode (Claude Code integration) into separate class/module",
+            "missing_consequence": "Cannot separate concerns cleanly",
+            "source": "architecture_analysis"
+          },
+          {
+            "component": "vibe_cli_api_mode_class",
+            "reason": "Extract API stub mode into separate class/module (fallback when no Claude Code)",
+            "missing_consequence": "Cannot separate concerns cleanly",
+            "source": "architecture_analysis"
+          },
+          {
+            "component": "shared_orchestrator_client",
+            "reason": "Both modes need shared code for launching and monitoring orchestrator subprocess",
+            "missing_consequence": "Code duplication between operator mode and API mode",
+            "source": "architecture_analysis"
+          },
+          {
+            "component": "mode_selection_cli_flag",
+            "reason": "Add --mode flag (operator|api) for user to select execution mode",
+            "missing_consequence": "Cannot switch between modes easily",
+            "source": "architecture_analysis",
+            "related_to": "arch_006"
+          }
+        ],
+        "enables": ["arch_006", "arch_002"],
+        "conflicts_with": []
+      }
+    },
+    {
+      "feature_id": "arch_002",
+      "feature_name": "Clarify orchestrator role (state machine ONLY, no business logic)",
+      "implementation_order": 4,
+      "dependencies": {
+        "required_before_implementation": [
+          {
+            "component": "arch_004",
+            "reason": "Need test infrastructure to verify orchestrator behavior during refactoring",
+            "missing_consequence": "Cannot verify state machine correctness",
+            "type": "prerequisite"
+          },
+          {
+            "component": "arch_001",
+            "reason": "vibe-cli refactoring makes orchestrator boundaries clearer (tool vs state machine)",
+            "missing_consequence": "Harder to separate concerns if vibe-cli is still mixed",
+            "type": "prerequisite"
+          }
+        ],
+        "required_components": [
+          {
+            "component": "tool_execution_service",
+            "reason": "Extract tool execution logic (google_search, web_fetch) from orchestrator to dedicated service",
+            "missing_consequence": "Orchestrator remains coupled to business logic",
+            "source": "architecture_analysis"
+          },
+          {
+            "component": "state_machine_core",
+            "reason": "Reduce orchestrator to pure state machine (phase transitions, agent routing, artifact management)",
+            "missing_consequence": "Orchestrator still mixes concerns",
+            "source": "architecture_analysis"
+          },
+          {
+            "component": "tool_registry",
+            "reason": "Centralized registry for available tools (used by tool execution service)",
+            "missing_consequence": "No single source of truth for tool availability",
+            "source": "architecture_analysis"
+          }
+        ],
+        "enables": ["arch_007"],
+        "conflicts_with": []
+      }
+    },
+    {
+      "feature_id": "arch_004",
+      "feature_name": "Add architecture tests (pytest infrastructure)",
+      "implementation_order": 1,
+      "dependencies": {
+        "required_before_implementation": [],
+        "required_components": [
+          {
+            "component": "pytest_framework",
+            "reason": "Test framework for writing and running architecture tests",
+            "missing_consequence": "Cannot write tests",
+            "source": "FAE-TIME-018",
+            "status": "AVAILABLE (requirements.txt already has pytest)"
+          },
+          {
+            "component": "test_orchestrator_state_transitions",
+            "reason": "Test that orchestrator correctly transitions between phases (PLANNING → CODING → etc.)",
+            "missing_consequence": "Cannot verify state machine correctness",
+            "source": "architecture_analysis"
+          },
+          {
+            "component": "test_vibe_aligner_e2e",
+            "reason": "End-to-end test of VIBE_ALIGNER workflow (Task 01 → Task 06 → feature_spec.json)",
+            "missing_consequence": "Cannot verify VIBE_ALIGNER works as designed",
+            "source": "architecture_analysis"
+          },
+          {
+            "component": "test_artifact_schema_validation",
+            "reason": "Test that all artifacts (feature_spec.json, lean_canvas.json, etc.) match schema contracts",
+            "missing_consequence": "Cannot verify artifact format correctness",
+            "source": "architecture_analysis"
+          },
+          {
+            "component": "test_coverage_enforcement",
+            "reason": "CI/CD check that test coverage is >80% for core modules",
+            "missing_consequence": "Tests exist but coverage gaps remain undetected",
+            "source": "architecture_analysis"
+          },
+          {
+            "component": "github_actions_ci_workflow",
+            "reason": "Automated test execution on every commit/PR",
+            "missing_consequence": "Tests must be run manually, regressions not caught early",
+            "source": "FAE-TIME-018"
+          }
+        ],
+        "enables": ["arch_001", "arch_002", "arch_005", "arch_007"],
+        "conflicts_with": [],
+        "critical_note": "⚠️ MUST BE IMPLEMENTED FIRST - All other features depend on test infrastructure for verification"
+      }
+    },
+    {
+      "feature_id": "arch_005",
+      "feature_name": "Fix documentation contradictions",
+      "implementation_order": 2,
+      "dependencies": {
+        "required_before_implementation": [
+          {
+            "component": "arch_004",
+            "reason": "Need test results to provide evidence for 'Complete ✅' claims in documentation",
+            "missing_consequence": "Documentation claims cannot be verified",
+            "type": "prerequisite"
+          }
+        ],
+        "required_components": [
+          {
+            "component": "documentation_audit_script",
+            "reason": "Automated script to find all 'Complete ✅' markers in docs and verify against test results",
+            "missing_consequence": "Must manually audit all documentation files",
+            "source": "architecture_analysis"
+          },
+          {
+            "component": "verification_date_standard",
+            "reason": "Standard format for adding verification dates (e.g., 'Verified: 2025-11-15 via test_xyz.py')",
+            "missing_consequence": "Inconsistent documentation format",
+            "source": "CLAUDE.md protocol"
+          },
+          {
+            "component": "status_update_checklist",
+            "reason": "Checklist for what to update when implementation status changes (CLAUDE.md, STATUS.md, README.md, GAD docs)",
+            "missing_consequence": "Documentation drift continues (some docs updated, others forgotten)",
+            "source": "architecture_analysis"
+          }
+        ],
+        "enables": [],
+        "conflicts_with": [],
+        "critical_note": "⚠️ CRITICAL for anti-hallucination - Prevents AI assistants from repeating false claims"
+      }
+    },
+    {
+      "feature_id": "arch_006",
+      "feature_name": "Make API stub optional flag",
+      "implementation_order": 5,
+      "dependencies": {
+        "required_before_implementation": [
+          {
+            "component": "arch_001",
+            "reason": "vibe-cli refactoring should separate operator mode vs API mode BEFORE adding flag",
+            "missing_consequence": "Flag implementation more complex if concerns are mixed",
+            "type": "prerequisite"
+          }
+        ],
+        "required_components": [
+          {
+            "component": "mode_flag_cli_argument",
+            "reason": "Add --mode {operator|api} CLI argument to vibe-cli",
+            "missing_consequence": "Cannot switch between modes",
+            "source": "architecture_analysis"
+          },
+          {
+            "component": "default_to_operator_mode",
+            "reason": "Default behavior should be operator mode (Claude Code primary), API is fallback",
+            "missing_consequence": "Users confused about which mode is primary",
+            "source": "user_clarification"
+          },
+          {
+            "component": "graceful_fallback_logic",
+            "reason": "If operator mode fails (no Claude Code available), warn and suggest using --mode api",
+            "missing_consequence": "Poor user experience when Claude Code not available",
+            "source": "architecture_analysis"
+          }
+        ],
+        "enables": [],
+        "conflicts_with": []
+      }
+    },
+    {
+      "feature_id": "arch_007",
+      "feature_name": "Complete tool use loop (Anthropic native API)",
+      "implementation_order": 6,
+      "dependencies": {
+        "required_before_implementation": [
+          {
+            "component": "arch_004",
+            "reason": "Need end-to-end test infrastructure to verify tool use loop works with real API",
+            "missing_consequence": "Cannot verify multi-turn tool conversation works",
+            "type": "prerequisite"
+          },
+          {
+            "component": "arch_002",
+            "reason": "Tool execution service should be separate from orchestrator for cleaner implementation",
+            "missing_consequence": "Tool loop remains coupled to orchestrator state machine",
+            "type": "prerequisite"
+          }
+        ],
+        "required_components": [
+          {
+            "component": "anthropic_sdk",
+            "reason": "Official Anthropic Python SDK for tool use API",
+            "missing_consequence": "Must implement custom HTTP client for Anthropic API",
+            "source": "user_choice_option_b",
+            "status": "AVAILABLE (pip install anthropic)"
+          },
+          {
+            "component": "tool_use_loop_implementation",
+            "reason": "Implementation of multi-turn conversation: API request → tool_use → execute tool → send TOOL_RESULT → repeat until stop",
+            "missing_consequence": "Research agents with tools cannot complete workflows",
+            "source": "GAD-003"
+          },
+          {
+            "component": "tool_result_formatting",
+            "reason": "Format tool execution results into Anthropic API's expected TOOL_RESULT format",
+            "missing_consequence": "API rejects malformed tool results",
+            "source": "anthropic_api_docs"
+          },
+          {
+            "component": "anthropic_api_key_management",
+            "reason": "Secure storage and loading of ANTHROPIC_API_KEY environment variable",
+            "missing_consequence": "Cannot authenticate to Anthropic API",
+            "source": "architecture_analysis"
+          },
+          {
+            "component": "test_tool_use_e2e",
+            "reason": "End-to-end test with real Anthropic API: research agent with google_search completes workflow",
+            "missing_consequence": "Cannot verify implementation works",
+            "source": "STATUS.md priority_1"
+          }
+        ],
+        "enables": ["research_agents_functional"],
+        "conflicts_with": [],
+        "critical_note": "⚠️ This completes GAD-003 - makes research agents with tools fully functional"
+      }
+    },
+    {
+      "feature_id": "arch_008",
+      "feature_name": "Dogfood VIBE_ALIGNER on vibe-agency (meta)",
+      "implementation_order": 0,
+      "dependencies": {
+        "required_before_implementation": [],
+        "required_components": [
+          {
+            "component": "vibe_aligner_task_01_education",
+            "reason": "Calibrate scope and expectations for v1.0 refactoring",
+            "missing_consequence": "Unclear what belongs in v1.0 vs v2.0",
+            "source": "VIBE_ALIGNER workflow",
+            "status": "COMPLETED (commit 53aec65)"
+          },
+          {
+            "component": "vibe_aligner_task_02_extraction",
+            "reason": "Extract 8 architecture improvements from user description and documentation analysis",
+            "missing_consequence": "No feature list to validate",
+            "source": "VIBE_ALIGNER workflow",
+            "status": "COMPLETED (commit c0228f7)"
+          },
+          {
+            "component": "vibe_aligner_task_03_feasibility",
+            "reason": "Validate features against FAE constraints, blocked arch_003 (plugins) for YAGNI violation",
+            "missing_consequence": "Scope creep, unrealistic timeline",
+            "source": "VIBE_ALIGNER workflow",
+            "status": "COMPLETED (commit 12aee54)"
+          },
+          {
+            "component": "vibe_aligner_task_04_gap_detection",
+            "reason": "Identify missing dependencies and implementation order (THIS TASK)",
+            "missing_consequence": "Features implemented in wrong order, missing prerequisites",
+            "source": "VIBE_ALIGNER workflow",
+            "status": "IN_PROGRESS"
+          },
+          {
+            "component": "vibe_aligner_task_05_negotiation",
+            "reason": "Prioritize features by complexity (APCE), finalize v1.0 roadmap",
+            "missing_consequence": "No clear implementation priority",
+            "source": "VIBE_ALIGNER workflow",
+            "status": "PENDING"
+          },
+          {
+            "component": "vibe_aligner_task_06_output",
+            "reason": "Generate feature_spec.json for vibe-agency v1.0 architecture refactoring",
+            "missing_consequence": "No machine-readable spec for orchestrator to use",
+            "source": "VIBE_ALIGNER workflow",
+            "status": "PENDING"
+          }
+        ],
+        "enables": ["all_other_arch_features"],
+        "conflicts_with": [],
+        "meta_note": "This feature IS the process that generates the spec for all other features"
+      }
+    }
+  ],
+
+  "dependency_analysis": {
+    "implementation_order_rationale": {
+      "order_0_meta": {
+        "features": ["arch_008"],
+        "reason": "Dogfooding VIBE_ALIGNER generates the spec for all other features (in progress)"
+      },
+      "order_1_foundation": {
+        "features": ["arch_004"],
+        "reason": "Test infrastructure MUST come first - enables verification for all other features",
+        "critical": true
+      },
+      "order_2_documentation": {
+        "features": ["arch_005"],
+        "reason": "Fix documentation contradictions AFTER tests provide evidence, BEFORE major refactoring",
+        "depends_on": ["arch_004"]
+      },
+      "order_3_vibe_cli_refactor": {
+        "features": ["arch_001"],
+        "reason": "Separate vibe-cli concerns with test coverage to verify correctness",
+        "depends_on": ["arch_004"]
+      },
+      "order_4_orchestrator_refactor": {
+        "features": ["arch_002"],
+        "reason": "Clarify orchestrator role AFTER vibe-cli is separated (clearer boundaries)",
+        "depends_on": ["arch_004", "arch_001"]
+      },
+      "order_5_api_flag": {
+        "features": ["arch_006"],
+        "reason": "Add API optional flag AFTER vibe-cli concerns are separated",
+        "depends_on": ["arch_001"]
+      },
+      "order_6_tool_loop": {
+        "features": ["arch_007"],
+        "reason": "Complete tool use loop AFTER orchestrator is refactored and tests are in place",
+        "depends_on": ["arch_004", "arch_002"]
+      }
+    },
+
+    "missing_components_summary": {
+      "testing_infrastructure": [
+        "pytest_framework (AVAILABLE)",
+        "test_orchestrator_state_transitions (MISSING)",
+        "test_vibe_aligner_e2e (MISSING)",
+        "test_artifact_schema_validation (MISSING)",
+        "test_coverage_enforcement (MISSING)",
+        "github_actions_ci_workflow (MISSING)",
+        "test_tool_use_e2e (MISSING)"
+      ],
+      "vibe_cli_refactoring": [
+        "vibe_cli_operator_mode_class (MISSING)",
+        "vibe_cli_api_mode_class (MISSING)",
+        "shared_orchestrator_client (MISSING)",
+        "mode_selection_cli_flag (MISSING)"
+      ],
+      "orchestrator_refactoring": [
+        "tool_execution_service (MISSING)",
+        "state_machine_core (PARTIAL - exists but mixed with business logic)",
+        "tool_registry (MISSING)"
+      ],
+      "documentation_fixes": [
+        "documentation_audit_script (MISSING)",
+        "verification_date_standard (DEFINED in CLAUDE.md, not enforced)",
+        "status_update_checklist (MISSING)"
+      ],
+      "api_flag": [
+        "mode_flag_cli_argument (MISSING)",
+        "default_to_operator_mode (MISSING)",
+        "graceful_fallback_logic (MISSING)"
+      ],
+      "tool_use_loop": [
+        "anthropic_sdk (AVAILABLE via pip)",
+        "tool_use_loop_implementation (MISSING)",
+        "tool_result_formatting (MISSING)",
+        "anthropic_api_key_management (MISSING)",
+        "test_tool_use_e2e (MISSING)"
+      ]
+    },
+
+    "circular_dependencies_check": {
+      "status": "NONE_DETECTED",
+      "note": "All dependencies flow in one direction: arch_004 → arch_005/arch_001 → arch_002 → arch_006/arch_007"
+    },
+
+    "critical_path": [
+      "arch_004 (tests)",
+      "arch_001 (vibe-cli separation)",
+      "arch_002 (orchestrator clarity)",
+      "arch_007 (tool use loop)"
+    ],
+
+    "parallel_work_opportunities": [
+      {
+        "parallel_group": "foundation",
+        "features": ["arch_004", "arch_005"],
+        "note": "arch_005 (doc fixes) can START after arch_004 completes, but they can overlap if arch_004 is done incrementally"
+      },
+      {
+        "parallel_group": "mode_clarification",
+        "features": ["arch_001", "arch_006"],
+        "note": "Both are about clarifying operator mode vs API mode, can be done together"
+      }
+    ]
+  },
+
+  "completeness_validation": {
+    "all_features_checked": true,
+    "features_with_no_fdg_match": [
+      "All features (arch_001 to arch_008) are architecture refactoring tasks, not typical user-facing features",
+      "Standard FDG (authentication, database, etc.) does not apply",
+      "Created custom dependency analysis based on implementation order and architectural coupling"
+    ],
+    "custom_fdg_approach": {
+      "reason": "Meta use case - dogfooding VIBE_ALIGNER on itself",
+      "methodology": "Analyzed architectural dependencies instead of typical feature dependencies",
+      "validation": "Implementation order derived from prerequisite chain (tests → refactoring → tool integration)"
+    }
+  },
+
+  "critical_gaps_identified": [
+    {
+      "gap_id": "GAP-001",
+      "description": "Test infrastructure completely missing",
+      "severity": "CRITICAL",
+      "impact": "Cannot verify any refactoring work without breaking existing functionality",
+      "features_blocked": ["arch_001", "arch_002", "arch_005", "arch_007"],
+      "mitigation": "arch_004 MUST be implemented first (Priority 1)"
+    },
+    {
+      "gap_id": "GAP-002",
+      "description": "Documentation audit process not automated",
+      "severity": "HIGH",
+      "impact": "Manual documentation updates prone to errors and omissions",
+      "features_blocked": ["arch_005"],
+      "mitigation": "Create documentation_audit_script as part of arch_005"
+    },
+    {
+      "gap_id": "GAP-003",
+      "description": "No end-to-end test for tool use loop",
+      "severity": "HIGH",
+      "impact": "Cannot verify research agents work with real Anthropic API",
+      "features_blocked": ["arch_007"],
+      "mitigation": "Create test_tool_use_e2e as part of arch_007 implementation"
+    },
+    {
+      "gap_id": "GAP-004",
+      "description": "Mode selection (operator vs API) not clearly flagged",
+      "severity": "MEDIUM",
+      "impact": "Users confused about which mode is primary (Claude Code vs API stub)",
+      "features_blocked": ["arch_006"],
+      "mitigation": "Add --mode flag with default to operator mode"
+    }
+  ],
+
+  "recommendations": [
+    {
+      "priority": "CRITICAL",
+      "recommendation": "Implement arch_004 (tests) FIRST before any refactoring",
+      "rationale": "4 of 6 remaining features depend on test infrastructure. Cannot verify correctness without tests.",
+      "blocks": ["arch_001", "arch_002", "arch_005", "arch_007"]
+    },
+    {
+      "priority": "HIGH",
+      "recommendation": "Implement features in dependency order: arch_004 → arch_001 → arch_002 → arch_007",
+      "rationale": "This order respects prerequisite chain. Each feature builds on previous ones."
+    },
+    {
+      "priority": "HIGH",
+      "recommendation": "Implement arch_005 (doc fixes) and arch_006 (API flag) in parallel with refactoring work",
+      "rationale": "These features have minimal dependencies and can proceed alongside architectural changes."
+    },
+    {
+      "priority": "MEDIUM",
+      "recommendation": "Consider incremental implementation of arch_004 (tests)",
+      "rationale": "Write tests incrementally as you refactor, not all at once. This enables earlier start on arch_001 and arch_002."
+    }
+  ],
+
+  "validation_gate_status": {
+    "gate": "gate_no_missing_dependencies",
+    "status": "PASS",
+    "all_dependencies_identified": true,
+    "implementation_order_defined": true,
+    "critical_gaps_documented": 4,
+    "circular_dependencies": "NONE",
+    "gate_result": "PASS - All dependencies identified, implementation order defined, critical gaps documented with mitigation strategies"
+  },
+
+  "meta_observations": {
+    "fdg_applicability": {
+      "standard_fdg_applies": false,
+      "reason": "Architecture refactoring tasks have different dependency patterns than user-facing features",
+      "adaptation": "Created custom dependency analysis based on implementation prerequisites and architectural coupling"
+    },
+    "dogfooding_insight": {
+      "observation": "FDG Gap Detection reveals implementation order, not just missing components",
+      "value": "Implementation order IS a dependency - arch_002 depends on arch_001 being complete",
+      "meta_validation": "This proves FDG is useful beyond typical software features - applies to architecture refactoring too"
+    },
+    "critical_path_discovery": {
+      "observation": "arch_004 (tests) is the critical path bottleneck - blocks 4 other features",
+      "impact": "Without tests first, refactoring is risky and unverifiable",
+      "recommendation": "Allocate maximum resources to arch_004 to unblock other work"
+    }
+  }
+}
