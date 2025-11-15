@@ -30,7 +30,7 @@ def get_github_token() -> Optional[str]:
         )
         if result.returncode == 0:
             return result.stdout.strip()
-    except:
+    except Exception:
         pass
 
     return None

@@ -13,14 +13,12 @@ Tests core_orchestrator.py state machine logic:
 This validates GAD-002 (SDLC Orchestration) implementation.
 """
 
-import os
 import sys
 import json
 import pytest
 import tempfile
 import shutil
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
 
 # Add orchestrator to path
 repo_root = Path(__file__).parent.parent
@@ -30,10 +28,7 @@ from core_orchestrator import (
     CoreOrchestrator,
     ProjectPhase,
     PlanningSubState,
-    ProjectManifest,
-    StateTransitionError,
-    ArtifactNotFoundError,
-    SchemaValidationError
+    ProjectManifest
 )
 
 
@@ -174,7 +169,7 @@ class TestOrchestratorStateMachine:
 
         # Verify
         assert basic_manifest.current_phase == ProjectPhase.AWAITING_QA_APPROVAL
-        assert basic_manifest.artifacts["qa_approved"] == False
+        assert not basic_manifest.artifacts["qa_approved"]
 
     def test_qa_approval_to_deployment(self, basic_manifest):
         """Test: QA approval allows transition to DEPLOYMENT"""
@@ -188,7 +183,7 @@ class TestOrchestratorStateMachine:
 
         # Verify
         assert basic_manifest.current_phase == ProjectPhase.DEPLOYMENT
-        assert basic_manifest.artifacts["qa_approved"] == True
+        assert basic_manifest.artifacts["qa_approved"]
 
     def test_qa_rejection_to_coding_error_loop(self, basic_manifest):
         """Test: QA rejection triggers error loop back to CODING"""
@@ -203,7 +198,7 @@ class TestOrchestratorStateMachine:
 
         # Verify
         assert basic_manifest.current_phase == ProjectPhase.CODING
-        assert basic_manifest.artifacts["qa_rejected"] == True
+        assert basic_manifest.artifacts["qa_rejected"]
         assert basic_manifest.artifacts["qa_rejection_reason"] == "Tests failing"
 
     def test_deployment_to_production(self, basic_manifest):

@@ -34,7 +34,7 @@ def validate_knowledge_index(index_path: str = ".knowledge_index.yaml") -> bool:
         print(f"❌ ERROR: Invalid YAML syntax: {e}")
         return False
 
-    print(f"✅ YAML syntax valid")
+    print("✅ YAML syntax valid")
 
     # Validate structure
     required_keys = ['version', 'kind', 'categories']
@@ -63,7 +63,7 @@ def validate_knowledge_index(index_path: str = ".knowledge_index.yaml") -> bool:
     missing_files = []
     valid_files = []
 
-    print(f"\n🔍 Validating file paths...")
+    print("\n🔍 Validating file paths...")
     print("-" * 60)
 
     for category in categories:
@@ -127,7 +127,7 @@ def validate_hardcoded_paths() -> bool:
     print("=" * 60)
 
     if not ssf_dir.exists():
-        print(f"⚠️  system_steward_framework directory not found")
+        print("⚠️  system_steward_framework directory not found")
         return True  # Not fatal
 
     import subprocess

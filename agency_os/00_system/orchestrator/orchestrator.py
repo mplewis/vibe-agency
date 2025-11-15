@@ -240,7 +240,6 @@ class Orchestrator:
             raise ValueError(f"Unknown artifact: {artifact_name}")
 
         # Find project directory
-        manifest = self.load_project_manifest(project_id)
         project_dir = self._get_manifest_path(project_id).parent
         artifact_path = project_dir / artifact_paths[artifact_name]
 
@@ -314,7 +313,7 @@ class Orchestrator:
         manifest.current_sub_state = None
         self.save_project_manifest(manifest)
 
-        print(f"✅ PLANNING phase complete. Transitioning to CODING")
+        print("✅ PLANNING phase complete. Transitioning to CODING")
 
     def _should_execute_optional_state(self, state: WorkflowState) -> bool:
         """
@@ -352,9 +351,6 @@ class Orchestrator:
         5. Compile → research_brief.json
         """
         print("\n🔬 Starting RESEARCH phase...")
-
-        # Load research workflow
-        research_workflow = self._load_research_workflow()
 
         # Execute agents in sequence
         market_analysis = self._execute_agent_placeholder("MARKET_RESEARCHER", {})

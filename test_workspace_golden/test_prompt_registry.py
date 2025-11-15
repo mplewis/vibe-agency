@@ -5,7 +5,6 @@ Tests if PromptRegistry correctly loads and injects Guardian Directives
 """
 
 import sys
-import os
 
 # Add agency_os to path
 sys.path.insert(0, '/home/user/vibe-agency')
@@ -47,11 +46,11 @@ print("-" * 80)
 try:
     directives = registry.guardian_directives
     if directives:
-        print(f"✅ PASS: Guardian Directives loaded")
+        print("✅ PASS: Guardian Directives loaded")
         print(f"   Directives count: {len(directives)}")
         print(f"   Keys: {list(directives.keys())[:5]}...")  # Show first 5 keys
     else:
-        print(f"⚠️  WARNING: Guardian Directives is empty")
+        print("⚠️  WARNING: Guardian Directives is empty")
 except Exception as e:
     print(f"❌ FAIL: Cannot load Guardian Directives: {e}")
     import traceback
@@ -78,15 +77,15 @@ try:
     )
 
     if prompt:
-        print(f"✅ PASS: compose() returned prompt")
+        print("✅ PASS: compose() returned prompt")
         print(f"   Prompt length: {len(prompt)} characters")
 
         # Check if guardian directives are in the prompt
         if "GUARDIAN" in prompt.upper() or "DIRECTIVE" in prompt.upper():
-            print(f"   ✅ Guardian Directives appear to be injected")
+            print("   ✅ Guardian Directives appear to be injected")
         else:
-            print(f"   ⚠️  WARNING: Cannot find 'GUARDIAN' or 'DIRECTIVE' in prompt")
-            print(f"   (May be using different keywords)")
+            print("   ⚠️  WARNING: Cannot find 'GUARDIAN' or 'DIRECTIVE' in prompt")
+            print("   (May be using different keywords)")
 
         # Show snippet
         print()
@@ -96,7 +95,7 @@ try:
             print(f"   {line}")
         print("   " + "-" * 76)
     else:
-        print(f"❌ FAIL: compose() returned empty prompt")
+        print("❌ FAIL: compose() returned empty prompt")
         sys.exit(1)
 
 except Exception as e:
@@ -122,10 +121,10 @@ try:
             found_keywords.append(keyword)
 
     if found_keywords:
-        print(f"✅ PASS: Governance keywords found in prompt")
+        print("✅ PASS: Governance keywords found in prompt")
         print(f"   Keywords: {', '.join(found_keywords)}")
     else:
-        print(f"⚠️  WARNING: No governance keywords found")
+        print("⚠️  WARNING: No governance keywords found")
         print(f"   Checked: {', '.join(governance_keywords)}")
 
 except Exception as e:

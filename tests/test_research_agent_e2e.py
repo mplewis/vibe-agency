@@ -15,9 +15,7 @@ EXPECTED OUTCOME: This test will FAIL and expose design flaws in GAD-003
 """
 
 import sys
-import json
 from pathlib import Path
-from io import StringIO
 
 # Add orchestrator to path
 repo_root = Path(__file__).resolve().parent.parent
@@ -25,7 +23,6 @@ sys.path.insert(0, str(repo_root / "agency_os" / "00_system" / "orchestrator"))
 sys.path.insert(0, str(repo_root / "agency_os" / "00_system" / "runtime"))
 
 from core_orchestrator import CoreOrchestrator
-from prompt_runtime import PromptRuntime
 
 
 def test_e2e_research_agent_with_tools():
@@ -135,7 +132,7 @@ I will analyze the results to identify key competitors.
             print("❌ CRITICAL FAILURE: Orchestrator failed to parse tool request!")
             return False
 
-        print(f"✅ Tool request parsed successfully")
+        print("✅ Tool request parsed successfully")
         print(f"   Tool: {tool_call['name']}")
         print(f"   Parameters: {tool_call['parameters']}")
         print()
@@ -153,7 +150,7 @@ I will analyze the results to identify key competitors.
                 print(f"⚠️  Tool execution returned error: {result['error']}")
                 print("   (This is expected if Google API credentials not configured)")
             else:
-                print(f"✅ Tool executed successfully")
+                print("✅ Tool executed successfully")
                 if 'results' in result:
                     print(f"   Returned {len(result['results'])} search results")
         except Exception as e:

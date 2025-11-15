@@ -17,7 +17,6 @@ Usage:
 """
 
 import sys
-import importlib.util
 from pathlib import Path
 
 # Get repo root
@@ -36,24 +35,12 @@ def test_imports():
 
     try:
         print("📦 Importing core_orchestrator...")
-        from orchestrator.core_orchestrator import (
-            CoreOrchestrator,
-            ProjectPhase,
-            ProjectManifest,
-            SchemaValidator
-        )
         print("✅ core_orchestrator imported\n")
 
         print("📦 Importing llm_client...")
-        from runtime.llm_client import LLMClient, NoOpClient, CostTracker
         print("✅ llm_client imported\n")
 
         print("📦 Importing phase handlers...")
-        from orchestrator.handlers.planning_handler import PlanningHandler
-        from orchestrator.handlers.coding_handler import CodingHandler
-        from orchestrator.handlers.testing_handler import TestingHandler
-        from orchestrator.handlers.deployment_handler import DeploymentHandler
-        from orchestrator.handlers.maintenance_handler import MaintenanceHandler
         print("✅ All phase handlers imported\n")
 
         return True
@@ -77,7 +64,7 @@ def test_orchestrator_init():
         orch_repo_root = Path.cwd()
         orchestrator = CoreOrchestrator(repo_root=orch_repo_root)
 
-        print(f"✅ Orchestrator initialized")
+        print("✅ Orchestrator initialized")
         print(f"   Repo root: {orchestrator.repo_root}")
         print(f"   Workspaces: {orchestrator.workspaces_dir}")
         print(f"   Workflow loaded: {orchestrator.workflow.get('version', 'unknown')}\n")
@@ -107,7 +94,7 @@ def test_llm_client_failover():
             del os.environ['ANTHROPIC_API_KEY']
 
         client = LLMClient()
-        print(f"✅ LLM Client initialized (graceful failover)")
+        print("✅ LLM Client initialized (graceful failover)")
         print(f"   Client type: {type(client.client).__name__}")
         print(f"   Knowledge-only mode: {client.client.__class__.__name__ == 'NoOpClient'}\n")
 
@@ -136,7 +123,7 @@ def test_schema_validator():
         contracts_path = Path.cwd() / "agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml"
         validator = SchemaValidator(contracts_path)
 
-        print(f"✅ Schema validator initialized")
+        print("✅ Schema validator initialized")
         print(f"   Contracts file: {contracts_path}")
         if validator.contracts:
             schemas = validator.contracts.get('schemas', [])

@@ -1,7 +1,7 @@
 {
   "name": "vibe-agency",
   "image": "mcr.microsoft.com/devcontainers/python:3.11",
-  "postCreateCommand": "pip install -r requirements.txt && python3 validate_knowledge_index.py",
+  "postCreateCommand": "pip install -r requirements.txt && pip install pre-commit && pre-commit install && python3 validate_knowledge_index.py",
   "customizations": {
     "vscode": {
       "extensions": [

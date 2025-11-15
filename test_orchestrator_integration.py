@@ -5,7 +5,6 @@ This proves the Prompt Registry integration works end-to-end.
 """
 
 import subprocess
-import sys
 import time
 import os
 

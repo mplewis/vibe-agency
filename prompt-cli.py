@@ -12,7 +12,6 @@ You can then copy/paste this into Claude Code.
 """
 
 import sys
-import os
 import argparse
 import json
 import getpass
@@ -235,7 +234,7 @@ def approve_qa(project_id: str):
 
     # Validate state
     if manifest.get('current_phase') != 'AWAITING_QA_APPROVAL':
-        print(f"❌ ERROR: Project is not awaiting QA approval")
+        print("❌ ERROR: Project is not awaiting QA approval")
         print(f"   Current phase: {manifest.get('current_phase')}\n")
         return
 
@@ -301,7 +300,7 @@ def reject_qa(project_id: str, reason: str = None):
 
     # Validate state
     if manifest.get('current_phase') != 'AWAITING_QA_APPROVAL':
-        print(f"❌ ERROR: Project is not awaiting QA approval")
+        print("❌ ERROR: Project is not awaiting QA approval")
         print(f"   Current phase: {manifest.get('current_phase')}\n")
         return
 
@@ -335,7 +334,7 @@ def reject_qa(project_id: str, reason: str = None):
     print("=" * 60 + "\n")
     print(f"Rejector: {manifest['artifacts']['qa_rejector']}")
     print(f"Reason: {reason}")
-    print(f"New phase: CODING (error loop)\n")
+    print("New phase: CODING (error loop)\n")
     print("\nNext steps:")
     print(f"  1. Resume orchestrator: python -m agency_os.00_system.orchestrator.core_orchestrator resume {project_id}")
     print("  2. Orchestrator will re-execute CODING phase to fix issues\n")

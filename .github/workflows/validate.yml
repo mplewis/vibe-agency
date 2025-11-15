@@ -44,12 +44,12 @@ jobs:
 
       - name: Run tests
         run: |
-          pytest tests/ -v --tb=short || echo "⚠️  Some tests failed (non-blocking for now)"
+          pytest tests/ -v --tb=short
 
-      - name: Check code quality (non-blocking)
+      - name: Check code quality
         run: |
           pip install ruff
-          ruff check . --output-format=github || echo "⚠️  Linting issues detected (non-blocking)"
+          ruff check . --output-format=github
 
   validate-devcontainer:
     name: Validate Devcontainer Config

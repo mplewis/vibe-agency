@@ -296,8 +296,6 @@ class CoreOrchestrator:
         """
         if phase not in self._handlers:
             # Import handler dynamically
-            handlers_dir = Path(__file__).parent / "handlers"
-
             if phase == ProjectPhase.PLANNING:
                 from handlers.planning_handler import PlanningHandler
                 self._handlers[phase] = PlanningHandler(self)
@@ -427,16 +425,16 @@ class CoreOrchestrator:
 
         # Check top-level required fields
         required_fields = ['apiVersion', 'kind', 'metadata', 'status', 'artifacts']
-        for field in required_fields:
-            if field not in data:
-                errors.append(f"Missing required top-level field: '{field}'")
+        for req_field in required_fields:
+            if req_field not in data:
+                errors.append(f"Missing required top-level field: '{req_field}'")
 
         # Validate metadata structure
         if 'metadata' in data:
             metadata_required = ['projectId', 'name', 'owner', 'createdAt']
-            for field in metadata_required:
-                if field not in data['metadata']:
-                    errors.append(f"Missing required metadata field: 'metadata.{field}'")
+            for meta_field in metadata_required:
+                if meta_field not in data['metadata']:
+                    errors.append(f"Missing required metadata field: 'metadata.{meta_field}'")
 
         # Validate status structure
         if 'status' in data:
@@ -660,7 +658,7 @@ class CoreOrchestrator:
         tool_executor = ToolExecutor() if TOOLS_AVAILABLE else None
 
         # GAD-003: Tool execution loop
-        logger.info(f"⏳ Waiting for intelligence response from Claude Code...")
+        logger.info("⏳ Waiting for intelligence response from Claude Code...")
         while True:
             response_line = sys.stdin.readline()
 
@@ -705,7 +703,7 @@ class CoreOrchestrator:
                     if result is None:
                         raise RuntimeError("Intelligence response missing 'result' field")
 
-                    logger.info(f"✅ Intelligence response received from Claude Code")
+                    logger.info("✅ Intelligence response received from Claude Code")
                     return result
             except json.JSONDecodeError:
                 # Not JSON - might be intermediate output, pass through
@@ -1159,7 +1157,7 @@ class CoreOrchestrator:
         # Run horizontal audits after phase completion (GAD-002 Decision 4)
         try:
             self.run_horizontal_audits(manifest)
-        except QualityGateFailure as e:
+        except QualityGateFailure:
             logger.error(f"Phase {manifest.current_phase.value} BLOCKED by horizontal audit")
             # Save manifest with audit failure
             self.save_project_manifest(manifest)

@@ -29,7 +29,7 @@ def test_workspace_resolution():
 
     # Test 1: Verify environment variable is set
     active_ws = os.getenv('ACTIVE_WORKSPACE')
-    print(f"✓ Test 1: Environment variable set")
+    print("✓ Test 1: Environment variable set")
     print(f"  $ACTIVE_WORKSPACE = {active_ws}")
     assert active_ws == 'prabhupad_os', "ENV var not set correctly"
 
@@ -40,7 +40,7 @@ def test_workspace_resolution():
         'phase': 'PLANNING'
     }
 
-    print(f"\n✓ Test 2: Creating prompt runtime")
+    print("\n✓ Test 2: Creating prompt runtime")
     print(f"  Context: {context}")
 
     # This should trigger workspace path resolution
@@ -51,11 +51,11 @@ def test_workspace_resolution():
             context=context
         )
 
-        print(f"\n✓ Test 3: Prompt composition succeeded")
+        print("\n✓ Test 3: Prompt composition succeeded")
         print(f"  Prompt size: {len(prompt):,} characters")
 
         # Test 3: Verify resolved paths are in context
-        print(f"\n✓ Test 4: Checking resolved paths in context")
+        print("\n✓ Test 4: Checking resolved paths in context")
 
         expected_paths = [
             '_resolved_workspace',
@@ -75,11 +75,11 @@ def test_workspace_resolution():
             actual = context['_resolved_artifact_base_path']
 
             if actual == expected:
-                print(f"\n✅ SUCCESS: Workspace paths resolved correctly!")
+                print("\n✅ SUCCESS: Workspace paths resolved correctly!")
                 print(f"   Expected: {expected}")
                 print(f"   Actual:   {actual}")
             else:
-                print(f"\n❌ FAIL: Wrong path!")
+                print("\n❌ FAIL: Wrong path!")
                 print(f"   Expected: {expected}")
                 print(f"   Actual:   {actual}")
                 return False

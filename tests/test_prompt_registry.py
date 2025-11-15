@@ -31,10 +31,7 @@ sys.path.insert(0, str(_RUNTIME_PATH))
 
 # Import directly from the runtime directory (since folder starts with number)
 from prompt_registry import (
-    PromptRegistry,
-    PromptRegistryError,
-    GovernanceLoadError,
-    ContextEnrichmentError
+    PromptRegistry
 )
 from prompt_runtime import (
     PromptRuntime,

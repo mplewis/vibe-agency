@@ -9,9 +9,7 @@ Tests:
 """
 
 import sys
-import os
 import yaml
-import inspect
 from pathlib import Path
 
 # Add project root to path
@@ -87,7 +85,7 @@ def test_transitions_complete():
         'T1_StartCoding': ('PLANNING.ARCHITECTURE_DESIGN', 'CODING'),
     }
 
-    print(f"  Critical transitions:")
+    print("  Critical transitions:")
     all_correct = True
 
     for name, (expected_from, expected_to) in critical.items():
@@ -126,7 +124,7 @@ def test_handler_has_all_methods():
         '_execute_architecture_design_state',
     ]
 
-    print(f"  Checking PlanningHandler methods:")
+    print("  Checking PlanningHandler methods:")
     all_present = True
 
     for method_name in expected_methods:
@@ -162,7 +160,7 @@ def test_handler_execute_logic():
         ('ARCHITECTURE_DESIGN', '_execute_architecture_design_state'),
     ]
 
-    print(f"  Checking execute() routing logic:")
+    print("  Checking execute() routing logic:")
     all_routes_present = True
 
     for substate_name, method_name in expected_routes:
@@ -196,7 +194,7 @@ def test_expected_artifacts():
 
     substates = planning_state.get('sub_states', [])
 
-    print(f"  Expected artifacts from PLANNING workflow:")
+    print("  Expected artifacts from PLANNING workflow:")
     artifact_count = 0
 
     for substate in substates:
@@ -226,8 +224,8 @@ def test_expected_artifacts():
 def main():
     """Run all tests"""
     print(f"\n{Colors.BOLD}{'='*80}")
-    print(f"Full Planning Workflow Architecture Test")
-    print(f"Purpose: Verify workflow will execute all 4 substates and generate all artifacts")
+    print("Full Planning Workflow Architecture Test")
+    print("Purpose: Verify workflow will execute all 4 substates and generate all artifacts")
     print(f"{'='*80}{Colors.RESET}")
 
     tests = [
@@ -252,7 +250,7 @@ def main():
 
     # Summary
     print(f"\n{Colors.BOLD}{'='*80}")
-    print(f"Test Summary")
+    print("Test Summary")
     print(f"{'='*80}{Colors.RESET}\n")
 
     passed = sum(1 for _, result in results if result)
@@ -266,9 +264,9 @@ def main():
 
     if passed == total:
         print(f"{Colors.GREEN}{Colors.BOLD}🎉 Architecture verified! Workflow will execute all 4 substates:{Colors.RESET}")
-        print(f"  1. BUSINESS_VALIDATION → lean_canvas_summary.json")
-        print(f"  2. FEATURE_SPECIFICATION → feature_spec.json")
-        print(f"  3. ARCHITECTURE_DESIGN → architecture.json + code_gen_spec.json")
+        print("  1. BUSINESS_VALIDATION → lean_canvas_summary.json")
+        print("  2. FEATURE_SPECIFICATION → feature_spec.json")
+        print("  3. ARCHITECTURE_DESIGN → architecture.json + code_gen_spec.json")
         print(f"{Colors.GREEN}{Colors.BOLD}  Total: 4 artifacts will be generated ✅{Colors.RESET}\n")
         return 0
     else:
