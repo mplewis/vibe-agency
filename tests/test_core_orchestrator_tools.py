@@ -9,7 +9,6 @@ Tests:
 """
 
 import sys
-import json
 from pathlib import Path
 
 # Add orchestrator to path
@@ -19,7 +18,6 @@ sys.path.insert(0, str(repo_root / "agency_os" / "00_system" / "orchestrator" / 
 sys.path.insert(0, str(repo_root / "agency_os" / "00_system" / "runtime"))
 
 from core_orchestrator import CoreOrchestrator
-from tool_executor import ToolExecutor
 
 
 def test_xml_parsing():
@@ -94,7 +92,7 @@ def test_tool_executor():
 
         assert 'error' not in result or result['error'] is None, f"Tool failed: {result.get('error')}"
         assert 'title' in result, "Missing title in result"
-        print(f"✅ web_fetch executed successfully")
+        print("✅ web_fetch executed successfully")
         print(f"   Title: {result['title'][:50]}...")
         print(f"   Content length: {len(result.get('content', ''))} chars\n")
 

@@ -56,7 +56,7 @@ def test_vibe_aligner():
             }
         )
 
-        print(f"\n✅ SUCCESS!")
+        print("\n✅ SUCCESS!")
         print(f"   Prompt length: {len(prompt)} chars")
         print(f"   Preview: {prompt[:200]}...")
 

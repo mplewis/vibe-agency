@@ -16,13 +16,11 @@ Validates that VIBE_ALIGNER workflow completes and generates valid feature_spec.
 This test validates the dogfooding exercise that created feature_spec_v1.0_FINAL.json.
 """
 
-import os
 import sys
 import json
 import yaml
 import pytest
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
 
 # Add paths
 repo_root = Path(__file__).parent.parent

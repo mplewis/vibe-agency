@@ -74,7 +74,7 @@ class GoogleSearchClient:
                         f"  - API not enabled in Google Cloud Console\n"
                         f"  - Billing not enabled for the project"
                     )
-            except:
+            except Exception:
                 pass
             raise RuntimeError(f"Google Search API error: {e}")
         except requests.RequestException as e:

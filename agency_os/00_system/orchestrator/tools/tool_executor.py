@@ -1,6 +1,5 @@
 """Tool executor for dispatching tool calls from Claude Code."""
 
-import json
 from typing import Dict, Any
 
 # Support both relative and absolute imports

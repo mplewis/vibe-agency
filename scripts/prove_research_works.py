@@ -9,7 +9,6 @@ Uses Claude Code's WebSearch (via tool delegation) as the search backend.
 This is the CORRECT architecture - Claude Code IS the operator.
 """
 
-import os
 import sys
 from pathlib import Path
 

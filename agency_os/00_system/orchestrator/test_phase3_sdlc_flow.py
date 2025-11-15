@@ -14,7 +14,6 @@ Usage:
 """
 
 import sys
-import json
 import shutil
 from pathlib import Path
 
@@ -23,8 +22,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from orchestrator.core_orchestrator import (
     CoreOrchestrator,
-    ProjectPhase,
-    ProjectManifest
+    ProjectPhase
 )
 
 
@@ -71,7 +69,7 @@ def test_phase3_sdlc_flow():
     try:
         print("🎯 Executing PLANNING phase...")
         orchestrator.execute_phase(manifest)
-        print(f"✅ PLANNING complete")
+        print("✅ PLANNING complete")
         print(f"   New phase: {manifest.current_phase.value}")
         print(f"   Artifacts: {list(manifest.artifacts.keys())}\n")
     except Exception as e:
@@ -86,7 +84,7 @@ def test_phase3_sdlc_flow():
     try:
         print("💻 Executing CODING phase (stub)...")
         orchestrator.execute_phase(manifest)
-        print(f"✅ CODING complete (stub)")
+        print("✅ CODING complete (stub)")
         print(f"   New phase: {manifest.current_phase.value}")
         print(f"   Artifacts: {list(manifest.artifacts.keys())}\n")
     except Exception as e:
@@ -101,7 +99,7 @@ def test_phase3_sdlc_flow():
     try:
         print("🧪 Executing TESTING phase (stub)...")
         orchestrator.execute_phase(manifest)
-        print(f"✅ TESTING complete (stub)")
+        print("✅ TESTING complete (stub)")
         print(f"   New phase: {manifest.current_phase.value}")
         print(f"   Artifacts: {list(manifest.artifacts.keys())}\n")
     except Exception as e:
@@ -119,9 +117,9 @@ def test_phase3_sdlc_flow():
 
     print("⏸️  Project is waiting for QA approval")
     print(f"   Current phase: {manifest.current_phase.value}")
-    print(f"\n📝 In real usage, you would run:")
+    print("\n📝 In real usage, you would run:")
     print(f"   ./vibe-cli.py approve-qa {test_project_id}")
-    print(f"\n🤖 For this test, simulating approval...\n")
+    print("\n🤖 For this test, simulating approval...\n")
 
     # Simulate QA approval
     manifest.artifacts['qa_approved'] = True
@@ -139,7 +137,7 @@ def test_phase3_sdlc_flow():
     try:
         print("🚀 Executing DEPLOYMENT phase (stub)...")
         orchestrator.execute_phase(manifest)
-        print(f"✅ DEPLOYMENT complete (stub)")
+        print("✅ DEPLOYMENT complete (stub)")
         print(f"   New phase: {manifest.current_phase.value}")
         print(f"   Artifacts: {list(manifest.artifacts.keys())}\n")
     except Exception as e:
@@ -156,7 +154,7 @@ def test_phase3_sdlc_flow():
         return False
 
     print("🎉 Project successfully reached PRODUCTION phase!")
-    print(f"\n📊 Final Report:")
+    print("\n📊 Final Report:")
     print(f"   Project ID: {manifest.project_id}")
     print(f"   Final Phase: {manifest.current_phase.value}")
     print(f"   Artifacts Created: {len(manifest.artifacts)}")
@@ -164,7 +162,7 @@ def test_phase3_sdlc_flow():
     print(f"   Workspace: {test_workspace}")
 
     # List all artifacts
-    print(f"\n📦 Artifacts:")
+    print("\n📦 Artifacts:")
     for artifact_name in sorted(manifest.artifacts.keys()):
         if artifact_name.endswith('_spec') or artifact_name.endswith('_report') or artifact_name.endswith('_receipt'):
             print(f"   ✓ {artifact_name}")

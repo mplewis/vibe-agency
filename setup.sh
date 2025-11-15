@@ -25,6 +25,13 @@ echo ""
 echo "📦 Installing Python dependencies..."
 pip install -r requirements.txt
 
+# Install and activate pre-commit hooks
+echo ""
+echo "🪝 Setting up pre-commit hooks..."
+pip install pre-commit
+pre-commit install
+echo "✅ Pre-commit hooks activated"
+
 # Validate knowledge bases
 echo ""
 echo "🔍 Validating knowledge bases..."

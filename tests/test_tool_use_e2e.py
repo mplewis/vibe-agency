@@ -19,7 +19,6 @@ Test Flow:
 This test validates GAD-003 (Research Tool Integration) is complete.
 """
 
-import os
 import sys
 import json
 import pytest

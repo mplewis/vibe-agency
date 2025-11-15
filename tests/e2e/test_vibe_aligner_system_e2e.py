@@ -20,11 +20,9 @@ the system produces the correct artifacts with proper governance.
 import os
 import sys
 import json
-import yaml
-import shutil
 import pytest
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import patch
 from datetime import datetime
 
 # Add paths
@@ -32,7 +30,7 @@ repo_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(repo_root / "agency_os" / "00_system" / "orchestrator"))
 sys.path.insert(0, str(repo_root / "agency_os" / "00_system" / "runtime"))
 
-from core_orchestrator import CoreOrchestrator, ProjectPhase
+from core_orchestrator import CoreOrchestrator
 from prompt_registry import PromptRegistry
 
 
@@ -373,9 +371,6 @@ class TestVibeAlignerSystemE2E:
             print("  - FEATURE_SPECIFICATION: Running (VIBE_ALIGNER all 6 tasks)...")
 
             try:
-                # Load manifest
-                manifest = orchestrator.load_manifest()
-
                 # Execute planning phase (this will run BUSINESS_VALIDATION + FEATURE_SPECIFICATION)
                 orchestrator.run()
 
@@ -415,7 +410,7 @@ class TestVibeAlignerSystemE2E:
                 assert 'complexity_score' in feature
                 assert 'estimated_effort' in feature
 
-            print(f"✓ feature_spec.json is valid")
+            print("✓ feature_spec.json is valid")
             print(f"  - Features: {len(feature_spec['features'])}")
             print(f"  - Total complexity: {feature_spec['scope_negotiation']['total_complexity']}")
 
@@ -479,13 +474,13 @@ class TestVibeAlignerSystemE2E:
             print("E2E TEST PASSED ✅")
             print("="*80)
             print("SUMMARY:")
-            print(f"  - Orchestrator initialized: ✓")
-            print(f"  - PromptRegistry enabled: ✓")
+            print("  - Orchestrator initialized: ✓")
+            print("  - PromptRegistry enabled: ✓")
             print(f"  - Guardian Directives injected: ✓ ({guardian_found_count} prompts)")
-            print(f"  - VIBE_ALIGNER executed: ✓")
-            print(f"  - feature_spec.json generated: ✓")
-            print(f"  - Schema validation passed: ✓")
-            print(f"  - No regressions: ✓")
+            print("  - VIBE_ALIGNER executed: ✓")
+            print("  - feature_spec.json generated: ✓")
+            print("  - Schema validation passed: ✓")
+            print("  - No regressions: ✓")
             print()
 
     def test_prompt_registry_governance_injection(self):

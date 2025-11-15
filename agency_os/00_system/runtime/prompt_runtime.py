@@ -21,7 +21,6 @@ Error Handling:
 """
 
 import yaml
-import json
 import logging
 import sys
 from pathlib import Path
@@ -202,7 +201,7 @@ class PromptRuntime:
                 logger.debug(f"Validation gates: {task_meta.validation_gates}")
 
             print(f"\n{'='*60}")
-            print(f"COMPOSITION COMPLETE")
+            print("COMPOSITION COMPLETE")
             print(f"{'='*60}\n")
 
             logger.info(f"Composition successful: {agent_id}.{task_id} ({prompt_size:,} chars)")
@@ -655,6 +654,6 @@ if __name__ == "__main__":
         f.write(composed_prompt)
 
     print(f"✓ Composed prompt written to: {output_file}")
-    print(f"\nFirst 500 chars of composed prompt:")
+    print("\nFirst 500 chars of composed prompt:")
     print("-" * 60)
     print(composed_prompt[:500] + "...")

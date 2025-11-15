@@ -145,11 +145,52 @@ This adds a `Signed-off-by` line to your commit message, certifying that you hav
 
 ## Pull Request Process
 
+### Quality Contract (BLOCKING REQUIREMENTS)
+
+**All PRs must pass these quality gates. CI will block merges if any fail.**
+
+#### ✅ Required Checks (MUST PASS)
+
+1. **All tests pass:**
+   ```bash
+   pytest tests/ -v --tb=short
+   ```
+   - Status: **BLOCKING** ❌ CI fails if tests fail
+   - No exceptions, no escape hatches
+
+2. **Code linting passes:**
+   ```bash
+   ruff check . --output-format=github
+   ```
+   - Status: **BLOCKING** ❌ CI fails if linting fails
+   - Fix all issues before pushing
+
+3. **Pre-commit hooks pass:**
+   ```bash
+   pre-commit run --all-files
+   ```
+   - Status: **BLOCKING** ❌ Commit rejected if hooks fail
+   - Installed automatically via `setup.sh` or devcontainer
+
+#### ℹ️ Why This Matters
+
+**Before 2025-11-15:** Quality checks were "non-blocking warnings"
+- Tests could fail, PRs still merged
+- Linting issues accumulated
+- Main branch broke repeatedly
+
+**After 2025-11-15:** Quality gates have teeth
+- Broken code cannot merge
+- Quality regressions prevented systematically
+- Main branch stays green
+
+This is part of our **systematic quality enforcement** strategy to prevent regressions.
+
 ### Before Submitting
 
 - [ ] All tests pass (`pytest`)
 - [ ] Code is formatted (`black`)
-- [ ] Linting passes (`flake8`)
+- [ ] Linting passes (`ruff check .`)
 - [ ] YAML is valid (`yamllint`)
 - [ ] Pre-commit hooks pass (`pre-commit run --all-files`)
 - [ ] Documentation is updated (if needed)

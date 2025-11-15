@@ -136,8 +136,8 @@ try:
 
     if 'error' in result and result['error']:
         print(f"⚠️  Fetch returned error: {result['error']}")
-        print(f"   (This might be expected - some sites block bots)")
-        print(f"✅ WebFetchClient is callable and functional")
+        print("   (This might be expected - some sites block bots)")
+        print("✅ WebFetchClient is callable and functional")
         print()
     elif 'content' in result:
         print(f"✅ Fetched {len(result['content'])} characters")
@@ -173,9 +173,9 @@ try:
 
     if 'error' in result:
         print(f"⚠️  Tool returned error (might be site-specific): {result['error']}")
-        print(f"✅ web_fetch tool is callable")
+        print("✅ web_fetch tool is callable")
     else:
-        print(f"✅ web_fetch tool works")
+        print("✅ web_fetch tool works")
 
     # Test google_search (if available)
     if google_available:

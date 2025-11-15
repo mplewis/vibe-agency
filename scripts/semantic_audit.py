@@ -31,11 +31,9 @@ Exit Codes:
 
 import sys
 import yaml
-import json
 import argparse
 from pathlib import Path
-from datetime import datetime, timedelta
-from typing import Dict, List, Set, Tuple, Optional
+from typing import Dict, List, Set, Optional
 from collections import defaultdict
 
 

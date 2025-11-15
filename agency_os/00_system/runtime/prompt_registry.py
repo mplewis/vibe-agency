@@ -31,7 +31,6 @@ Version: 1.0 (MVP)
 """
 
 import yaml
-import json
 import sys
 import logging
 from pathlib import Path
@@ -40,10 +39,10 @@ from typing import Dict, List, Any, Optional
 # Import PromptRuntime (same directory)
 # Use try/except to handle both direct execution and module import
 try:
-    from .prompt_runtime import PromptRuntime, PromptRuntimeError
+    from .prompt_runtime import PromptRuntime
 except ImportError:
     # Direct execution - import without relative path
-    from prompt_runtime import PromptRuntime, PromptRuntimeError
+    from prompt_runtime import PromptRuntime
 
 # Import workspace utilities
 _REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
@@ -264,7 +263,7 @@ class PromptRegistry:
                 logger.warning(f"Could not load manifest for workspace {workspace}: {e}")
                 lines.append(f"**Manifest:** *(not available - {e})*\n")
         else:
-            lines.append(f"**Manifest:** *(workspace_utils not available)*\n")
+            lines.append("**Manifest:** *(workspace_utils not available)*\n")
 
         # Add manifest state (if loaded)
         if manifest_data:
@@ -461,6 +460,6 @@ if __name__ == "__main__":
 
     print(f"✓ Composed prompt written to: {output_file}")
     print(f"\nPrompt size: {len(composed_prompt):,} chars")
-    print(f"\nFirst 1000 chars:")
+    print("\nFirst 1000 chars:")
     print("-" * 60)
     print(composed_prompt[:1000] + "...")

@@ -14,7 +14,6 @@ import os
 import sys
 import json
 from pathlib import Path
-from typing import List, Dict
 
 # Import utilities
 import importlib.util
@@ -46,7 +45,7 @@ def test_manifest_schema_consistency():
     root_has_api_version = 'apiVersion' in root_manifest
     root_has_kind = 'kind' in root_manifest
 
-    print(f"Root manifest:")
+    print("Root manifest:")
     print(f"  apiVersion: {'✅' if root_has_api_version else '❌'}")
     print(f"  kind: {'✅' if root_has_kind else '❌'}")
     print()
@@ -84,7 +83,7 @@ def test_manifest_schema_consistency():
             print(f"  - {issue}")
         return False
     else:
-        print(f"✅ All manifests use consistent schema")
+        print("✅ All manifests use consistent schema")
         return True
 
 
@@ -157,7 +156,7 @@ def test_agent_task_coverage():
                     print(f"    ✅ {task_id}")
         else:
             issues.append(f"{agent_id}: No tasks directory")
-            print(f"  ❌ No tasks directory")
+            print("  ❌ No tasks directory")
 
         print()
 
@@ -167,7 +166,7 @@ def test_agent_task_coverage():
             print(f"  - {issue}")
         return False
     else:
-        print(f"✅ All agents have proper task definitions")
+        print("✅ All agents have proper task definitions")
         return True
 
 
@@ -236,7 +235,7 @@ def test_end_to_end_workflow():
 
     # Create runtime
     runtime = prompt_runtime.PromptRuntime()
-    print(f"✓ Created runtime")
+    print("✓ Created runtime")
 
     # Execute task
     context = {
@@ -263,12 +262,12 @@ def test_end_to_end_workflow():
         all_present = all(key in context for key in required_keys)
 
         if all_present:
-            print(f"✓ All resolved paths present in context")
+            print("✓ All resolved paths present in context")
             print()
             print("✅ End-to-end workflow successful")
             return True
         else:
-            print(f"❌ Missing resolved paths in context")
+            print("❌ Missing resolved paths in context")
             return False
 
     except Exception as e:

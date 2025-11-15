@@ -351,7 +351,6 @@ class LLMClient:
 # =============================================================================
 
 if __name__ == "__main__":
-    import sys
 
     # Test LLM client
     print("Testing LLM Client...")

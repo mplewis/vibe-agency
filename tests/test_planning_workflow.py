@@ -10,10 +10,8 @@ Tests:
 5. Agent task files have correct references
 """
 
-import os
 import sys
 import yaml
-import json
 from pathlib import Path
 
 # Add project root to path
@@ -315,7 +313,7 @@ def test_agent_integrations():
 def main():
     """Run all tests"""
     print(f"\n{Colors.BOLD}{'='*60}")
-    print(f"Planning Workflow Integration Test Suite")
+    print("Planning Workflow Integration Test Suite")
     print(f"{'='*60}{Colors.RESET}\n")
 
     tests = [
@@ -337,7 +335,7 @@ def main():
 
     # Summary
     print(f"\n{Colors.BOLD}{'='*60}")
-    print(f"Test Summary")
+    print("Test Summary")
     print(f"{'='*60}{Colors.RESET}\n")
 
     passed = sum(1 for _, result in results if result)

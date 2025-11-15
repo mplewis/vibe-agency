@@ -12,7 +12,6 @@ Version: 1.0
 """
 
 import sys
-import json
 from pathlib import Path
 
 # Add paths
@@ -25,7 +24,7 @@ sys.path.insert(0, str(_RUNTIME_PATH))
 sys.path.insert(0, str(_ORCHESTRATOR_PATH))
 
 from prompt_registry import PromptRegistry
-from core_orchestrator import CoreOrchestrator, PROMPT_REGISTRY_AVAILABLE, ProjectPhase
+from core_orchestrator import CoreOrchestrator, PROMPT_REGISTRY_AVAILABLE
 
 def test_prompt_registry_integration():
     """Test that orchestrator uses PromptRegistry with governance"""
@@ -46,10 +45,10 @@ def test_prompt_registry_integration():
             repo_root=_REPO_ROOT,
             execution_mode="autonomous"  # Use autonomous for testing
         )
-        print(f"✓ Orchestrator initialized")
+        print("✓ Orchestrator initialized")
         print(f"  - Using PromptRegistry: {orchestrator.use_registry}\n")
 
-        assert orchestrator.use_registry == True, "Orchestrator should use PromptRegistry"
+        assert orchestrator.use_registry, "Orchestrator should use PromptRegistry"
     except Exception as e:
         print(f"✗ Failed to initialize orchestrator: {e}")
         raise
@@ -201,7 +200,7 @@ def test_prompt_registry_integration():
     print("="*60)
     print("✅ ALL INTEGRATION TESTS PASSED!")
     print("="*60)
-    print(f"""
+    print("""
 Summary:
   ✓ PromptRegistry available and loaded by orchestrator
   ✓ Guardian Directives auto-injected (9 directives)
