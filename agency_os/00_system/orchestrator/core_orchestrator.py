@@ -55,16 +55,6 @@ except ImportError:
     PROMPT_REGISTRY_AVAILABLE = False
     logger.warning("PromptRegistry not available, falling back to PromptRuntime")
 
-# GAD-003: Add tools to path
-sys.path.insert(0, str(Path(__file__).resolve().parent / "tools"))
-try:
-    from tool_executor import ToolExecutor
-
-    TOOLS_AVAILABLE = True
-except ImportError:
-    TOOLS_AVAILABLE = False
-    logger.warning("ToolExecutor not available - tool execution disabled")
-
 
 # =============================================================================
 # DATA STRUCTURES
