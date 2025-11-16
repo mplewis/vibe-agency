@@ -376,9 +376,9 @@ class TestVibeAlignerSystemE2E:
             # Validate structure
             assert "project" in feature_spec, "feature_spec should have 'project' section"
             assert "features" in feature_spec, "feature_spec should have 'features' section"
-            assert (
-                "scope_negotiation" in feature_spec
-            ), "feature_spec should have 'scope_negotiation' section"
+            assert "scope_negotiation" in feature_spec, (
+                "feature_spec should have 'scope_negotiation' section"
+            )
             assert "validation" in feature_spec, "feature_spec should have 'validation' section"
             assert "metadata" in feature_spec, "feature_spec should have 'metadata' section"
 
@@ -421,9 +421,9 @@ class TestVibeAlignerSystemE2E:
                     print(f"✓ Guardian Directives found in: {prompt_info['agent']}")
 
             # Verify at least some prompts had Guardian Directives
-            assert (
-                guardian_found_count > 0
-            ), "Guardian Directives should be present in at least one prompt"
+            assert guardian_found_count > 0, (
+                "Guardian Directives should be present in at least one prompt"
+            )
             print(
                 f"✓ Guardian Directives found in {guardian_found_count}/{len(executed_prompts)} prompts"
             )
@@ -455,9 +455,9 @@ class TestVibeAlignerSystemE2E:
             print(f"✓ Final phase: {updated_manifest['status']['projectPhase']}")
 
             # Verify no errors in manifest
-            assert "errors" not in updated_manifest.get(
-                "status", {}
-            ), "Manifest should not have errors"
+            assert "errors" not in updated_manifest.get("status", {}), (
+                "Manifest should not have errors"
+            )
 
             print("\n" + "=" * 80)
             print("E2E TEST PASSED ✅")
@@ -498,9 +498,9 @@ class TestVibeAlignerSystemE2E:
         # Verify Guardian Directives are present (check for the heading marker)
         has_guardian_section = "# === GUARDIAN DIRECTIVES ===" in prompt
 
-        assert (
-            has_guardian_section
-        ), "Composed prompt should contain '# === GUARDIAN DIRECTIVES ===' section"
+        assert has_guardian_section, (
+            "Composed prompt should contain '# === GUARDIAN DIRECTIVES ===' section"
+        )
 
         print("✓ Guardian Directives present in composed prompt")
         print(f"  Prompt length: {len(prompt)} characters")

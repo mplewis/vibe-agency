@@ -52,9 +52,9 @@ def check_agent_prompt_composition(agent_id: str, task_id: str) -> bool:
 
         # Validate prompt
         assert len(prompt) > 100, "Prompt too short"
-        assert (
-            "CORE PERSONALITY" in prompt or "personality" in prompt.lower()
-        ), "Missing personality section"
+        assert "CORE PERSONALITY" in prompt or "personality" in prompt.lower(), (
+            "Missing personality section"
+        )
 
         print(f"✅ {agent_id}/{task_id}: OK ({len(prompt)} chars)")
         return True
