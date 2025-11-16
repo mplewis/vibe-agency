@@ -52,28 +52,22 @@ def simulate_claude_code_operator(workspace_dir, timeout=10):
             print(f"[OPERATOR] 📖 Request: {request['agent']}.{request['task_id']}")
 
             # Generate mock response based on agent
-            if request['agent'] == 'VIBE_ALIGNER':
+            if request["agent"] == "VIBE_ALIGNER":
                 result = {
                     "features": ["Feature 1", "Feature 2"],
-                    "scope_negotiation": {
-                        "mvp_features": 2,
-                        "total_features": 2
-                    }
+                    "scope_negotiation": {"mvp_features": 2, "total_features": 2},
                 }
             else:
-                result = {
-                    "status": "success",
-                    "data": "Mock response for " + request['agent']
-                }
+                result = {"status": "success", "data": "Mock response for " + request["agent"]}
 
             # Write response
-            request_id = request['request_id']
+            request_id = request["request_id"]
             response_file = delegation_dir / f"response_{request_id}.json"
 
             response = {"result": result}
 
             print(f"[OPERATOR] ✍️  Writing response: {response_file}")
-            with open(response_file, 'w') as f:
+            with open(response_file, "w") as f:
                 json.dump(response, f, indent=2)
 
             print("[OPERATOR] ✅ Response written")
@@ -87,9 +81,9 @@ def test_orchestrator_file_delegation():
     """
     Test that orchestrator can delegate via file-based protocol.
     """
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("TEST: Orchestrator File-Based Delegation")
-    print("="*70)
+    print("=" * 70)
 
     # Setup test workspace
     project_id = "test-orchestrator-delegation"
@@ -104,23 +98,18 @@ def test_orchestrator_file_delegation():
     try:
         # Initialize orchestrator in delegated mode
         print("\n[TEST] 🚀 Initializing orchestrator...")
-        orchestrator = CoreOrchestrator(
-            repo_root=Path.cwd(),
-            execution_mode="delegated"
-        )
+        orchestrator = CoreOrchestrator(repo_root=Path.cwd(), execution_mode="delegated")
 
         # Create test manifest
         manifest = ProjectManifest(
-            project_id=project_id,
-            name=project_id,
-            current_phase=ProjectPhase.PLANNING
+            project_id=project_id, name=project_id, current_phase=ProjectPhase.PLANNING
         )
 
         # Start operator simulation in background
         print("\n[TEST] 🤖 Starting operator simulation...")
         operator_thread = threading.Thread(
             target=simulate_claude_code_operator,
-            args=(workspace_dir, 10)  # 10 second timeout
+            args=(workspace_dir, 10),  # 10 second timeout
         )
         operator_thread.daemon = True
         operator_thread.start()
@@ -134,7 +123,7 @@ def test_orchestrator_file_delegation():
             agent_name="VIBE_ALIGNER",
             task_id="01_education_calibration",
             inputs={"user_input": "Test project"},
-            manifest=manifest
+            manifest=manifest,
         )
 
         print(f"\n[TEST] 📥 Received result: {json.dumps(result, indent=2)}")
@@ -148,8 +137,12 @@ def test_orchestrator_file_delegation():
         request_files = list(delegation_dir.glob("request_*.json"))
         response_files = list(delegation_dir.glob("response_*.json"))
 
-        assert len(request_files) == 0, f"Request files should be cleaned up, found: {request_files}"
-        assert len(response_files) == 0, f"Response files should be cleaned up, found: {response_files}"
+        assert len(request_files) == 0, (
+            f"Request files should be cleaned up, found: {request_files}"
+        )
+        assert len(response_files) == 0, (
+            f"Response files should be cleaned up, found: {response_files}"
+        )
 
         print("\n[TEST] ✅ All assertions passed!")
         print("[TEST] ✅ File-based delegation works!")
@@ -162,6 +155,7 @@ def test_orchestrator_file_delegation():
     except Exception as e:
         print(f"\n[TEST] ❌ Test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -176,9 +170,9 @@ def test_orchestrator_delegation_timeout():
     """
     Test that orchestrator times out when no response is provided.
     """
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("TEST: Orchestrator Delegation Timeout")
-    print("="*70)
+    print("=" * 70)
 
     project_id = "test-timeout"
     workspace_dir = Path("workspaces") / project_id
@@ -210,9 +204,9 @@ if __name__ == "__main__":
     # Test 2: Timeout (skipped)
     test2_passed = test_orchestrator_delegation_timeout()
 
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("RESULTS")
-    print("="*70)
+    print("=" * 70)
     print(f"✅ Test 1 (Delegation Flow): {'PASSED' if test1_passed else 'FAILED'}")
     print("⚠️  Test 2 (Timeout): SKIPPED (would block)")
 

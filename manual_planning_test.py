@@ -32,9 +32,9 @@ from core_orchestrator import CoreOrchestrator
 
 def show_request_file(request_file: Path):
     """Display request file for manual inspection"""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("📬 INTELLIGENCE REQUEST")
-    print("="*70)
+    print("=" * 70)
 
     with open(request_file) as f:
         request = json.load(f)
@@ -45,13 +45,13 @@ def show_request_file(request_file: Path):
     print(f"\n📄 Request file: {request_file}")
 
     # Show first 500 chars of prompt
-    prompt = request['prompt']
+    prompt = request["prompt"]
     print("\n📝 Prompt preview (first 500 chars):")
-    print("-"*70)
+    print("-" * 70)
     print(prompt[:500])
     if len(prompt) > 500:
         print(f"\n... ({len(prompt) - 500} more chars)")
-    print("-"*70)
+    print("-" * 70)
 
     return request
 
@@ -60,8 +60,8 @@ def create_mock_response(request_file: Path, request: dict):
     """Helper to create mock response file"""
 
     # Determine response based on agent
-    agent = request['agent']
-    task_id = request['task_id']
+    agent = request["agent"]
+    task_id = request["task_id"]
 
     print(f"\n🤔 Generating mock response for {agent}.{task_id}...")
 
@@ -70,33 +70,26 @@ def create_mock_response(request_file: Path, request: dict):
         if "education" in task_id:
             result = {
                 "education_complete": True,
-                "user_understanding": "User understands the process"
+                "user_understanding": "User understands the process",
             }
         elif "feature" in task_id:
             result = {
-                "features": [
-                    "User authentication",
-                    "Dashboard",
-                    "Data export"
-                ],
-                "extracted_requirements": "Basic MVP features identified"
+                "features": ["User authentication", "Dashboard", "Data export"],
+                "extracted_requirements": "Basic MVP features identified",
             }
         elif "feasibility" in task_id:
             result = {
                 "technical_feasibility": "HIGH",
                 "business_feasibility": "MEDIUM",
-                "recommendations": "Proceed with MVP"
+                "recommendations": "Proceed with MVP",
             }
         elif "gap" in task_id:
-            result = {
-                "gaps": [],
-                "clarifications_needed": []
-            }
+            result = {"gaps": [], "clarifications_needed": []}
         elif "scope" in task_id:
             result = {
                 "mvp_features": ["User auth", "Dashboard"],
                 "deferred_features": ["Data export"],
-                "negotiation_complete": True
+                "negotiation_complete": True,
             }
         else:
             result = {"status": "success", "data": f"Mock response for {task_id}"}
@@ -105,28 +98,24 @@ def create_mock_response(request_file: Path, request: dict):
         result = {
             "market_size": "Large addressable market",
             "competitors": ["Competitor A", "Competitor B"],
-            "market_trends": "Growing demand for solution"
+            "market_trends": "Growing demand for solution",
         }
 
     elif agent == "TECH_RESEARCHER":
         result = {
             "tech_stack_recommendation": "Python + React",
             "architecture": "Serverless",
-            "considerations": "Scalability is key"
+            "considerations": "Scalability is key",
         }
 
     elif agent == "FACT_VALIDATOR":
-        result = {
-            "validation_status": "VERIFIED",
-            "issues": [],
-            "confidence": "HIGH"
-        }
+        result = {"validation_status": "VERIFIED", "issues": [], "confidence": "HIGH"}
 
     elif agent == "USER_RESEARCHER":
         result = {
             "user_insights": "Users need simple interface",
             "pain_points": ["Complex workflows", "Slow performance"],
-            "preferences": "Mobile-first design"
+            "preferences": "Mobile-first design",
         }
 
     elif agent == "LEAN_CANVAS_VALIDATOR":
@@ -135,7 +124,7 @@ def create_mock_response(request_file: Path, request: dict):
             "problem": "Users struggle with X",
             "solution": "Our product solves X",
             "unique_value": "Simplicity + Speed",
-            "validation_score": 8
+            "validation_score": 8,
         }
 
     elif agent == "GENESIS_BLUEPRINT":
@@ -143,9 +132,9 @@ def create_mock_response(request_file: Path, request: dict):
             "feature_spec": {
                 "features": [
                     {"name": "Authentication", "priority": "P0"},
-                    {"name": "Dashboard", "priority": "P0"}
+                    {"name": "Dashboard", "priority": "P0"},
                 ],
-                "user_stories": ["As user, I can login", "As user, I can view dashboard"]
+                "user_stories": ["As user, I can login", "As user, I can view dashboard"],
             }
         }
 
@@ -153,14 +142,14 @@ def create_mock_response(request_file: Path, request: dict):
         result = {
             "status": "success",
             "message": f"Mock response for {agent}",
-            "data": "Generated by mock responder"
+            "data": "Generated by mock responder",
         }
 
     # Write response file
     response_file = request_file.parent / f"response_{request['request_id']}.json"
     response = {"result": result}
 
-    with open(response_file, 'w') as f:
+    with open(response_file, "w") as f:
         json.dump(response, f, indent=2)
 
     print(f"✅ Response written: {response_file}")
@@ -170,9 +159,9 @@ def create_mock_response(request_file: Path, request: dict):
 
 
 def main():
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("🧪 MANUAL E2E TEST: PLANNING Workflow")
-    print("="*70)
+    print("=" * 70)
 
     # Create test project
     project_id = "manual-test-project"
@@ -196,10 +185,7 @@ def main():
 
     # Initialize orchestrator
     print("\n🚀 Initializing CoreOrchestrator (delegated mode)...")
-    orchestrator = CoreOrchestrator(
-        repo_root=Path.cwd(),
-        execution_mode="delegated"
-    )
+    orchestrator = CoreOrchestrator(repo_root=Path.cwd(), execution_mode="delegated")
 
     print("✅ Orchestrator initialized")
 
@@ -256,9 +242,9 @@ def main():
         print("📤 Calling: orchestrator.execute_phase(manifest)")
         orchestrator.execute_phase(manifest)
 
-        print("\n" + "="*70)
+        print("\n" + "=" * 70)
         print("✅ PLANNING WORKFLOW COMPLETE!")
-        print("="*70)
+        print("=" * 70)
 
         print("\n📊 Final manifest:")
         print(f"   Phase: {manifest.current_phase}")
@@ -278,6 +264,7 @@ def main():
     except Exception as e:
         print(f"\n❌ Workflow failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 

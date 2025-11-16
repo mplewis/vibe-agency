@@ -752,7 +752,7 @@ class CoreOrchestrator:
         result = response.get("result")
         if result is None:
             raise RuntimeError(
-                f"Intelligence response missing 'result' field\n" f"Response: {response}"
+                f"Intelligence response missing 'result' field\nResponse: {response}"
             )
 
         logger.info("✅ Intelligence response received and processed")
