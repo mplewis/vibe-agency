@@ -98,6 +98,7 @@ cat > "$STATUS_FILE" <<EOF
     "status": "$FORMATTING_STATUS"
   },
   "session_handoff_exists": $SESSION_HANDOFF_EXISTS,
+  "steward": "manifest=truth | read>write | edit>create | test>claim | health>features",
   "generated_by": "bin/update-system-status.sh"
 }
 EOF
