@@ -863,11 +863,13 @@ class CoreOrchestrator:
 
         # Parse JSON output
         try:
-            return json.loads(response.content)
+            # Defensive: ensure response.content is a string (not MagicMock in tests)
+            content = str(response.content) if response.content else "{}"
+            return json.loads(content)
         except json.JSONDecodeError:
             # If not JSON, return as text
             logger.warning(f"Agent {agent_name} returned non-JSON response")
-            return {"text": response.content}
+            return {"text": str(response.content)}
 
     # -------------------------------------------------------------------------
     # AUDITOR & QUALITY GATES (GAD-002 Decision 2 & 4)
