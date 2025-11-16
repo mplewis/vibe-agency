@@ -1,0 +1,786 @@
+# GAD-006: Knowledge Department Architecture (VISION)
+
+**STATUS: VISION DRAFT**  
+**TYPE: High-Level Architecture**  
+**DETAIL LEVEL: 30% (Enough to build on, not full implementation)**
+
+---
+
+## 1. Executive Summary
+
+**Problem:** The Agency OS needs access to knowledge that spans:
+- Internal agency learnings (cross-project patterns)
+- Client-specific domain knowledge (confidential)
+- External research capabilities (federated)
+- Industry best practices (public)
+
+**Solution:** A separate **Knowledge Department** that operates independently from Agency OS but provides knowledge services to all frameworks and agents.
+
+**Key Principle:** **Graceful Degradation**
+- Works at Level 1 (prompt-only, browser)
+- Enhanced at Level 2 (with Claude Code)
+- Full-featured at Level 3 (with runtime APIs)
+
+---
+
+## 2. The Core Insight: Knowledge as Separate Entity
+
+```
+┌──────────────────────────────────────┐
+│ AGENCY OS                            │
+│ • Planning, CodeGen, QA, Deploy      │
+│ • Agents, Orchestrator               │
+│ • Operates on PROJECTS               │
+└──────────────────────────────────────┘
+            ↕ queries
+┌──────────────────────────────────────┐
+│ KNOWLEDGE DEPARTMENT                 │
+│ • Research Division                  │
+│ • Domain Knowledge Bases             │
+│ • Knowledge Services                 │
+│ • Operates on KNOWLEDGE              │
+└──────────────────────────────────────┘
+            ↕ federated access
+┌──────────────────────────────────────┐
+│ CLIENT RESEARCH DEPARTMENTS          │
+│ • External knowledge sources         │
+└──────────────────────────────────────┘
+```
+
+**Why separate?**
+- Different lifecycle (knowledge persists across projects)
+- Different access patterns (read-heavy, not write-heavy)
+- Different security model (confidentiality layers)
+- Can operate independently (public library metaphor)
+
+---
+
+## 3. Three-Layer Architecture (Graceful Degradation)
+
+### Layer 1: Prompt-Only (Browser-Compatible)
+
+```yaml
+# Minimum viable knowledge system
+# Works: In browser, no server, no APIs
+
+components:
+  - Static YAML knowledge bases
+  - Markdown documentation
+  - Prompt templates for knowledge retrieval
+  - Manual agent queries (copy/paste)
+
+example:
+  agent_query: |
+    The agent needs "Best practices for booking systems"
+    
+    Process:
+    1. Agent prompts user: "Check knowledge/industry_patterns/booking_systems.yaml"
+    2. User copies content
+    3. User pastes into chat
+    4. Agent processes knowledge
+    
+  storage:
+    - knowledge_department/
+      - domain_knowledge/
+        - industry_patterns/
+          - booking_systems.yaml
+          - saas_applications.yaml
+        - client_domains/
+          - client_a/
+            - business_rules.yaml (if accessible)
+
+capabilities:
+  - ✅ Static knowledge retrieval
+  - ✅ Manual knowledge injection
+  - ✅ Works in browser
+  - ❌ No automated search
+  - ❌ No federated queries
+  - ❌ No semantic search
+```
+
+### Layer 2: Delegated Execution (Claude Code)
+
+```yaml
+# Enhanced with Claude Code integration
+# Works: With vibe-cli, Claude Code access
+
+components:
+  - All Layer 1 components
+  - Python knowledge query tools
+  - Semantic search (basic)
+  - Automated file reading
+  - Knowledge graph (simple)
+
+example:
+  agent_query: |
+    Agent uses tool: knowledge_query()
+    
+    Process:
+    1. Agent calls: knowledge_query("booking systems best practices")
+    2. Tool searches YAML files semantically
+    3. Returns relevant snippets
+    4. Agent processes automatically
+    
+  tools:
+    - knowledge_query(query: str, scope: str)
+    - domain_search(client_id: str, domain: str)
+    - pattern_match(project_type: str)
+
+capabilities:
+  - ✅ Automated knowledge retrieval
+  - ✅ Basic semantic search
+  - ✅ File system access
+  - ✅ Knowledge graph traversal
+  - ⚠️ Limited to local knowledge
+  - ❌ No external API calls
+  - ❌ No real-time research
+```
+
+### Layer 3: Full Runtime (APIs + Research)
+
+```yaml
+# Complete knowledge system
+# Works: With backend, APIs, external services
+
+components:
+  - All Layer 1 + 2 components
+  - Research Engine (multi-step)
+  - Federated client connectors
+  - External API integration
+  - Advanced semantic search
+  - Knowledge graph database
+
+example:
+  agent_query: |
+    Agent uses: ResearchEngine.research()
+    
+    Process:
+    1. Agent: research("fintech PCI compliance patterns")
+    2. Engine queries:
+       - Internal knowledge base
+       - Client A research API (if authorized)
+       - Client B research API (if authorized)
+       - External sources (web search)
+    3. Synthesizes results
+    4. Returns comprehensive report
+    
+  services:
+    - ResearchEngine (multi-source aggregation)
+    - ClientResearchConnector (federated access)
+    - SemanticIndexService (vector search)
+    - KnowledgeGraphDB (relationship queries)
+
+capabilities:
+  - ✅ Everything from Layer 1 + 2
+  - ✅ Multi-source research
+  - ✅ Federated client access
+  - ✅ Real-time web research
+  - ✅ Advanced semantic search
+  - ✅ Knowledge synthesis
+```
+
+---
+
+## 4. Directory Structure (All Layers)
+
+```
+knowledge_department/
+│
+├── domain_knowledge/              # Layer 1: Static YAML
+│   ├── industry_patterns/
+│   │   ├── booking_systems.yaml
+│   │   ├── saas_applications.yaml
+│   │   ├── fintech_apps.yaml
+│   │   └── ...
+│   │
+│   ├── client_domains/           # Confidential!
+│   │   ├── client_a/
+│   │   │   ├── business_rules.yaml
+│   │   │   ├── domain_ontology.yaml
+│   │   │   └── constraints.yaml
+│   │   └── client_b/
+│   │
+│   └── cross_project_learnings/  # Internal only
+│       ├── shared_patterns.yaml
+│       └── anti_patterns.yaml
+│
+├── research_division/             # Layer 2+3
+│   ├── tools/                     # Layer 2: Claude Code tools
+│   │   ├── knowledge_query.py
+│   │   ├── semantic_search.py
+│   │   └── pattern_matcher.py
+│   │
+│   ├── services/                  # Layer 3: Runtime services
+│   │   ├── research_engine.py
+│   │   ├── client_connectors/
+│   │   └── synthesis_engine.py
+│   │
+│   └── strategies/
+│       ├── search_strategies.yaml
+│       └── synthesis_rules.yaml
+│
+├── knowledge_services/            # Layer 2+3
+│   ├── access_control/
+│   │   ├── permissions.yaml
+│   │   └── confidentiality_rules.yaml
+│   │
+│   ├── indexing/                  # Layer 3 only
+│   │   ├── semantic_index.py
+│   │   └── knowledge_graph.py
+│   │
+│   └── query_interface/
+│       ├── public_api.py          # Layer 3
+│       └── tool_interface.py      # Layer 2
+│
+└── config/
+    ├── layer1_config.yaml         # Prompt-only mode
+    ├── layer2_config.yaml         # Claude Code mode
+    └── layer3_config.yaml         # Full runtime mode
+```
+
+---
+
+## 5. Knowledge Access Patterns
+
+### Pattern 1: Agent Query (All Layers)
+
+```python
+# Layer 1: Manual
+"""
+Agent prompt: "Please check knowledge_department/domain_knowledge/
+industry_patterns/booking_systems.yaml for best practices"
+
+User: [copies file content]
+Agent: [processes content]
+"""
+
+# Layer 2: Automated (Claude Code)
+from knowledge_department.research_division.tools import knowledge_query
+
+result = knowledge_query(
+    query="booking systems best practices",
+    scope="public"
+)
+
+# Layer 3: Full Research (Runtime)
+from knowledge_department.research_division.services import ResearchEngine
+
+research = ResearchEngine()
+report = research.research(
+    query="booking systems best practices",
+    sources=["internal", "client", "external"],
+    depth=3
+)
+```
+
+### Pattern 2: Confidential Client Knowledge
+
+```python
+# Layer 1: Manual (if user has access)
+"""
+Agent: "Check knowledge_department/domain_knowledge/client_domains/
+client_a/business_rules.yaml"
+
+Note: Only if working on Client A project!
+"""
+
+# Layer 2: Tool-based (with auth)
+from knowledge_department.research_division.tools import domain_search
+
+result = domain_search(
+    client_id="client_a",
+    domain="payment_processing",
+    project_id="project_123"  # Must match!
+)
+
+# Layer 3: Federated access
+from knowledge_department.research_division.services import ClientResearchConnector
+
+connector = ClientResearchConnector("client_a")
+client_knowledge = connector.query(
+    query="payment processing business rules",
+    access_token=get_token("client_a"),
+    confidentiality="confidential"
+)
+```
+
+---
+
+## 6. Semantic Knowledge Graph (Layer 2+3)
+
+```yaml
+# knowledge_department/config/knowledge_graph.yaml
+
+# Simple graph structure for semantic search
+conceptGraph:
+  
+  booking_system:
+    type: project_type
+    related_concepts:
+      - reservation_management
+      - availability_calendar
+      - payment_processing
+    related_patterns:
+      - double_booking_prevention
+      - cancellation_policies
+    tech_stacks:
+      - next_fullstack
+      - django_backend
+  
+  payment_processing:
+    type: domain_concept
+    related_concepts:
+      - stripe_integration
+      - pci_compliance
+      - transaction_security
+    applies_to:
+      - booking_system
+      - saas_application
+      - marketplace
+    client_specific:
+      - client_a: ["3d_secure_required", "fraud_detection"]
+      - client_b: ["multi_currency_support"]
+
+# This enables better queries:
+# Query: "booking systems" → finds "reservation_management" too
+# Query: "payment" + client_a → includes "3d_secure_required"
+```
+
+### How It Works
+
+```python
+# Layer 2: Simple graph traversal
+def knowledge_query(query: str, scope: str = "public"):
+    # 1. Parse query
+    concepts = extract_concepts(query)  # ["booking", "system"]
+    
+    # 2. Expand via graph
+    graph = load_knowledge_graph()
+    expanded = graph.expand(concepts)
+    # Now includes: ["booking_system", "reservation_management", 
+    #                "availability_calendar"]
+    
+    # 3. Search YAML files
+    results = []
+    for concept in expanded:
+        matches = search_yaml_files(concept, scope)
+        results.extend(matches)
+    
+    return results
+
+# Layer 3: Vector-based semantic search
+def semantic_search(query: str):
+    # Uses embeddings + vector DB for better matching
+    embedding = get_embedding(query)
+    similar = vector_db.search(embedding, top_k=10)
+    return similar
+```
+
+---
+
+## 7. Access Control (All Layers)
+
+```yaml
+# knowledge_department/knowledge_services/access_control/permissions.yaml
+
+accessLevels:
+  
+  public:
+    description: "Anyone can access (including browser-only)"
+    knowledge_bases:
+      - industry_patterns/*
+      - tech_stack_patterns/*
+      - best_practices/*
+    layers: [1, 2, 3]
+  
+  internal:
+    description: "Agency internal only"
+    knowledge_bases:
+      - cross_project_learnings/*
+      - proprietary_patterns/*
+    layers: [2, 3]  # Requires tools/runtime
+  
+  confidential:
+    description: "Client-specific (requires project match)"
+    knowledge_bases:
+      - client_domains/{client_id}/*
+    requires:
+      - project_id_match: true
+      - confidentiality_clearance: "confidential"
+    layers: [2, 3]
+    audit: true
+
+federatedAccess:
+  description: "Access to client research APIs"
+  requires:
+    - authentication: true
+    - confidentiality: "confidential"
+    - project_id_match: true
+  layers: [3]  # Only with runtime
+  audit: true
+```
+
+---
+
+## 8. Integration with Agency OS
+
+### How Agents Use Knowledge Department
+
+```python
+# agency_os/01_planning_framework/agents/VIBE_ALIGNER/_agent_core.py
+
+class VIBE_ALIGNER:
+    def __init__(self, execution_layer: int):
+        self.layer = execution_layer
+        
+        # Layer-appropriate knowledge access
+        if self.layer == 1:
+            self.knowledge = ManualKnowledgeAccess()
+        elif self.layer == 2:
+            self.knowledge = ToolBasedKnowledgeAccess()
+        elif self.layer == 3:
+            self.knowledge = ResearchEngineAccess()
+    
+    def validate_feasibility(self, features, project_context):
+        # Query knowledge appropriate to layer
+        if self.layer == 1:
+            # Prompt user to check files
+            self.knowledge.prompt_user(
+                f"Check knowledge_department/domain_knowledge/"
+                f"industry_patterns/{project_context.type}.yaml"
+            )
+        
+        elif self.layer >= 2:
+            # Automated query
+            patterns = self.knowledge.query(
+                query=f"{project_context.type} common patterns",
+                scope="public"
+            )
+            
+            # If confidential project, get client knowledge
+            if project_context.client_id:
+                client_rules = self.knowledge.query(
+                    query=f"{project_context.domain} business rules",
+                    scope="confidential",
+                    client_id=project_context.client_id,
+                    project_id=project_context.project_id
+                )
+        
+        return validation_result
+```
+
+---
+
+## 9. Deployment Matrix
+
+| Component | Layer 1 | Layer 2 | Layer 3 |
+|-----------|---------|---------|---------|
+| **Static YAML** | ✅ File system | ✅ File system | ✅ File system |
+| **Knowledge Graph** | ✅ YAML file | ✅ YAML + Python | ✅ Vector DB |
+| **Semantic Search** | ❌ Manual | ✅ Python tools | ✅ Vector search |
+| **Client Connectors** | ❌ N/A | ❌ N/A | ✅ API calls |
+| **Research Engine** | ❌ N/A | ⚠️ Limited | ✅ Full featured |
+| **Web Search** | ❌ N/A | ❌ N/A | ✅ API |
+| **Hosting** | Browser/local | Claude Code | Server required |
+
+---
+
+## 10. Knowledge Base Schema (Layer 1 Foundation)
+
+```yaml
+# Example: knowledge_department/domain_knowledge/industry_patterns/booking_systems.yaml
+
+pattern:
+  name: "Booking System Architecture"
+  type: "project_pattern"
+  
+  description: |
+    Common architectural patterns for booking and reservation systems.
+  
+  core_features:
+    - availability_management:
+        description: "Track available slots/resources"
+        complexity: "medium"
+        dependencies: ["database", "caching"]
+    
+    - reservation_booking:
+        description: "Create and manage reservations"
+        complexity: "medium"
+        dependencies: ["availability_management", "payment_processing"]
+    
+    - double_booking_prevention:
+        description: "Prevent concurrent bookings of same resource"
+        complexity: "high"
+        dependencies: ["database_locking", "transaction_management"]
+  
+  tech_stack_recommendations:
+    - primary:
+        name: "Next.js Full-Stack"
+        reason: "Real-time updates, good caching, Vercel deployment"
+        works_well_with: ["Supabase", "Stripe"]
+    
+    - alternative:
+        name: "Django Backend + React"
+        reason: "Strong ORM for complex booking logic"
+        works_well_with: ["PostgreSQL", "Celery"]
+  
+  common_pitfalls:
+    - issue: "Race conditions in booking"
+      solution: "Use database-level locking (SELECT FOR UPDATE)"
+    
+    - issue: "Poor calendar performance"
+      solution: "Cache availability data, use indexed queries"
+  
+  related_patterns:
+    - marketplace
+    - event_management
+    - appointment_scheduling
+  
+  confidence: 0.95
+  last_updated: "2025-01-15"
+  source: "cross_project_analysis"
+```
+
+---
+
+## 11. Research Division (Layer 3 Only)
+
+```python
+# knowledge_department/research_division/services/research_engine.py
+
+class ResearchEngine:
+    """
+    Multi-source research aggregation.
+    Only available in Layer 3 (runtime).
+    """
+    
+    def __init__(self, requester: str, project_context: dict):
+        self.requester = requester
+        self.project = project_context
+        self.sources = self._initialize_sources()
+    
+    def research(
+        self, 
+        query: str,
+        sources: list = ["internal"],
+        depth: int = 2
+    ) -> ResearchReport:
+        """
+        Multi-step research with source aggregation.
+        
+        Args:
+            query: Research question
+            sources: ["internal", "client", "external"]
+            depth: How many levels deep to search
+        
+        Returns:
+            ResearchReport with synthesized findings
+        """
+        
+        results = []
+        
+        # Phase 1: Internal knowledge
+        if "internal" in sources:
+            internal = self._search_internal(query)
+            results.extend(internal)
+        
+        # Phase 2: Client research (if authorized)
+        if "client" in sources:
+            if not self._has_client_access():
+                raise PermissionError("No client access for this project")
+            
+            client_results = self._search_client_research(query)
+            results.extend(client_results)
+        
+        # Phase 3: External sources (web search, etc.)
+        if "external" in sources:
+            external = self._search_external(query, depth)
+            results.extend(external)
+        
+        # Phase 4: Synthesize
+        report = self._synthesize(results, query)
+        
+        # Phase 5: Log for compliance
+        self._log_research(query, sources, report)
+        
+        return report
+    
+    def _search_client_research(self, query: str):
+        """Federated query to client research APIs."""
+        client_id = self.project.get("client_id")
+        
+        connector = ClientResearchConnector(client_id)
+        return connector.query(
+            query=query,
+            access_token=self._get_client_token(),
+            project_id=self.project["project_id"]
+        )
+```
+
+---
+
+## 12. Migration Path (Layer 1 → 2 → 3)
+
+### Phase 1: Start with Layer 1 (NOW)
+
+```bash
+# Create static knowledge bases
+mkdir -p knowledge_department/domain_knowledge/industry_patterns
+touch knowledge_department/domain_knowledge/industry_patterns/booking_systems.yaml
+
+# Populate with current knowledge from PROJECT_TEMPLATES.yaml
+# Agents use manual prompts to access
+
+# Works: In browser, no dependencies
+```
+
+### Phase 2: Add Layer 2 Tools (NEXT)
+
+```bash
+# Add Python tools for Claude Code
+touch knowledge_department/research_division/tools/knowledge_query.py
+
+# Implement simple semantic search
+# Agents can now query automatically
+
+# Works: With Claude Code, still no external APIs
+```
+
+### Phase 3: Add Layer 3 Services (LATER)
+
+```bash
+# Add runtime services
+touch knowledge_department/research_division/services/research_engine.py
+
+# Implement federated connectors
+# Implement vector search
+
+# Works: Full featured, requires backend
+```
+
+---
+
+## 13. Key Design Decisions
+
+### Decision 1: Separate from Agency OS
+
+**Why?** 
+- Different lifecycle (knowledge persists)
+- Different access patterns (read-heavy)
+- Can operate independently
+- Reusable across multiple agencies
+
+### Decision 2: YAML over Database (Layer 1)
+
+**Why?**
+- Works in browser (no backend)
+- Human-readable and editable
+- Git-trackable
+- Easy to deploy
+- Upgrade path to DB exists (Layer 3)
+
+### Decision 3: Three Layers, Not One
+
+**Why?**
+- Graceful degradation is core value
+- Start simple, add complexity as needed
+- Each layer is fully functional
+- Clear upgrade path
+
+### Decision 4: No External APIs in Layer 2
+
+**Why?**
+- Keep Claude Code mode simple
+- Avoid rate limits / auth complexity
+- External research = Layer 3 only
+- Clear separation of concerns
+
+---
+
+## 14. Success Metrics
+
+| Metric | Layer 1 | Layer 2 | Layer 3 |
+|--------|---------|---------|---------|
+| **Agent query time** | ~60s (manual) | ~5s (automated) | ~10s (multi-source) |
+| **Knowledge coverage** | Static only | Static + graph | All sources |
+| **Setup complexity** | Zero (files) | Low (tools) | Medium (services) |
+| **Operational cost** | $0 | $0 | Variable (APIs) |
+| **Query accuracy** | 70% | 85% | 95% |
+
+---
+
+## 15. Open Questions (To Be Resolved)
+
+1. **Client Research Connectors**
+   - What API standard? REST? GraphQL?
+   - Authentication method? OAuth? API keys?
+   - Data format? JSON? Protobuf?
+
+2. **Knowledge Graph Scale**
+   - At what point migrate YAML → Vector DB?
+   - Which vector DB? Qdrant? Pinecone? Weaviate?
+   - Embedding model? OpenAI? Local?
+
+3. **Confidentiality Enforcement**
+   - How to prevent accidental leaks?
+   - Audit log format?
+   - Compliance reporting?
+
+4. **Cross-Project Learning**
+   - How to anonymize client data?
+   - Opt-in or opt-out?
+   - Privacy safeguards?
+
+---
+
+## 16. Integration Points
+
+```yaml
+# Interfaces that other GADs will use
+
+knowledge_department_interfaces:
+  
+  query_interface:
+    layer1: "Manual prompts"
+    layer2: "knowledge_query() tool"
+    layer3: "ResearchEngine API"
+    
+  access_control:
+    enforced_by: "GAD-007 STEWARD"
+    permission_source: "project_manifest.json"
+    
+  knowledge_graph:
+    used_by: "GAD-008 Integration Matrix"
+    enables: "Semantic search across all systems"
+    
+  receipts:
+    logs_to: "GAD-005 Receipt system"
+    audits: "All confidential access"
+```
+
+---
+
+## 17. Summary
+
+The Knowledge Department is:
+
+1. **Separate Entity** - Not part of Agency OS, provides services to it
+2. **Three Layers** - Graceful degradation from browser to full runtime
+3. **Access Controlled** - Public, internal, confidential tiers
+4. **Federated** - Can access client research (Layer 3)
+5. **Graph-Based** - Semantic knowledge graph for better queries
+6. **Privacy-First** - Confidentiality and audit built-in
+
+**Next Steps:**
+1. Implement Layer 1 (static YAML)
+2. Define knowledge schemas
+3. Populate with existing knowledge
+4. Test with agents in prompt mode
+
+**Full Implementation:** See future detailed GAD-006 spec.
+
+---
+
+**END OF VISION DOCUMENT**
+
+*This is a high-level vision. Detailed implementation specs will follow in phase 2.*

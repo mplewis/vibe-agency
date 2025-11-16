@@ -1,0 +1,971 @@
+# GAD-008: Integration Matrix & Graceful Degradation (VISION)
+
+**STATUS: VISION DRAFT**  
+**TYPE: High-Level Architecture**  
+**DETAIL LEVEL: 30% (System-wide view, not detailed implementation)**
+
+---
+
+## 1. Executive Summary
+
+**Problem:** We have multiple systems (Agency OS, Knowledge Department, STEWARD) that each work at 3 different layers. How do they interact? How do we ensure graceful degradation?
+
+**Solution:** The **Integration Matrix** - a comprehensive map of:
+- Component interactions
+- Layer compatibility
+- Degradation paths
+- Communication protocols
+- Semantic knowledge graph (binds everything together)
+
+**Key Principle:** Every component knows how to degrade gracefully. No component requires a higher layer to function.
+
+---
+
+## 2. The Three Dimensions
+
+```
+DIMENSION 1: LAYERS (Deployment)
+├── Layer 1: Prompt-only (Browser)
+├── Layer 2: Tool-based (Claude Code)
+└── Layer 3: Runtime (Full APIs)
+
+DIMENSION 2: SYSTEMS (Horizontal)
+├── Agency OS (Project work)
+├── Knowledge Department (Knowledge services)
+└── STEWARD (Governance)
+
+DIMENSION 3: COMPONENTS (Vertical)
+├── Intelligent (Agents, Research Engine)
+├── Semi-Intelligent (Orchestrator, Validators)
+└── Mechanical (YAML, JSON, Manifests)
+```
+
+---
+
+## 3. The Integration Matrix
+
+### 3.1 Component Compatibility Matrix
+
+| Component | Layer 1 | Layer 2 | Layer 3 | Type | System |
+|-----------|---------|---------|---------|------|--------|
+| **VIBE_ALIGNER** | ✅ Prompt | ✅ Tools | ✅ API | Intelligent | Agency OS |
+| **GENESIS_BLUEPRINT** | ✅ Prompt | ✅ Tools | ✅ API | Intelligent | Agency OS |
+| **Core Orchestrator** | ❌ N/A | ✅ Delegated | ✅ Autonomous | Semi-Intelligent | Agency OS |
+| **Knowledge Query** | ✅ Manual | ✅ Tool | ✅ API | Semi-Intelligent | Knowledge Dept |
+| **Research Engine** | ❌ N/A | ⚠️ Limited | ✅ Full | Intelligent | Knowledge Dept |
+| **STEWARD** | ✅ Guidance | ✅ Validation | ✅ Enforcement | Hybrid | Governance |
+| **Receipt Manager** | ❌ N/A | ✅ Tool | ✅ Service | Semi-Intelligent | GAD-005 |
+| **Integrity Checker** | ⚠️ Manual | ✅ Tool | ✅ Service | Semi-Intelligent | GAD-005 |
+| **Mod Registry** | ❌ N/A | ✅ Tool | ✅ Service | Semi-Intelligent | STEWARD |
+| **Knowledge Graph** | ✅ YAML | ✅ Python | ✅ Vector DB | Mechanical | Knowledge Dept |
+
+**Legend:**
+- ✅ Fully functional
+- ⚠️ Limited functionality
+- ❌ Not applicable / doesn't work
+
+---
+
+### 3.2 Cross-System Interactions
+
+```yaml
+# How systems talk to each other
+
+agency_os_to_knowledge_dept:
+  layer1:
+    method: "prompt"
+    example: "Agent prompts user to check YAML file"
+  
+  layer2:
+    method: "tool_call"
+    example: "knowledge_query('booking systems')"
+  
+  layer3:
+    method: "api_call"
+    example: "ResearchEngine.research(query, sources)"
+
+agency_os_to_steward:
+  layer1:
+    method: "prompt_consultation"
+    example: "Agent asks STEWARD: 'Can I access client_a knowledge?'"
+  
+  layer2:
+    method: "tool_validation"
+    example: "steward.validate_operation('confidential_access', context)"
+  
+  layer3:
+    method: "runtime_enforcement"
+    example: "GovernanceEngine.enforce_policy('access_control')"
+
+knowledge_dept_to_steward:
+  layer1:
+    method: "policy_awareness"
+    example: "Knowledge base includes access rules in comments"
+  
+  layer2:
+    method: "access_check"
+    example: "Before query, check with STEWARD"
+  
+  layer3:
+    method: "audit_logging"
+    example: "All confidential access logged to STEWARD"
+```
+
+---
+
+## 4. Graceful Degradation Paths
+
+### Path 1: Agency OS Degradation
+
+```yaml
+# VIBE_ALIGNER degradation example
+
+layer3_mode:
+  - Use ResearchEngine for deep knowledge
+  - Access client research APIs
+  - Full semantic search
+  - Automated synthesis
+  
+  ↓ degrade to
+  
+layer2_mode:
+  - Use knowledge_query tool
+  - Local YAML search only
+  - Basic pattern matching
+  - Manual synthesis
+  
+  ↓ degrade to
+  
+layer1_mode:
+  - Prompt user to check files
+  - User copies/pastes content
+  - Agent processes manually
+  - User validates results
+
+# CRITICAL: Each layer is COMPLETE
+# Not "broken Layer 3" - it's "fully functional Layer 1"
+```
+
+### Path 2: Knowledge Department Degradation
+
+```yaml
+# Knowledge query degradation
+
+layer3_mode:
+  query: "Best practices for fintech PCI compliance"
+  process:
+    - Search internal knowledge base
+    - Query client_a research API
+    - Web search for latest standards
+    - Synthesize all sources
+    - Return comprehensive report
+  
+  ↓ degrade to
+  
+layer2_mode:
+  query: "Best practices for fintech PCI compliance"
+  process:
+    - Search local YAML files
+    - Use knowledge graph for related concepts
+    - Return file snippets
+    - No external sources
+  
+  ↓ degrade to
+  
+layer1_mode:
+  query: "Best practices for fintech PCI compliance"
+  process:
+    - Prompt: "Check knowledge_department/domain_knowledge/
+              industry_patterns/fintech.yaml"
+    - User provides content
+    - Agent processes manually
+```
+
+### Path 3: STEWARD Degradation
+
+```yaml
+# Governance enforcement degradation
+
+layer3_mode:
+  operation: "Agent wants to access confidential knowledge"
+  process:
+    - GovernanceEngine.validate_operation()
+    - Check project_id in database
+    - Verify API auth token
+    - Log to audit trail
+    - Block if unauthorized
+  
+  ↓ degrade to
+  
+layer2_mode:
+  operation: "Agent wants to access confidential knowledge"
+  process:
+    - steward_validate_access tool
+    - Read project_manifest.json
+    - Compare project_id fields
+    - Return validation result
+    - Agent follows result
+  
+  ↓ degrade to
+  
+layer1_mode:
+  operation: "Agent wants to access confidential knowledge"
+  process:
+    - Agent asks STEWARD in prompt
+    - STEWARD explains policy
+    - Agent checks project_id manually
+    - Agent decides based on guidance
+    - User validates decision
+```
+
+---
+
+## 5. The Semantic Knowledge Graph (The Glue)
+
+### 5.1 What It Is
+
+```yaml
+# The knowledge graph connects everything
+
+conceptGraph:
+  
+  # Projects link to patterns
+  booking_system:
+    type: "project_type"
+    links_to:
+      patterns: ["reservation_management", "payment_processing"]
+      tech_stacks: ["next_fullstack", "django_backend"]
+      agents: ["VIBE_ALIGNER", "GENESIS_BLUEPRINT"]
+      knowledge_files: ["booking_systems.yaml", "calendar_patterns.yaml"]
+  
+  # Patterns link to rules
+  payment_processing:
+    type: "domain_pattern"
+    links_to:
+      governance_rules: ["pci_compliance", "transaction_logging"]
+      knowledge_files: ["payment_patterns.yaml"]
+      client_specific: ["client_a/payment_rules.yaml"]
+  
+  # Agents link to knowledge
+  VIBE_ALIGNER:
+    type: "agent"
+    links_to:
+      knowledge_needs: ["project_templates", "tech_stacks", "feasibility_rules"]
+      governance_rules: ["access_control", "receipt_generation"]
+      tools: ["knowledge_query", "pattern_match"]
+```
+
+### 5.2 How It Works Across Layers
+
+```python
+# Layer 1: YAML-based graph
+graph = yaml.load('knowledge_graph.yaml')
+related = graph['booking_system']['links_to']['patterns']
+# Returns: ["reservation_management", "payment_processing"]
+
+# Layer 2: Python graph traversal
+from knowledge_graph import KnowledgeGraph
+graph = KnowledgeGraph()
+related = graph.expand_concept('booking_system', depth=2)
+# Returns: All concepts within 2 hops
+
+# Layer 3: Vector DB semantic search
+from knowledge_graph import VectorKnowledgeGraph
+graph = VectorKnowledgeGraph()
+similar = graph.semantic_search('booking system', top_k=10)
+# Returns: Semantically similar concepts even if not linked
+```
+
+### 5.3 Graph Enables Better Queries
+
+```yaml
+# Without graph:
+query: "booking systems"
+results:
+  - booking_systems.yaml
+
+# With graph (Layer 2+):
+query: "booking systems"
+expanded:
+  - booking_systems.yaml
+  - reservation_management.yaml  # Linked concept
+  - calendar_patterns.yaml       # Linked concept
+  - payment_processing.yaml      # Linked via booking
+  - stripe_integration.yaml      # Linked via payment
+
+# Result: Much better coverage!
+```
+
+---
+
+## 6. Communication Protocols
+
+### Protocol 1: Agent-to-Knowledge
+
+```yaml
+# Standard protocol for knowledge queries
+
+layer1_protocol:
+  request:
+    agent: "VIBE_ALIGNER"
+    action: "query_knowledge"
+    query: "booking system patterns"
+  
+  process:
+    1. Agent prompts user
+    2. User checks file
+    3. User pastes content
+    4. Agent processes
+  
+  response:
+    type: "manual"
+    content: "[pasted YAML content]"
+
+layer2_protocol:
+  request:
+    agent: "VIBE_ALIGNER"
+    action: "knowledge_query"
+    params:
+      query: "booking system patterns"
+      scope: "public"
+  
+  process:
+    1. Tool searches YAML files
+    2. Tool expands via graph
+    3. Tool returns matches
+  
+  response:
+    type: "structured"
+    results: [
+      {file: "booking_systems.yaml", snippet: "..."},
+      {file: "reservation_patterns.yaml", snippet: "..."}
+    ]
+
+layer3_protocol:
+  request:
+    agent: "VIBE_ALIGNER"
+    action: "research"
+    params:
+      query: "booking system patterns"
+      sources: ["internal", "client", "external"]
+      depth: 2
+  
+  process:
+    1. ResearchEngine.research()
+    2. Multi-source aggregation
+    3. Synthesis
+  
+  response:
+    type: "comprehensive_report"
+    report: {
+      summary: "...",
+      sources: [...],
+      recommendations: [...]
+    }
+```
+
+### Protocol 2: Agent-to-STEWARD
+
+```yaml
+# Standard protocol for governance queries
+
+layer1_protocol:
+  request:
+    agent: "VIBE_ALIGNER"
+    question: "Can I access client_a knowledge?"
+  
+  steward_response:
+    type: "guidance"
+    content: |
+      Let me check governance rules...
+      
+      Your current context:
+      - Project: project_123 (client_b)
+      - Requested: client_a knowledge
+      
+      Decision: ❌ Not allowed
+      Reason: Access Control Policy requires project_id match
+      
+      Alternative: Use public industry patterns instead
+
+layer2_protocol:
+  request:
+    agent: "VIBE_ALIGNER"
+    tool: "steward_validate_access"
+    params:
+      resource: "client_a/domain_knowledge"
+      operation: "read"
+      context: {project_id: "project_123"}
+  
+  steward_response:
+    type: "validation_result"
+    result: {
+      allowed: false,
+      reason: "project_id mismatch",
+      required_project: "client_a_project",
+      current_project: "project_123"
+    }
+
+layer3_protocol:
+  request:
+    agent: "VIBE_ALIGNER"
+    api: "POST /steward/validate"
+    body: {
+      operation: "confidential_access",
+      resource: "client_a/domain_knowledge",
+      context: {...}
+    }
+  
+  steward_response:
+    type: "enforcement_decision"
+    status: 403
+    body: {
+      allowed: false,
+      policy_violated: "access_control",
+      audit_logged: true,
+      guidance: "..."
+    }
+```
+
+---
+
+## 7. Layer Detection & Activation
+
+```python
+# How the system determines which layer it's running in
+
+class LayerDetector:
+    """Detect current execution layer."""
+    
+    def detect_layer(self) -> int:
+        """
+        Detect which layer we're currently in.
+        
+        Returns:
+            1: Prompt-only (browser)
+            2: Tool-based (Claude Code)
+            3: Runtime (full APIs)
+        """
+        
+        # Check for runtime services
+        if self._has_runtime_services():
+            return 3
+        
+        # Check for tool execution capability
+        if self._has_tool_execution():
+            return 2
+        
+        # Default: prompt-only
+        return 1
+    
+    def _has_runtime_services(self) -> bool:
+        """Check if runtime services are available."""
+        try:
+            # Try to connect to a known service
+            response = requests.get('http://localhost:8000/health', timeout=1)
+            return response.status_code == 200
+        except:
+            return False
+    
+    def _has_tool_execution(self) -> bool:
+        """Check if tools can be executed."""
+        # In Claude Code environment, tools can be executed
+        # In browser, they cannot
+        return hasattr(__builtins__, 'execute_tool')
+
+# Components activate based on detected layer
+class Component:
+    def __init__(self):
+        self.layer = LayerDetector().detect_layer()
+        self.activate_for_layer(self.layer)
+    
+    def activate_for_layer(self, layer: int):
+        if layer == 1:
+            self.mode = "prompt"
+            self.capabilities = ["guidance", "manual_operations"]
+        elif layer == 2:
+            self.mode = "tool"
+            self.capabilities = ["automated_queries", "validation", "file_access"]
+        elif layer == 3:
+            self.mode = "runtime"
+            self.capabilities = ["api_calls", "services", "enforcement"]
+```
+
+---
+
+## 8. Degradation Decision Tree
+
+```yaml
+# When to use which layer
+
+decision_tree:
+  
+  user_environment:
+    browser_only:
+      layer: 1
+      reason: "No backend available"
+      components: "Prompt-based only"
+    
+    claude_code_available:
+      layer: 2
+      reason: "Tools can execute"
+      components: "Prompt + Tools"
+    
+    full_runtime_available:
+      layer: 3
+      reason: "Services running"
+      components: "All features"
+  
+  feature_requirements:
+    knowledge_query:
+      layer1: "Manual file check"
+      layer2: "Automated search"
+      layer3: "Multi-source research"
+    
+    governance:
+      layer1: "Guidance only"
+      layer2: "Tool validation"
+      layer3: "Runtime enforcement"
+    
+    receipts:
+      layer1: "Not available"
+      layer2: "Tool-generated"
+      layer3: "Service-managed"
+  
+  failure_handling:
+    layer3_service_down:
+      degrade_to: "layer2"
+      notify: "User warned about reduced functionality"
+    
+    layer2_tools_fail:
+      degrade_to: "layer1"
+      notify: "Switch to manual operations"
+    
+    layer1_files_missing:
+      action: "Cannot degrade further - halt"
+      notify: "Critical error - restore files"
+```
+
+---
+
+## 9. The Complete Interaction Map
+
+```
+┌─────────────────────────────────────────────────────┐
+│ LAYER 1: PROMPT-ONLY (Browser)                     │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│ ┌─────────────┐     ┌──────────────┐     ┌───────┐│
+│ │ VIBE_ALIGNER│────▶│  STEWARD     │────▶│ User  ││
+│ │   (prompt)  │     │  (guidance)  │     │       ││
+│ └─────────────┘     └──────────────┘     └───────┘│
+│        │                                      │    │
+│        ▼                                      ▼    │
+│ ┌─────────────────────────────────────────────┐   │
+│ │ Knowledge Files (user reads/pastes)        │   │
+│ │ • industry_patterns/*.yaml                 │   │
+│ │ • project_templates/*.yaml                 │   │
+│ └─────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────┘
+                         ↓ upgrade to
+┌─────────────────────────────────────────────────────┐
+│ LAYER 2: TOOL-BASED (Claude Code)                  │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│ ┌─────────────┐     ┌──────────────┐              │
+│ │ VIBE_ALIGNER│────▶│  STEWARD     │              │
+│ │   (tools)   │     │ (validation) │              │
+│ └─────────────┘     └──────────────┘              │
+│        │                    │                      │
+│        ▼                    ▼                      │
+│ ┌──────────────┐    ┌──────────────┐              │
+│ │ knowledge_   │    │ steward_     │              │
+│ │ query()      │    │ validate()   │              │
+│ └──────────────┘    └──────────────┘              │
+│        │                    │                      │
+│        ▼                    ▼                      │
+│ ┌─────────────────────────────────────────────┐   │
+│ │ Knowledge Graph (Python + YAML)            │   │
+│ │ Receipt Manager (Tools)                    │   │
+│ │ Integrity Checker (Tools)                  │   │
+│ └─────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────┘
+                         ↓ upgrade to
+┌─────────────────────────────────────────────────────┐
+│ LAYER 3: RUNTIME (Full APIs)                       │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│ ┌─────────────┐     ┌──────────────┐              │
+│ │ VIBE_ALIGNER│────▶│  STEWARD     │              │
+│ │    (API)    │     │(enforcement) │              │
+│ └─────────────┘     └──────────────┘              │
+│        │                    │                      │
+│        ▼                    ▼                      │
+│ ┌──────────────┐    ┌──────────────┐              │
+│ │ Research     │    │ Governance   │              │
+│ │ Engine API   │    │ Engine API   │              │
+│ └──────────────┘    └──────────────┘              │
+│        │                    │                      │
+│        ▼                    ▼                      │
+│ ┌─────────────────────────────────────────────┐   │
+│ │ Vector DB (Semantic Search)                │   │
+│ │ Client Research APIs (Federated)           │   │
+│ │ Web Search APIs                            │   │
+│ │ Audit Logging Service                      │   │
+│ │ CI/CD Enforcement                          │   │
+│ └─────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────┘
+```
+
+---
+
+## 10. Integration Test Matrix
+
+```yaml
+# Tests that verify cross-system integration
+
+integration_tests:
+  
+  agent_to_knowledge:
+    test_name: "VIBE_ALIGNER queries booking patterns"
+    layers: [1, 2, 3]
+    
+    layer1_test:
+      - Agent prompts user to check file
+      - User provides content
+      - Agent processes successfully
+    
+    layer2_test:
+      - Agent calls knowledge_query()
+      - Tool returns relevant patterns
+      - Agent processes automatically
+    
+    layer3_test:
+      - Agent calls ResearchEngine
+      - Engine queries multiple sources
+      - Synthesized report returned
+  
+  agent_to_steward:
+    test_name: "Agent requests confidential access"
+    layers: [1, 2, 3]
+    
+    layer1_test:
+      - Agent asks STEWARD in prompt
+      - STEWARD provides guidance
+      - Agent follows guidance
+    
+    layer2_test:
+      - Agent calls steward_validate()
+      - Tool checks project_id
+      - Returns validation result
+    
+    layer3_test:
+      - Agent calls governance API
+      - API enforces policy
+      - Audit log created
+  
+  degradation_resilience:
+    test_name: "System degrades gracefully"
+    
+    scenario_1:
+      - Start in Layer 3
+      - Kill runtime services
+      - System detects failure
+      - Automatically degrades to Layer 2
+      - Agent continues work
+    
+    scenario_2:
+      - Start in Layer 2
+      - Tool execution fails
+      - System detects failure
+      - Automatically degrades to Layer 1
+      - Agent prompts user for manual help
+```
+
+---
+
+## 11. Configuration Management
+
+```yaml
+# config/integration_config.yaml
+
+integration:
+  
+  layer_detection:
+    auto_detect: true
+    fallback_layer: 1
+    upgrade_allowed: true
+    downgrade_allowed: true
+  
+  knowledge_integration:
+    layer1:
+      enabled: true
+      files_location: "knowledge_department/domain_knowledge"
+    
+    layer2:
+      enabled: true
+      tools: ["knowledge_query", "pattern_match", "semantic_search"]
+      graph_file: "knowledge_department/config/knowledge_graph.yaml"
+    
+    layer3:
+      enabled: true
+      services: ["research_engine", "vector_search", "federated_query"]
+      api_base_url: "http://localhost:8000/knowledge"
+  
+  steward_integration:
+    layer1:
+      enabled: true
+      personality_file: "steward/core/_steward_personality.md"
+    
+    layer2:
+      enabled: true
+      tools: ["steward_validate", "steward_decide"]
+      rules_location: "steward/governance"
+    
+    layer3:
+      enabled: true
+      services: ["governance_engine", "audit_logger"]
+      api_base_url: "http://localhost:8000/steward"
+  
+  degradation:
+    graceful: true
+    notify_user: true
+    log_degradation: true
+    preserve_state: true
+```
+
+---
+
+## 12. The Knowledge Graph Schema (Detailed)
+
+```yaml
+# knowledge_department/config/knowledge_graph.yaml
+
+# This graph binds EVERYTHING together
+
+graphStructure:
+  
+  nodes:
+    types:
+      - project_type       # booking_system, saas_app
+      - domain_concept     # payment_processing, auth
+      - tech_stack         # next_fullstack, django
+      - agent              # VIBE_ALIGNER, GENESIS_BLUEPRINT
+      - governance_rule    # access_control, integrity
+      - knowledge_file     # booking_systems.yaml
+      - tool               # knowledge_query, receipt_create
+  
+  edges:
+    types:
+      - requires           # project requires concept
+      - implements         # stack implements concept
+      - uses               # agent uses tool
+      - governed_by        # operation governed_by rule
+      - defined_in         # concept defined_in file
+      - links_to           # general relationship
+
+# Example graph:
+concepts:
+  
+  booking_system:
+    type: "project_type"
+    
+    requires:
+      - reservation_management
+      - availability_calendar
+      - payment_processing
+    
+    recommended_stacks:
+      - next_fullstack
+      - django_backend
+    
+    handled_by_agents:
+      - VIBE_ALIGNER      # Planning
+      - GENESIS_BLUEPRINT # Architecture
+    
+    knowledge_sources:
+      - domain_knowledge/industry_patterns/booking_systems.yaml
+      - domain_knowledge/tech_stacks/booking_stack.yaml
+    
+    governance_rules:
+      - access_control    # Who can query this
+      - receipt_generation # Must track work
+  
+  payment_processing:
+    type: "domain_concept"
+    
+    part_of_projects:
+      - booking_system
+      - saas_application
+      - marketplace
+    
+    requires_governance:
+      - pci_compliance
+      - transaction_logging
+      - confidentiality
+    
+    knowledge_sources:
+      - domain_knowledge/patterns/payment_patterns.yaml
+      - client_domains/client_a/payment_rules.yaml  # Confidential!
+    
+    tools_available:
+      - knowledge_query   # To find patterns
+      - steward_validate  # To check access
+  
+  VIBE_ALIGNER:
+    type: "agent"
+    
+    uses_knowledge:
+      - project_templates
+      - tech_stack_patterns
+      - feasibility_rules
+    
+    uses_tools:
+      - knowledge_query
+      - steward_validate
+      - receipt_create
+    
+    governed_by:
+      - access_control
+      - receipt_accountability
+    
+    works_on:
+      - all_project_types
+```
+
+### How Graph Queries Work
+
+```python
+# Example: "Find everything related to booking systems"
+
+from knowledge_graph import KnowledgeGraph
+
+graph = KnowledgeGraph()
+
+# Layer 1: Manual traversal
+booking = graph.get_node('booking_system')
+related_files = booking['knowledge_sources']
+# Returns: List of file paths to check
+
+# Layer 2: Automated expansion
+related = graph.expand('booking_system', depth=2, types=['domain_concept', 'tech_stack'])
+# Returns: {
+#   'concepts': ['reservation_management', 'payment_processing'],
+#   'stacks': ['next_fullstack', 'django_backend']
+# }
+
+# Layer 3: Semantic search
+similar = graph.semantic_search('booking system', top_k=10)
+# Returns: Semantically similar concepts using embeddings
+```
+
+---
+
+## 13. Deployment Strategies
+
+```yaml
+# How to deploy each layer
+
+deployment:
+  
+  layer1_browser_only:
+    hosting: "Static files (GitHub Pages, Netlify, etc.)"
+    requirements:
+      - YAML files
+      - Markdown docs
+      - No backend
+    cost: "$0"
+    setup_time: "5 minutes"
+    
+  layer2_claude_code:
+    hosting: "Local machine + Claude Code"
+    requirements:
+      - Python tools
+      - File system access
+      - Claude Code subscription
+    cost: "$20/month (Claude subscription)"
+    setup_time: "30 minutes"
+    
+  layer3_full_runtime:
+    hosting: "Cloud server (AWS, GCP, etc.)"
+    requirements:
+      - Backend services
+      - Vector DB
+      - External API keys
+    cost: "$50-200/month"
+    setup_time: "2-4 hours"
+```
+
+---
+
+## 14. Success Metrics
+
+```yaml
+integration_metrics:
+  
+  cross_system_queries:
+    - agent_to_knowledge_success_rate: ">95%"
+    - agent_to_steward_success_rate: ">98%"
+    - knowledge_to_steward_audit_rate: "100%"
+  
+  degradation_performance:
+    - layer3_to_layer2_degradation_time: "<5 seconds"
+    - layer2_to_layer1_degradation_time: "<2 seconds"
+    - state_preservation_success_rate: ">90%"
+  
+  knowledge_graph_effectiveness:
+    - query_expansion_improvement: ">40%"
+    - semantic_search_accuracy: ">85%"
+    - cross_concept_discovery: ">60%"
+```
+
+---
+
+## 15. Open Questions
+
+1. **State Preservation During Degradation**
+   - How much state can we preserve?
+   - What gets lost in Layer 3 → 2 transition?
+   - How to resume when upgrading back?
+
+2. **Cross-Layer Communication**
+   - Can Layer 3 service talk to Layer 2 agent?
+   - How to handle mixed-layer scenarios?
+   - Protocol negotiation?
+
+3. **Knowledge Graph Evolution**
+   - How does graph get updated?
+   - Auto-discovery of new concepts?
+   - Version management?
+
+4. **Performance Optimization**
+   - Caching strategies across layers?
+   - What to cache where?
+   - Cache invalidation?
+
+---
+
+## 16. Summary
+
+The Integration Matrix provides:
+
+1. **Complete Component Map** - Every component's layer compatibility
+2. **Degradation Paths** - How each component gracefully degrades
+3. **Communication Protocols** - Standard interfaces across systems
+4. **Knowledge Graph** - Semantic binding of all concepts
+5. **Test Matrix** - Verification of all integrations
+6. **Deployment Guide** - How to deploy each layer
+
+**Next Steps:**
+1. Implement Layer 1 integration (prompt-based)
+2. Build knowledge graph (YAML version)
+3. Test cross-system queries
+4. Verify degradation paths
+
+**Full Implementation:** See future detailed GAD-008 spec.
+
+---
+
+**END OF VISION DOCUMENT**
+
+*This is a high-level vision. Detailed implementation specs will follow in phase 2.*

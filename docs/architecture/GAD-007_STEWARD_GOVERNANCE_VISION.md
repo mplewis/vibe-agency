@@ -1,0 +1,854 @@
+# GAD-007: STEWARD Governance Architecture (VISION)
+
+**STATUS: VISION DRAFT**  
+**TYPE: High-Level Architecture**  
+**DETAIL LEVEL: 30% (Foundational clarity, not full implementation)**
+
+---
+
+## 1. Executive Summary
+
+**Problem:** The system needs governance that works:
+- In browser-only mode (no runtime)
+- With Claude Code (delegated execution)
+- With full runtime (APIs, services)
+- **AND maintains consistency across all modes**
+
+**Solution:** The **STEWARD** - a hybrid governance layer that operates both:
+- **Horizontally** (runtime monitoring, enforcement)
+- **Vertically** (prompt-based decision-making via Claude)
+
+**Key Insight:** Governance isn't just runtime enforcement - it's **architectural guidance** that works even when there's no running code.
+
+---
+
+## 2. The STEWARD Concept
+
+```
+STEWARD = System-wide Governance Entity
+
+Traditional Governance:
+  Runtime Enforcement → Blocks invalid operations
+  ❌ Doesn't work without runtime
+
+STEWARD Governance:
+  Prompt-Based Guidance → Agent knows the rules
+  Runtime Enforcement → System enforces the rules
+  ✅ Works at ALL layers
+```
+
+### The Metaphor
+
+```
+Think: Constitutional Law
+
+CONSTITUTION (Prompts):
+  "The system shall maintain integrity"
+  "Access shall be controlled by project scope"
+  "Receipts shall be required for commits"
+
+COURTS (Runtime):
+  Enforce the constitution when running
+  
+CITIZENS (Agents):
+  Follow the constitution even without courts
+  
+→ STEWARD is both the constitution AND the courts
+```
+
+---
+
+## 3. Hybrid Architecture
+
+### Vertical Governance (Prompt-Based)
+
+```markdown
+# _steward_prompt_core.md
+
+You are the STEWARD, the governance entity for vibe-agency.
+
+Your responsibilities:
+1. Ensure all agents follow architectural rules
+2. Validate operations against governance policies
+3. Make decisions when rules conflict
+4. Guide agents toward compliant behavior
+
+Governance Rules:
+- Layer 0: System integrity must be verified before boot
+- Layer 1: All work must go through Session Shell when possible
+- Layer 2: Context must be enriched from project_manifest.json
+- Layer 3: Commits must have watermarks (or receipts in strict mode)
+- Layer 4: PRs must pass CI/CD validation
+
+Access Control:
+- Public knowledge: Always accessible
+- Internal knowledge: Requires agent authorization
+- Confidential knowledge: Requires project_id match
+
+Decision Framework:
+When an agent asks "Can I do X?":
+1. Check current execution layer (1, 2, or 3)
+2. Check governance rules for that layer
+3. If allowed: Guide agent on correct procedure
+4. If blocked: Explain why and suggest alternative
+5. If uncertain: Escalate to human (prompt user)
+
+You operate even without runtime.
+Your guidance IS the governance in browser-only mode.
+```
+
+### Horizontal Governance (Runtime)
+
+```python
+# steward/runtime/governance_engine.py
+
+class GovernanceEngine:
+    """
+    Runtime enforcement of STEWARD rules.
+    Only active in Layer 2+ (with execution environment).
+    """
+    
+    def __init__(self, execution_layer: int):
+        self.layer = execution_layer
+        self.rules = self._load_governance_rules()
+        self.policies = self._load_policies()
+    
+    def validate_operation(
+        self, 
+        operation: str,
+        context: dict
+    ) -> ValidationResult:
+        """
+        Validate operation against governance rules.
+        """
+        
+        # 1. Get applicable rules for this layer
+        layer_rules = self.rules.get_for_layer(self.layer)
+        
+        # 2. Check each rule
+        violations = []
+        for rule in layer_rules:
+            if not rule.check(operation, context):
+                violations.append(rule)
+        
+        # 3. Return result
+        if violations:
+            return ValidationResult(
+                allowed=False,
+                violations=violations,
+                guidance=self._get_guidance(violations)
+            )
+        
+        return ValidationResult(allowed=True)
+    
+    def enforce_policy(self, policy_name: str, context: dict):
+        """
+        Enforce a specific governance policy.
+        """
+        policy = self.policies[policy_name]
+        
+        if not policy.check(context):
+            if policy.enforcement == "block":
+                raise PolicyViolationError(policy)
+            elif policy.enforcement == "warn":
+                log_warning(policy)
+            elif policy.enforcement == "audit":
+                log_audit(policy, context)
+```
+
+---
+
+## 4. Three-Layer Governance
+
+### Layer 1: Prompt-Only Governance
+
+```yaml
+# steward/governance/layer1_rules.yaml
+
+layer: 1
+mode: "prompt-based"
+enforcement: "guidance"
+
+rules:
+  - name: "integrity_awareness"
+    description: "Agent must be aware of system integrity status"
+    guidance: |
+      Before starting work, check:
+      .vibe/system_integrity_manifest.json
+      
+      If any checksums fail, STOP and report to user.
+    
+  - name: "context_loading"
+    description: "Agent must load context from manifest"
+    guidance: |
+      Always read project_manifest.json first.
+      It contains:
+      - Current project state
+      - System health status
+      - Next action to take
+    
+  - name: "knowledge_access"
+    description: "Agent must follow access control"
+    guidance: |
+      Public knowledge: Always accessible
+      Client knowledge: Only if project_id matches
+      
+      Before accessing client knowledge, verify:
+      1. You are working on that client's project
+      2. User has authorized access
+
+# No runtime enforcement - agent follows prompts
+```
+
+### Layer 2: Tool-Based Governance
+
+```yaml
+# steward/governance/layer2_rules.yaml
+
+layer: 2
+mode: "tool-enforced"
+enforcement: "validation"
+
+rules:
+  - name: "integrity_check"
+    description: "System integrity must be verified"
+    enforcement: "block"
+    tool: "verify_system_integrity"
+    triggers:
+      - "session_shell_boot"
+      - "before_commit"
+    
+  - name: "receipt_generation"
+    description: "Receipts must be created for all tasks"
+    enforcement: "warn"
+    tool: "create_receipt"
+    triggers:
+      - "task_start"
+      - "task_complete"
+    
+  - name: "access_validation"
+    description: "Validate access before confidential queries"
+    enforcement: "block"
+    tool: "validate_access"
+    triggers:
+      - "knowledge_query(scope=confidential)"
+      - "client_research_access"
+
+# Tools enforce rules automatically
+```
+
+### Layer 3: Runtime Governance
+
+```yaml
+# steward/governance/layer3_rules.yaml
+
+layer: 3
+mode: "runtime-enforced"
+enforcement: "strict"
+
+rules:
+  - name: "api_rate_limiting"
+    description: "Enforce rate limits on external APIs"
+    enforcement: "block"
+    limits:
+      client_research_api: "10 req/min"
+      web_search_api: "100 req/hour"
+    
+  - name: "confidentiality_logging"
+    description: "Audit all confidential access"
+    enforcement: "audit"
+    logs_to: ".vibe/audit/confidential_access.log"
+    
+  - name: "ci_cd_validation"
+    description: "Validate all PRs before merge"
+    enforcement: "block"
+    checks:
+      - "system_integrity"
+      - "receipt_validation"
+      - "watermark_analysis"
+      - "test_coverage"
+
+# Full runtime enforcement with APIs, databases, etc.
+```
+
+---
+
+## 5. STEWARD Decision Framework
+
+```python
+# steward/core/decision_engine.py
+
+class StewardDecisionEngine:
+    """
+    Makes governance decisions across all layers.
+    
+    Works even in prompt-only mode (Layer 1).
+    """
+    
+    def decide(
+        self,
+        question: str,
+        context: dict,
+        execution_layer: int
+    ) -> Decision:
+        """
+        Make a governance decision.
+        
+        Examples:
+          - "Can I access client A's knowledge?"
+          - "Should I create a receipt for this task?"
+          - "Is it safe to commit with failing tests?"
+        """
+        
+        # 1. Load rules for current layer
+        rules = self._load_rules(execution_layer)
+        
+        # 2. Parse question
+        operation = self._parse_operation(question)
+        
+        # 3. Check rules
+        applicable_rules = rules.find_applicable(operation)
+        
+        # 4. Evaluate
+        for rule in applicable_rules:
+            result = rule.evaluate(context)
+            
+            if result.decision == "block":
+                return Decision(
+                    allowed=False,
+                    reason=result.reason,
+                    guidance=rule.get_guidance(),
+                    alternative=rule.suggest_alternative(context)
+                )
+            
+            if result.decision == "warn":
+                return Decision(
+                    allowed=True,
+                    warnings=[result.warning],
+                    guidance=rule.get_guidance()
+                )
+        
+        # 5. Default: allow with guidance
+        return Decision(
+            allowed=True,
+            guidance=self._get_best_practice_guidance(operation)
+        )
+```
+
+---
+
+## 6. Integration with Mod Registry
+
+```yaml
+# steward/integrations/mod_registry.yaml
+
+# The Mod Registry tracks installed modifications/extensions
+# STEWARD governs which mods can be installed/activated
+
+modGovernance:
+  
+  approval_required:
+    - description: "Mods must be approved before installation"
+    - approval_levels:
+        - public_mods: "auto_approve"
+        - internal_mods: "steward_review"
+        - client_mods: "requires_project_match"
+  
+  compatibility_check:
+    - description: "STEWARD verifies mod compatibility"
+    - checks:
+        - layer_compatibility: "Mod must support current layer"
+        - dependency_satisfaction: "All mod dependencies must be met"
+        - security_baseline: "Mod must pass security scan"
+  
+  activation_rules:
+    - description: "When mods can be activated"
+    - rules:
+        - during_session: "Only if session_shell active"
+        - during_task: "Only if receipt created"
+        - global: "Only if governance approves"
+
+modRegistry:
+  location: ".vibe/mods/registry.json"
+  
+  structure:
+    installed_mods:
+      - mod_id: "string"
+        name: "string"
+        version: "string"
+        approved_by: "steward | user | auto"
+        activated: "boolean"
+        layer_support: [1, 2, 3]
+        governance_approved: "boolean"
+```
+
+### Example: Mod Installation Flow
+
+```python
+# User wants to install a mod
+
+# 1. Mod declaration
+mod = {
+    "id": "semantic_search_v2",
+    "name": "Advanced Semantic Search",
+    "version": "2.0.0",
+    "requires": {
+        "layer": 3,
+        "dependencies": ["vector_db", "embeddings_api"]
+    }
+}
+
+# 2. STEWARD governance check
+steward = StewardGovernanceEngine()
+approval = steward.approve_mod(mod)
+
+if not approval.allowed:
+    print(f"❌ Mod rejected: {approval.reason}")
+    # e.g., "Requires Layer 3, but currently in Layer 2"
+    # Guidance: "Upgrade to Layer 3 or choose Layer 2 compatible mod"
+
+# 3. If approved, install to mod registry
+mod_registry.install(mod)
+
+# 4. Activate only when governance permits
+if steward.can_activate_mod(mod, current_context):
+    mod_registry.activate(mod.id)
+```
+
+---
+
+## 7. Governance Policies
+
+```yaml
+# steward/policies/core_policies.yaml
+
+policies:
+  
+  system_integrity:
+    name: "System Integrity Policy"
+    description: "System regulators must be trusted"
+    enforcement: "block"
+    applies_to: "all_layers"
+    rules:
+      - "Layer 0 verification must pass before boot"
+      - "Modified regulatory scripts block boot"
+      - "Integrity manifest must match code"
+    
+  access_control:
+    name: "Access Control Policy"
+    description: "Knowledge access follows principle of least privilege"
+    enforcement: "block"
+    applies_to: [2, 3]
+    rules:
+      - "Public knowledge: Always accessible"
+      - "Internal knowledge: Requires agent authorization"
+      - "Confidential knowledge: Requires project_id match"
+      - "Federated access: Requires Layer 3 + authentication"
+    
+  receipt_accountability:
+    name: "Receipt Accountability Policy"
+    description: "All work must be traceable"
+    enforcement: "warn"
+    applies_to: [2, 3]
+    rules:
+      - "Receipts created at task start"
+      - "Receipts finalized at task complete"
+      - "Receipts include system health snapshot"
+      - "Commits reference receipt IDs"
+    
+  graceful_degradation:
+    name: "Graceful Degradation Policy"
+    description: "System must function at all layers"
+    enforcement: "guidance"
+    applies_to: "all_layers"
+    rules:
+      - "Layer 1: Prompt-based operations work"
+      - "Layer 2: Tool-based operations enhance Layer 1"
+      - "Layer 3: Runtime operations enhance Layer 2"
+      - "No layer depends on higher layer"
+```
+
+---
+
+## 8. STEWARD as Personality (Prompt-Based)
+
+```markdown
+# steward/_steward_personality.md
+
+You are STEWARD, the governance consciousness of vibe-agency.
+
+## Your Nature
+
+You are not a police officer. You are a constitutional advisor.
+
+Your goal is not to block agents, but to guide them toward:
+- Architecturally sound decisions
+- Secure operations
+- Compliant behavior
+- Best practices
+
+## Your Tone
+
+- Firm but helpful
+- Clear and specific
+- Always offer alternatives
+- Explain the "why" behind rules
+
+## Example Interactions
+
+❌ Bad:
+Agent: "Can I access client A's knowledge?"
+STEWARD: "No."
+
+✅ Good:
+Agent: "Can I access client A's knowledge?"
+STEWARD: "Let me check the governance rules.
+
+Current context:
+- You're working on project_123 (Client B)
+- Client A knowledge requires project match
+
+Decision: ❌ Not allowed
+
+Why: Access Control Policy requires project_id to match.
+You're on Client B's project, requesting Client A's knowledge.
+
+Alternative: 
+- If you need similar patterns, check public industry knowledge
+- If legitimately need Client A data, switch to their project first
+
+Guidance: Always verify project_id before confidential access."
+
+## Your Capabilities
+
+In Layer 1 (Prompt-only):
+- Provide guidance based on rules
+- Explain policies
+- Suggest compliant alternatives
+- **Cannot enforce** - rely on agent compliance
+
+In Layer 2 (Tools):
+- Same as Layer 1
+- Can use tools to validate
+- Can check actual file permissions
+- **Can prevent** via tool errors
+
+In Layer 3 (Runtime):
+- Same as Layer 2
+- Can enforce via APIs
+- Can log to audit trail
+- Can trigger alerts
+- **Can block** at runtime
+
+## Your Limitations
+
+You cannot:
+- Change governance rules (only explain/enforce them)
+- Override security policies
+- Bypass access control
+- Approve what policies forbid
+
+You can:
+- Interpret rules in context
+- Suggest workarounds within rules
+- Escalate to human when uncertain
+- Learn from precedents (within session)
+```
+
+---
+
+## 9. STEWARD in Session Flow
+
+### Layer 1 (Browser-Only)
+
+```
+User starts project in browser:
+
+1. User: "I want to plan a booking system"
+
+2. STEWARD (as prompt): 
+   "Before we begin, please verify system integrity:
+   - Check .vibe/system_integrity_manifest.json exists
+   - Verify all checksums match (if you can)
+   
+   Then load context:
+   - Read project_manifest.json
+   
+   Ready to proceed?"
+
+3. Agent (VIBE_ALIGNER) loads knowledge:
+   Agent: "I need booking system patterns"
+   STEWARD: "Accessing public knowledge is allowed.
+   Check: knowledge_department/domain_knowledge/
+   industry_patterns/booking_systems.yaml"
+
+4. Agent works, STEWARD guides at each step
+```
+
+### Layer 2 (Claude Code)
+
+```
+User starts via vibe-cli:
+
+1. $ vibe-cli start
+
+2. STEWARD governance checks:
+   [Layer 0] Verifying system integrity...
+   [STEWARD] Integrity verification passed ✅
+   
+   [Layer 1] Loading Session Shell...
+   [STEWARD] Session Shell authorized ✅
+   
+   [Layer 2] Creating receipt...
+   [STEWARD] Receipt created: task_042.json ✅
+
+3. Agent uses tools, STEWARD validates:
+   Agent: knowledge_query("booking systems", scope="public")
+   STEWARD: ✅ Public access allowed
+   
+   Agent: knowledge_query("client_a rules", scope="confidential")
+   STEWARD: ⚠️ Checking authorization...
+   STEWARD: ✅ Project ID matches, access granted
+
+4. Agent commits, STEWARD watermarks:
+   git commit -m "..."
+   [STEWARD] Pre-commit governance check...
+   [STEWARD] System healthy, watermark added ✅
+```
+
+### Layer 3 (Full Runtime)
+
+```
+Full CI/CD enforcement:
+
+1. Agent works normally (Layer 2 guidance)
+
+2. Agent pushes to PR:
+   git push origin feature/booking
+
+3. STEWARD CI/CD validation:
+   [STEWARD] Validating PR...
+   [STEWARD] System integrity: ✅ Verified
+   [STEWARD] Receipts: ✅ All commits have receipts
+   [STEWARD] Watermarks: ✅ All present
+   [STEWARD] Access logs: ✅ No violations
+   
+   [STEWARD] ✅ PR approved for merge
+
+4. If violations:
+   [STEWARD] ❌ PR blocked
+   Violations:
+   - Commit abc123 has no receipt
+   - Commit def456 started with failing tests
+   
+   Guidance:
+   - Add missing receipt via: vibe-cli receipt create
+   - Fix test failures before committing
+```
+
+---
+
+## 10. Directory Structure
+
+```
+steward/
+│
+├── core/
+│   ├── _steward_prompt_core.md      # Layer 1: Personality
+│   ├── _steward_personality.md      # Layer 1: Tone & behavior
+│   ├── decision_engine.py           # Layer 2+: Decision logic
+│   └── governance_engine.py         # Layer 3: Runtime enforcement
+│
+├── governance/
+│   ├── layer1_rules.yaml            # Prompt-based guidance
+│   ├── layer2_rules.yaml            # Tool-based validation
+│   └── layer3_rules.yaml            # Runtime enforcement
+│
+├── policies/
+│   ├── core_policies.yaml           # System-wide policies
+│   ├── access_control.yaml          # Knowledge access
+│   ├── integrity_policy.yaml        # Layer 0 rules
+│   └── accountability.yaml          # Receipt/audit rules
+│
+├── integrations/
+│   ├── mod_registry.yaml            # Mod governance
+│   ├── agency_os_hooks.py           # Agency OS integration
+│   └── knowledge_dept_hooks.py      # Knowledge Dept integration
+│
+├── runtime/                          # Layer 3 only
+│   ├── enforcement_engine.py
+│   ├── audit_logger.py
+│   └── alert_system.py
+│
+└── config/
+    ├── layer1_config.yaml
+    ├── layer2_config.yaml
+    └── layer3_config.yaml
+```
+
+---
+
+## 11. Integration Points
+
+```yaml
+# How STEWARD integrates with other GADs
+
+integrations:
+  
+  GAD-005:
+    layer0_integrity:
+      - STEWARD enforces integrity verification
+      - Blocks boot if integrity fails
+    
+    receipt_validation:
+      - STEWARD validates receipt presence
+      - Enforces accountability policy
+    
+  GAD-006:
+    access_control:
+      - STEWARD governs knowledge access
+      - Enforces confidentiality rules
+    
+    federated_queries:
+      - STEWARD approves client research access
+      - Logs all confidential queries
+    
+  GAD-008:
+    degradation_orchestration:
+      - STEWARD determines current layer
+      - Activates appropriate governance mode
+    
+    component_activation:
+      - STEWARD approves component usage
+      - Validates layer compatibility
+```
+
+---
+
+## 12. Governance Metrics
+
+```yaml
+# Tracked by STEWARD for reporting
+
+metrics:
+  
+  compliance:
+    - policy_violations_total: 0
+    - policy_warnings_total: 5
+    - guidance_requests_total: 234
+    - decisions_made_total: 567
+  
+  access_control:
+    - public_access_requests: 1000
+    - internal_access_requests: 50
+    - confidential_access_requests: 10
+    - denied_access_requests: 2
+  
+  integrity:
+    - integrity_checks_total: 100
+    - integrity_failures_total: 0
+    - system_boots_blocked: 0
+  
+  receipts:
+    - receipts_created: 45
+    - commits_with_receipts: 45
+    - commits_without_receipts: 0
+```
+
+---
+
+## 13. Key Design Decisions
+
+### Decision 1: Hybrid Governance (Prompt + Runtime)
+
+**Why?**
+- Browser-only mode needs governance too
+- Can't rely on runtime enforcement alone
+- Prompt-based guidance works everywhere
+- Runtime adds strictness where available
+
+### Decision 2: STEWARD as Personality
+
+**Why?**
+- Agents interact with STEWARD like a colleague
+- Natural language policy explanation
+- Can reason about edge cases
+- Provides helpful guidance, not just blocks
+
+### Decision 3: Graceful Degradation of Enforcement
+
+**Why?**
+- Layer 1: Guidance only (agent follows rules)
+- Layer 2: Tool validation (some enforcement)
+- Layer 3: Runtime blocking (full enforcement)
+- Each layer functional on its own
+
+### Decision 4: Mod Registry Governance
+
+**Why?**
+- Extensions need approval
+- Compatibility must be verified
+- Security baseline required
+- STEWARD is natural approval authority
+
+---
+
+## 14. Success Criteria
+
+| Metric | Layer 1 | Layer 2 | Layer 3 |
+|--------|---------|---------|---------|
+| **Policy Compliance** | 80% (voluntary) | 95% (validated) | 99% (enforced) |
+| **Access Violations** | Caught by audit | Blocked by tools | Blocked by runtime |
+| **Governance Overhead** | ~0s (prompts) | ~1s (validation) | ~2s (enforcement) |
+| **Agent Satisfaction** | High (helpful) | High (clear) | High (predictable) |
+
+---
+
+## 15. Open Questions
+
+1. **STEWARD Persistence**
+   - Does STEWARD maintain state across sessions?
+   - How to handle governance learning?
+   - Policy evolution mechanism?
+
+2. **Multi-Agent Governance**
+   - How do multiple agents coordinate with STEWARD?
+   - Conflict resolution when agents disagree?
+   - Priority/hierarchy among agents?
+
+3. **Human Override**
+   - When can humans override STEWARD?
+   - How to log overrides for audit?
+   - Emergency governance bypass?
+
+4. **Governance Evolution**
+   - How do policies get updated?
+   - Who approves policy changes?
+   - Backward compatibility of rules?
+
+---
+
+## 16. Summary
+
+The STEWARD is:
+
+1. **Hybrid Governance** - Works as prompts AND runtime
+2. **Multi-Layer** - Guidance → Validation → Enforcement
+3. **Helpful, Not Hostile** - Guides agents to compliance
+4. **Constitutional** - Rules are clear and explainable
+5. **Degradation-Aware** - Functions at all layers
+6. **Mod Governor** - Approves and manages extensions
+
+**Next Steps:**
+1. Implement Layer 1 (prompt-based STEWARD)
+2. Define core governance rules
+3. Test with agents in browser mode
+4. Add Layer 2 validation tools
+
+**Full Implementation:** See future detailed GAD-007 spec.
+
+---
+
+**END OF VISION DOCUMENT**
+
+*This is a high-level vision. Detailed implementation specs will follow in phase 2.*
