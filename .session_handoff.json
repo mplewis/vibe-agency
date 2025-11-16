@@ -24,18 +24,13 @@
   ],
   "critical_findings_remaining": [
     "✅ README.md FIXED - All 5 hallucinations resolved (95%+ honesty)",
-    "   - Added clear multi-agent architecture overview",
-    "   - Documented all 7 agents and their capabilities",
-    "   - Honest about Phase 2b not being implemented",
-    "   - Updated setup with optional dependency note",
-    "   - Rewrote status to distinguish complete vs partial features",
     "",
-    "🟡 MEDIUM PRIORITY: GAD-003 Phase 2b NOT Implemented",
-    "  - Phase 1: Tool infrastructure EXISTS (google_search_client.py) ✅",
-    "  - Phase 2a: Agent compositions REFERENCE tools ✅",
-    "  - Phase 2b: Orchestrator integration MISSING ❌",
-    "  - Impact: Research agents cannot execute web searches",
-    "  - See: docs/architecture/GAD-003_IMPLEMENTATION_STATUS.md for options"
+    "⚠️ KNOWN LIMITATION (GAD-006, NOT blocking GAD-005):",
+    "  - Research agent prompts reference unimplemented Phase 2b",
+    "  - These are partial agents (validation only, no web search)",
+    "  - DECISION: Rewrite prompts OR implement Phase 2b",
+    "  - Deferred to GAD-006 planning session",
+    "  - Current approach: Honest documentation (done in README)"
   ],
   "key_documents_created_this_session": [
     {
@@ -71,27 +66,14 @@
     "   This is NOT a regression - this is proper environment setup."
   ],
   "recommendations_for_next_session": [
-    "✅ 1. README.md - COMPLETE (This session fixed all 5 hallucinations)",
+    "✅ PRISTINE STATE READY FOR GAD-005",
+    "   - Environment: Fixed (uv sync --all-extras)",
+    "   - Documentation: Fixed (README 95%+ honest)",
+    "   - Tests: Passing",
+    "   - No blockers for GAD-005",
     "",
-    "2. DECISION REQUIRED: GAD-003 Phase 2b Implementation",
-    "   What: Web search integration for research agents",
-    "   Options:",
-    "     A) Complete Phase 2b (6-8 hours)",
-    "        - Implements ToolExecutor in orchestrator",
-    "        - Enables live web search for research agents",
-    "        - Substantial architecture change",
-    "     B) Revert agent compositions (2-4 hours)",
-    "        - Remove research agents from composition",
-    "        - Simpler but loses capability",
-    "        - OR leave as-is with documentation (current approach)",
-    "   Current Status: Documented as partial (passive validation only)",
-    "   See: docs/architecture/GAD-003_IMPLEMENTATION_STATUS.md",
-    "",
-    "3. OPTIONAL: Continue GAD-005 Implementation",
-    "   What: Runtime Engineering System (MOTD + Kernel Checks)",
-    "   Week 1: Implement MOTD display in vibe-cli (4-6 hours)",
-    "   Status: Todos 13-16 pending (from previous session)",
-    "   See: .session_handoff.json from previous agent for full plan"
+    "🚀 START: GAD-005 Week 1 - Implement MOTD (4-6 hours)",
+    "   Tasks: vibe-cli display_motd() + helper functions + tests"
   ],
   "commands_to_verify_this_session": [
     "# Verify AUDITOR task metadata was created",
@@ -118,12 +100,10 @@
     "session_handoff_created": true
   },
   "next_agent_quick_start": [
-    "1. Run: ./bin/show-context.sh (see full handoff with all updates)",
-    "2. Verify: git log -5 --oneline (see all commits from this session)",
-    "3. Read: README.md (recently rewritten - should now be clear and honest)",
-    "4. Decide: Implement GAD-003 Phase 2b (web search) or move to GAD-005?",
-    "5. Next Task: Either GAD-003 Phase 2b OR GAD-005 Week 1 MOTD implementation",
-    ""
+    "✅ State: PRISTINE - Ready for GAD-005",
+    "🚀 Next: GAD-005 Week 1 - MOTD implementation",
+    "   Read: Previous session .session_handoff.json (lines 46-58)",
+    "   Plan: vibe-cli display_motd() + tests"
   ],
   "branch_info": {
     "current_branch": "claude/review-handoff-context-01MAG6zS2GFeubHYiU7pwLor",
