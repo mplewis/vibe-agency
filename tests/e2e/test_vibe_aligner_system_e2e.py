@@ -17,13 +17,14 @@ This is a SYSTEM test - it validates that when a user says "Plan a yoga booking 
 the system produces the correct artifacts with proper governance.
 """
 
+import json
 import os
 import sys
-import json
-import pytest
+from datetime import datetime
 from pathlib import Path
 from unittest.mock import patch
-from datetime import datetime
+
+import pytest
 
 # Add paths
 repo_root = Path(__file__).parent.parent.parent
@@ -38,10 +39,18 @@ class TestVibeAlignerSystemE2E:
     """End-to-end system test for VIBE_ALIGNER workflow"""
 
     @pytest.fixture
-    def test_workspace_dir(self, tmp_path):
-        """Create isolated test workspace"""
-        workspace_dir = tmp_path / "test-vibe-aligner-e2e"
-        workspace_dir.mkdir()
+    def test_workspace_dir(self):
+        """Create isolated test workspace in repo workspaces directory"""
+        import shutil
+
+        # Use actual workspaces directory so orchestrator can find it
+        workspace_dir = repo_root / "workspaces" / "test-vibe-aligner-e2e"
+
+        # Clean up any existing test workspace
+        if workspace_dir.exists():
+            shutil.rmtree(workspace_dir)
+
+        workspace_dir.mkdir(parents=True)
 
         # Create project structure
         project_dir = workspace_dir / "test_project_001"
@@ -50,7 +59,10 @@ class TestVibeAlignerSystemE2E:
         (project_dir / "artifacts" / "planning").mkdir(parents=True)
         (project_dir / "artifacts" / "coding").mkdir(parents=True)
 
-        return workspace_dir
+        yield workspace_dir
+
+        # Cleanup after test
+        shutil.rmtree(workspace_dir, ignore_errors=True)
 
     @pytest.fixture
     def project_manifest_data(self):
@@ -321,9 +333,7 @@ class TestVibeAlignerSystemE2E:
             mock_llm.execute.side_effect = track_and_execute
 
             # Initialize orchestrator in autonomous mode (for testing)
-            orchestrator = CoreOrchestrator(
-                repo_root=str(repo_root), execution_mode="autonomous"
-            )
+            orchestrator = CoreOrchestrator(repo_root=str(repo_root), execution_mode="autonomous")
 
             # Verify PromptRegistry is being used
             assert orchestrator.use_registry, "PromptRegistry should be enabled"
@@ -366,9 +376,9 @@ class TestVibeAlignerSystemE2E:
             # Validate structure
             assert "project" in feature_spec, "feature_spec should have 'project' section"
             assert "features" in feature_spec, "feature_spec should have 'features' section"
-            assert "scope_negotiation" in feature_spec, (
-                "feature_spec should have 'scope_negotiation' section"
-            )
+            assert (
+                "scope_negotiation" in feature_spec
+            ), "feature_spec should have 'scope_negotiation' section"
             assert "validation" in feature_spec, "feature_spec should have 'validation' section"
             assert "metadata" in feature_spec, "feature_spec should have 'metadata' section"
 
@@ -411,9 +421,9 @@ class TestVibeAlignerSystemE2E:
                     print(f"✓ Guardian Directives found in: {prompt_info['agent']}")
 
             # Verify at least some prompts had Guardian Directives
-            assert guardian_found_count > 0, (
-                "Guardian Directives should be present in at least one prompt"
-            )
+            assert (
+                guardian_found_count > 0
+            ), "Guardian Directives should be present in at least one prompt"
             print(
                 f"✓ Guardian Directives found in {guardian_found_count}/{len(executed_prompts)} prompts"
             )
@@ -445,9 +455,9 @@ class TestVibeAlignerSystemE2E:
             print(f"✓ Final phase: {updated_manifest['status']['projectPhase']}")
 
             # Verify no errors in manifest
-            assert "errors" not in updated_manifest.get("status", {}), (
-                "Manifest should not have errors"
-            )
+            assert "errors" not in updated_manifest.get(
+                "status", {}
+            ), "Manifest should not have errors"
 
             print("\n" + "=" * 80)
             print("E2E TEST PASSED ✅")
@@ -488,9 +498,9 @@ class TestVibeAlignerSystemE2E:
         # Verify Guardian Directives are present (check for the heading marker)
         has_guardian_section = "# === GUARDIAN DIRECTIVES ===" in prompt
 
-        assert has_guardian_section, (
-            "Composed prompt should contain '# === GUARDIAN DIRECTIVES ===' section"
-        )
+        assert (
+            has_guardian_section
+        ), "Composed prompt should contain '# === GUARDIAN DIRECTIVES ===' section"
 
         print("✓ Guardian Directives present in composed prompt")
         print(f"  Prompt length: {len(prompt)} characters")
