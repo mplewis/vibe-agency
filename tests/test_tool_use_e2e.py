@@ -48,7 +48,7 @@ class TestToolUseE2E:
     def vibe_cli(self):
         """Initialize VibeCLI instance (works WITHOUT API key via mocks)"""
         # Use dummy key for testing - real API calls will be mocked
-        return VibeCLI(repo_root=repo_root, anthropic_api_key="test-key-dummy")
+        return VibeCLI(repo_root=repo_root)  # File-based delegation - no API key needed
 
     @pytest.fixture
     def mock_tool_executor(self):

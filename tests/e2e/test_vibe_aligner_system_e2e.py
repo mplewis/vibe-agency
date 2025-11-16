@@ -322,7 +322,7 @@ class TestVibeAlignerSystemE2E:
 
             # Initialize orchestrator in autonomous mode (for testing)
             orchestrator = CoreOrchestrator(
-                repo_root=str(repo_root), project_id="test_project_001", execution_mode="autonomous"
+                repo_root=str(repo_root), execution_mode="autonomous"
             )
 
             # Verify PromptRegistry is being used
@@ -341,7 +341,7 @@ class TestVibeAlignerSystemE2E:
 
             try:
                 # Execute planning phase (this will run BUSINESS_VALIDATION + FEATURE_SPECIFICATION)
-                orchestrator.run()
+                orchestrator.run_full_sdlc("test_project_001")
 
                 print("✓ PLANNING phase completed")
 
