@@ -1,296 +1,243 @@
-# 🎯 STEWARD SYSTEM ARCHITECTURE - DREI-EBENEN-MODELL
+Ah, ich verstehe - die Docs sind nicht uploaded. Aber aus deinem Boot-Prompt am Anfang kann ich die Struktur erschließen:
 
-Ah jetzt verstehe ich! Du brauchst ein **graceful degradation system** für unterschiedliche AI-Intelligenz-Level. Lass mich das neu aufbauen:
+```
+[Layer 0] Verifying system integrity...
+[Layer 1] Loading session context...
+```
+
+Das ist das **Hybrid Multi-Layer Model**!
 
 -----
 
-## 📊 DREI-EBENEN-ARCHITEKTUR
+# 🎯 ICH HAB’S JETZT VERSTANDEN
+
+Du hast ein **4-Layer Abstraction Model**:
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│ LEVEL 1: BOOT PRIMER (Goldilocks - Every Session)      │
-│ Token Budget: 50-100 | Audience: ALL agents            │
-└─────────────────────────────────────────────────────────┘
-                         ↓
-┌─────────────────────────────────────────────────────────┐
-│ LEVEL 2: RUNTIME CONTEXT (On-Demand)                   │
-│ Token Budget: 200-500 | Audience: Working agents       │
-└─────────────────────────────────────────────────────────┘
-                         ↓
-┌─────────────────────────────────────────────────────────┐
-│ LEVEL 3: DEEP REFERENCE (Linked SSOT)                  │
-│ Token Budget: ∞ | Audience: Smart agents when stuck    │
-└─────────────────────────────────────────────────────────┘
+Layer 0: BEDROCK (Kernel - minimalistisch, IMMER geladen)
+Layer 1: RUNTIME (Session Context - bei CLI start)
+Layer 2: CONTEXT (On-demand, working session)
+Layer 3: REFERENCE (SSOT Docs - nur wenn needed)
 ```
+
+**Problem mit meinem Vorschlag:**
+
+- Ich hab 85+ tokens in Layer 0 gepackt
+- Das läuft **JEDES MAL** wenn CLI startet
+- Viel zu fett für Bedrock!
 
 -----
 
-## 🥇 LEVEL 1: BOOT PRIMER (Goldilocks)
+## 💡 NEUER ANSATZ: 4-LAYER STEWARD
 
-**Purpose:** Der “Rückfallmodus” - wird IMMER geladen, JEDE Session
-**Constraint:** Muss auch von dümmsten Agents verstehbar sein
+### **LAYER 0: BEDROCK KERNEL** (Absolute Minimum)
+
+**Läuft: JEDES MAL bei CLI start**
+**Budget: 15-25 tokens MAX**
 
 ```json
 {
-  "steward_mode": "verify_before_proceed",
-  "default_behavior": {
-    "before_ANY_action": [
-      "1. Check: What exists already? (read files/docs)",
-      "2. Verify: Is system healthy? (run health check)",
-      "3. Plan: Smallest change needed?",
-      "4. Execute: Make the change",
-      "5. Prove: Does it work? (run tests)",
-      "6. Document: Update status"
-    ],
-    "mantra": "Verify > Act > Prove"
-  },
-  "when_uncertain": "STOP. Read ./docs/steward-principles.md",
-  "quality_gate": "Tests pass + System healthy = Good to proceed"
+  "steward": "validate→act→verify",
+  "mode": "artifact_guardian"
 }
 ```
 
-**~80 tokens** - Extrem kurz, aber verhaltenssteuernd!
+**20 tokens** - Das ist der **reine Kern**. Mehr nicht.
 
 -----
 
-## 🥈 LEVEL 2: RUNTIME CONTEXT
+### **LAYER 1: RUNTIME CONTEXT** (Session Boot)
 
-**Purpose:** Wird bei Session-Start geladen, gibt mehr Kontext
-**Constraint:** Praktische Guidance für die Arbeit
+**Läuft: Bei Session Start (nach Layer 0)**
+**Budget: 50-80 tokens**
 
 ```json
 {
   "steward_runtime": {
-    "lifecycle_governance": {
-      "phases": ["verify", "plan", "execute", "test", "document"],
-      
-      "verify_phase": {
-        "check": ["System health", "Git status", "Existing files"],
-        "command": "./bin/show-context.sh",
-        "decision": "Safe to proceed? yes/no"
-      },
-      
-      "plan_phase": {
-        "principle": "Smallest effective change",
-        "questions": [
-          "Does this file/function already exist?",
-          "Can I edit instead of create?",
-          "What breaks if I change this?"
-        ]
-      },
-      
-      "execute_phase": {
-        "rules": [
-          "One file at a time",
-          "Preserve existing architecture",
-          "No orphaned code"
-        ]
-      },
-      
-      "test_phase": {
-        "mandatory": "pytest before claiming done",
-        "optional": "Manual verification if no tests"
-      },
-      
-      "document_phase": {
-        "update": [".system_status.json", "relevant docs"],
-        "commit": "Only if tests pass"
-      }
+    "loop": ["check_artifacts", "verify_gates", "create", "validate_schema", "update_manifest"],
+    "enforce": ["validation_before_creation", "schema_compliance", "manifest_sync"],
+    "reject": ["untested_artifacts", "skipped_gates"]
+  }
+}
+```
+
+**~65 tokens** - Konkrete behavioral rules
+
+-----
+
+### **LAYER 2: WORKING CONTEXT** (On-Demand)
+
+**Läuft: Wenn Agent arbeitet (bei Bedarf)**
+**Budget: 150-300 tokens**
+
+```json
+{
+  "steward_working_context": {
+    "artifact_lifecycle": {
+      "before_creation": [
+        "Check existing artifacts in workspace",
+        "Verify all validation gates passed",
+        "Confirm dependencies resolved"
+      ],
+      "during_creation": [
+        "Follow schema strictly",
+        "Maintain consistency with manifest",
+        "Document decisions in artifact"
+      ],
+      "after_creation": [
+        "Validate against schema",
+        "Test integration with existing artifacts",
+        "Update project_manifest.json"
+      ]
     },
-    
-    "decision_tree": {
-      "system_unhealthy": "Fix health > Add features",
-      "tests_failing": "Fix tests > New code",
-      "file_exists": "Edit > Create new",
-      "unsure": "Read docs > Guess"
-    },
-    
-    "references": {
-      "principles": "./docs/steward-principles.md",
-      "architecture": "./docs/architecture.md",
-      "ask_human": "When all else fails"
+    "validation_gates": [
+      "timeline_realistic",
+      "budget_feasible", 
+      "tech_stack_coherent",
+      "dependencies_available",
+      "security_baseline"
+    ],
+    "principles": {
+      "helpful": "preserve_artifact_consistency",
+      "honest": "prove_validation_passed",
+      "harmless": "prevent_invalid_state"
     }
   }
 }
 ```
 
-**~300 tokens** - Mehr Detail, aber immer noch lean
+**~250 tokens** - Full working guidance
 
 -----
 
-## 🥉 LEVEL 3: DEEP REFERENCE (SSOT)
+### **LAYER 3: DEEP REFERENCE** (SSOT Docs)
 
-**Purpose:** Die “Source of Truth” - wird gelinkt, nicht immer geladen
-**Location:** `./docs/steward-principles.md`
+**Läuft: Nur wenn Agent stuck oder unsicher**
+**Location: `./docs/steward-principles.md`**
 
 ```markdown
-# Steward Principles - Single Source of Truth
+# Steward Principles - Complete Reference
 
-## Philosophy
-The Steward is not a feature-builder. The Steward is a **system caretaker**.
-
-### Core Identity
-- **Verify before Act** - Always check system state first
-- **Preserve before Create** - Default to editing existing over new
-- **Prove before Claim** - Tests are evidence, not prose
-- **Heal before Build** - Fix broken before adding features
-
-## Lifecycle Governance Model
-
-### Phase 1: VERIFY
-**Purpose:** Understand current state before changing anything
-
-Actions:
-1. Run `./bin/show-context.sh` to see full context
-2. Check `.system_status.json` for current health
-3. Review git status for uncommitted changes
-4. Read existing code in target area
-
-Decision Point: "Is system healthy enough to proceed?"
-- YES → Continue to PLAN
-- NO → Enter HEAL mode
-
-### Phase 2: PLAN
-**Purpose:** Determine minimal viable change
-
-Questions to answer:
-- Does this functionality already exist somewhere?
-- Can I achieve this by editing existing code?
-- What's the smallest possible change?
-- What could break as side-effect?
-
-Output: Clear, testable plan in 3-5 steps
-
-### Phase 3: EXECUTE
-**Purpose:** Make the planned change
-
-Rules:
-- One logical change at a time
-- Preserve existing patterns/architecture
-- No "while I'm here" refactors
-- Comment WHY not WHAT
-
-### Phase 4: TEST
-**Purpose:** Prove the change works
-
-Mandatory:
-- Run existing test suite (`pytest`)
-- Add tests for new behavior
-- Verify no regressions
-
-Evidence required:
-- Test output showing PASS
-- No new linting errors
-- System health maintained
-
-### Phase 5: DOCUMENT
-**Purpose:** Update system knowledge
-
-Update:
-- `.system_status.json` with completion
-- Relevant docs if behavior changed
-- Git commit with clear message
-
-## Decision Framework
+[Full documentation wie vorher - unbegrenzt]
 ```
 
-┌─────────────────────────────────────┐
-│ Is system healthy?                  │
-│ NO → HEAL mode (fix first)          │
-│ YES ↓                               │
-├─────────────────────────────────────┤
-│ Does solution exist?                │
-│ YES → USE it (don’t rebuild)        │
-│ NO ↓                                │
-├─────────────────────────────────────┤
-│ Can I edit existing?                │
-│ YES → EDIT (don’t create)           │
-│ NO ↓                                │
-├─────────────────────────────────────┤
-│ Is change testable?                 │
-│ NO → STOP (make it testable first) │
-│ YES ↓                               │
-├─────────────────────────────────────┤
-│ Execute → Test → Prove → Document  │
-└─────────────────────────────────────┘
-
-```
-## Anti-Patterns (What NOT to do)
-
-❌ Claiming done without test evidence
-❌ Creating new file when editing would work  
-❌ Making multiple unrelated changes together
-❌ Adding features while tests are failing
-❌ Verbose explanations of obvious code
-❌ Refactoring working code "for cleanliness"
-
-## Quality Metrics
-
-### Good Session Indicators:
-- ✅ All tests passing at end
-- ✅ System health same or better
-- ✅ Clear git history
-- ✅ Documentation updated
-- ✅ No new technical debt
-
-### Bad Session Indicators:
-- ❌ Tests failing at end
-- ❌ Uncommitted changes left
-- ❌ New linting errors
-- ❌ Undocumented behavior changes
-- ❌ "It should work" without proof
-
-## Scientific Foundation
-
-This model is based on:
-- **Site Reliability Engineering** (Google SRE)
-- **Lean Manufacturing** (Toyota Production System)
-- **Scientific Method** (Empirical verification)
-- **Information Theory** (Minimize entropy)
-
-Read more: ./docs/research/steward-science.md
-```
+**∞ tokens** - Wird nur bei Bedarf geladen
 
 -----
 
-## 🔗 INTEGRATION STRATEGIE
+## 🔥 WIE DAS IN GAD-005 ADDITION PASST
 
-**Wie die drei Levels zusammenspielen:**
+Basierend auf deinem Boot-Prompt:
+
+```
+[Layer 0] Verifying system integrity...
+   ✅ System integrity verified
+[Layer 1] Loading session context...
+```
+
+**Integration:**
 
 ```python
 # In vibe-cli boot sequence
-def boot_steward_context():
-    """Load steward context in graceful degradation"""
+
+def boot_steward():
+    """Multi-layer steward initialization"""
     
-    # LEVEL 1: Always loaded (minimal)
-    load_json(".system_status.json")  # Has boot primer
+    # LAYER 0: Bedrock (immer)
+    kernel = load_json(".system_status.json")["steward"]
+    # → "validate→act→verify" + "artifact_guardian"
     
-    # LEVEL 2: Loaded at session start
-    if session_type == "development":
-        load_json(".steward_runtime.json")
+    # LAYER 1: Runtime (bei session start)
+    if is_session_start():
+        runtime = load_json(".steward_runtime.json")
+        # → loop, enforce, reject rules
     
-    # LEVEL 3: Linked, loaded on-demand
-    print("📚 Reference: ./docs/steward-principles.md")
-    print("🔍 Context: ./bin/show-context.sh")
+    # LAYER 2: Working (on-demand)
+    if agent_is_working():
+        context = load_json(".steward_working.json") 
+        # → full artifact lifecycle guidance
+    
+    # LAYER 3: Reference (nur bei Bedarf)
+    if agent_needs_help():
+        print("📚 See: ./docs/steward-principles.md")
 ```
 
 -----
 
-## 💭 MEINE GEDANKEN
+## 🎯 TOKEN EFFIZIENZ
 
-**Was jetzt anders ist:**
+**Vorher (mein dummer Vorschlag):**
 
-1. **Level 1 ist verhaltensstiftend** - Nicht nur Prinzipien, sondern “Do this before EVERY action”
-1. **Level 2 gibt konkrete Runtime-Guidance** - Decision trees, nicht nur philosophy
-1. **Level 3 ist die Tiefe** - Für smarte Agents oder wenn stuck
+- Layer 0: 85 tokens ❌ (zu fett!)
 
-**Der Steward ist jetzt:**
+**Jetzt (4-Layer Hybrid):**
 
-- ✅ Ein Lifecycle-Manager (nicht nur Prinzipien)
-- ✅ Verhaltenssteuernd (nicht nur informativ)
-- ✅ Gracefully degraded (funktioniert auf allen AI-Levels)
-- ✅ Single Source of Truth (Level 3)
+- Layer 0: 20 tokens ✅ (läuft immer)
+- Layer 1: 65 tokens ✅ (nur bei session start)
+- Layer 2: 250 tokens ✅ (nur wenn working)
+- Layer 3: ∞ tokens ✅ (nur on-demand)
+
+**Durchschnittlicher Overhead:**
+
+- CLI start: 20 tokens (Layer 0 only)
+- Session start: 85 tokens (Layer 0+1)
+- Working: 335 tokens (Layer 0+1+2)
+- Deep work: 335+ tokens (Layer 0+1+2+3)
+
+**Graceful degradation!**
 
 -----
 
-**Passt das besser?** Oder brauchst du noch Adjustments?​​​​​​​​​​​​​​​​
+## 💎 FINAL FILES
+
+### `.system_status.json` (Layer 0 - Bedrock)
+
+```json
+{
+  "steward": {
+    "mantra": "validate→act→verify",
+    "mode": "artifact_guardian"
+  },
+  "health": {
+    "git": "clean",
+    "tests": "passing",
+    "linting": "passing"
+  }
+}
+```
+
+### `.steward_runtime.json` (Layer 1 - Runtime)
+
+```json
+{
+  "loop": ["check_artifacts", "verify_gates", "create", "validate", "update_manifest"],
+  "enforce": ["validation_first", "schema_strict", "manifest_sync"],
+  "reject": ["untested_artifacts", "skipped_gates", "invalid_schema"]
+}
+```
+
+### `.steward_working.json` (Layer 2 - Working Context)
+
+```json
+{
+  "artifact_lifecycle": {
+    "before": ["check_existing", "verify_gates", "resolve_deps"],
+    "during": ["follow_schema", "maintain_consistency", "document_decisions"],
+    "after": ["validate_schema", "test_integration", "update_manifest"]
+  },
+  "validation_gates": ["timeline", "budget", "tech_stack", "dependencies", "security"],
+  "principles": {
+    "helpful": "preserve_consistency",
+    "honest": "prove_validation",
+    "harmless": "prevent_invalid"
+  }
+}
+```
+
+### `(file)` (Layer 3 - SSOT)
+
+[Full reference doc - unlimited]
+
+-----
+
+**Passt das besser?** Jetzt ist Layer 0 wirklich **bedrock-minimal** und die Komplexität steigt gracefully durch die Layers!​​​​​​​​​​​​​​​​
