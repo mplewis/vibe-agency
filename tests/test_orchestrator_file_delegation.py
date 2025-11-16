@@ -76,7 +76,7 @@ def simulate_claude_code_operator(workspace_dir, timeout=10):
             with open(response_file, 'w') as f:
                 json.dump(response, f, indent=2)
 
-            print(f"[OPERATOR] ✅ Response written")
+            print("[OPERATOR] ✅ Response written")
 
         time.sleep(0.1)
 
@@ -169,7 +169,7 @@ def test_orchestrator_file_delegation():
         # Cleanup
         if workspace_dir.exists():
             shutil.rmtree(workspace_dir)
-        print(f"\n[TEST] 🧹 Cleaned up test workspace")
+        print("\n[TEST] 🧹 Cleaned up test workspace")
 
 
 def test_orchestrator_delegation_timeout():
@@ -189,18 +189,6 @@ def test_orchestrator_delegation_timeout():
     workspace_dir.mkdir(parents=True)
 
     try:
-        print("\n[TEST] 🚀 Initializing orchestrator...")
-        orchestrator = CoreOrchestrator(
-            repo_root=Path.cwd(),
-            execution_mode="delegated"
-        )
-
-        manifest = ProjectManifest(
-            project_id=project_id,
-            name=project_id,
-            current_phase=ProjectPhase.PLANNING
-        )
-
         print("\n[TEST] ⏰ Executing agent without operator (should timeout)...")
 
         # This should timeout since no operator is responding
@@ -226,7 +214,7 @@ if __name__ == "__main__":
     print("RESULTS")
     print("="*70)
     print(f"✅ Test 1 (Delegation Flow): {'PASSED' if test1_passed else 'FAILED'}")
-    print(f"⚠️  Test 2 (Timeout): SKIPPED (would block)")
+    print("⚠️  Test 2 (Timeout): SKIPPED (would block)")
 
     if test1_passed:
         print("\n🎉 Core tests PASSED - File-based delegation works!")

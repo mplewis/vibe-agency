@@ -27,7 +27,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent / "agency_os/00_system/orchestrator"))
 sys.path.insert(0, str(Path(__file__).parent / "agency_os/00_system/runtime"))
 
-from core_orchestrator import CoreOrchestrator, ProjectManifest, ProjectPhase, PlanningSubState
+from core_orchestrator import CoreOrchestrator
 
 
 def show_request_file(request_file: Path):
@@ -46,7 +46,7 @@ def show_request_file(request_file: Path):
 
     # Show first 500 chars of prompt
     prompt = request['prompt']
-    print(f"\n📝 Prompt preview (first 500 chars):")
+    print("\n📝 Prompt preview (first 500 chars):")
     print("-"*70)
     print(prompt[:500])
     if len(prompt) > 500:
@@ -195,7 +195,7 @@ def main():
     print(f"📝 User input: {user_input[:100]}...")
 
     # Initialize orchestrator
-    print(f"\n🚀 Initializing CoreOrchestrator (delegated mode)...")
+    print("\n🚀 Initializing CoreOrchestrator (delegated mode)...")
     orchestrator = CoreOrchestrator(
         repo_root=Path.cwd(),
         execution_mode="delegated"
@@ -209,7 +209,7 @@ def main():
     print(f"✅ Workspace created: {workspace_dir}")
 
     # Create manifest JSON (initial)
-    print(f"\n📦 Creating project manifest...")
+    print("\n📦 Creating project manifest...")
     manifest_data = {
         "apiVersion": "agency.os/v1alpha1",
         "kind": "Project",
@@ -246,7 +246,7 @@ def main():
     print(f"✅ Manifest loaded: phase={manifest.current_phase.value}")
 
     # Start planning workflow
-    print(f"\n🎯 Starting PLANNING workflow...")
+    print("\n🎯 Starting PLANNING workflow...")
     print("   This will execute all PLANNING sub-states")
     print("   Auto-responder will handle delegation requests")
     print()
@@ -260,13 +260,13 @@ def main():
         print("✅ PLANNING WORKFLOW COMPLETE!")
         print("="*70)
 
-        print(f"\n📊 Final manifest:")
+        print("\n📊 Final manifest:")
         print(f"   Phase: {manifest.current_phase}")
         print(f"   Sub-state: {manifest.current_sub_state}")
         print(f"   Artifacts: {len(manifest.artifacts)} items")
 
         # Show artifacts
-        print(f"\n📦 Artifacts created:")
+        print("\n📦 Artifacts created:")
         for key, value in manifest.artifacts.items():
             if isinstance(value, dict):
                 print(f"   - {key}: {len(value)} items")
@@ -321,7 +321,7 @@ if __name__ == "__main__":
                 # Create mock response
                 create_mock_response(request_file, request)
 
-                print(f"[AUTO-RESPONDER] ✅ Response ready, workflow continues...")
+                print("[AUTO-RESPONDER] ✅ Response ready, workflow continues...")
 
             time.sleep(0.2)
 
