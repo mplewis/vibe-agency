@@ -322,6 +322,7 @@ class TestVibeAlignerSystemE2E:
                 # Create mock response object with .content attribute
                 from unittest.mock import MagicMock
                 import json
+
                 mock_response = MagicMock()
                 mock_response.content = json.dumps(response_data)
                 return mock_response
@@ -329,16 +330,14 @@ class TestVibeAlignerSystemE2E:
             # Mock get_cost_summary to return proper cost data
             mock_llm.get_cost_summary.return_value = {
                 "total_cost_usd": 0.50,
-                "budget_used_percent": 5.0
+                "budget_used_percent": 5.0,
             }
 
             # Track prompts for Guardian Directive verification
             executed_prompts = []
 
             def track_and_invoke(prompt, model=None, max_tokens=4096):
-                executed_prompts.append(
-                    {"prompt": prompt, "length": len(prompt)}
-                )
+                executed_prompts.append({"prompt": prompt, "length": len(prompt)})
                 return mock_invoke(prompt, model, max_tokens)
 
             mock_llm.invoke.side_effect = track_and_invoke

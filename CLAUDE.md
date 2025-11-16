@@ -13,6 +13,7 @@
 3. **When docs contradict code, trust code**
 4. **When code contradicts tests, trust tests**
 5. **When in doubt: RUN THE VERIFICATION COMMAND**
+6. **ALWAYS run `uv run ruff check . --fix` BEFORE every commit** (CI/CD will fail otherwise)
 
 ---
 
@@ -329,6 +330,38 @@ cat ARCHITECTURE_V2.md  # Conceptual model
 2. Check if X already exists but is untested
 3. Check ARCHITECTURE_V2.md for intended design
 4. Only claim "missing" if no code exists
+
+### **🚨 BEFORE EVERY COMMIT (MANDATORY)**
+
+**CI/CD will FAIL if you skip this!**
+
+```bash
+# Step 1: Run ruff check and auto-fix
+uv run ruff check . --fix
+
+# Step 2: Verify no errors remain
+uv run ruff check . --output-format=github
+
+# Step 3: Check formatting
+uv run ruff format --check .
+
+# Only THEN commit!
+git add . && git commit -m "..." && git push
+```
+
+**Why this is MANDATORY:**
+- CI/CD runs `.github/workflows/validate.yml` on every push
+- It runs `uv run ruff check . --output-format=github` (line 66)
+- If ruff check fails → CI/CD fails → PR cannot merge
+- Pre-commit hooks DON'T work (require user to run git config)
+- **YOU (Claude Code) are the operator → YOU must check before commit**
+
+**Common ruff errors:**
+- F401: Unused imports
+- E501: Line too long
+- F841: Unused variable
+
+**Auto-fix available:** `uv run ruff check . --fix`
 
 ---
 
