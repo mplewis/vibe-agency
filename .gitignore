@@ -43,6 +43,9 @@ workspaces/*/artifacts/*/*
 # Local workspace state (persists active workspace selection)
 .active_workspace
 
+# Session handoff system status (auto-generated, do not commit)
+.system_status.json
+
 # Workspace artifacts (test project outputs)
 workspaces/*/artifacts/**/*.json
 workspaces/*/artifacts/**/*.md
