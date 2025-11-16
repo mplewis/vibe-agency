@@ -854,22 +854,22 @@ class CoreOrchestrator:
         manifest.budget["cost_breakdown"][phase_key] = cost_summary["total_cost_usd"]
 
         # Check budget alert threshold
-        if (
-            cost_summary.get("budget_used_percent", 0)
-            >= manifest.budget.get("alert_threshold", 0.80) * 100
-        ):
+        budget_used_percent = float(cost_summary.get("budget_used_percent", 0))
+        if budget_used_percent >= manifest.budget.get("alert_threshold", 0.80) * 100:
             logger.warning(
-                f"⚠️  Budget alert: {cost_summary['budget_used_percent']:.1f}% used "
+                f"⚠️  Budget alert: {budget_used_percent:.1f}% used "
                 f"(${cost_summary['total_cost_usd']:.2f} / ${manifest.budget['max_cost_usd']:.2f})"
             )
 
         # Parse JSON output
         try:
-            return json.loads(response.content)
+            # Defensive: ensure response.content is a string (not MagicMock in tests)
+            content = str(response.content) if response.content else "{}"
+            return json.loads(content)
         except json.JSONDecodeError:
             # If not JSON, return as text
             logger.warning(f"Agent {agent_name} returned non-JSON response")
-            return {"text": response.content}
+            return {"text": str(response.content)}
 
     # -------------------------------------------------------------------------
     # AUDITOR & QUALITY GATES (GAD-002 Decision 2 & 4)
