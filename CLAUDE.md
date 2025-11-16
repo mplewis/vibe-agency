@@ -67,6 +67,7 @@ See: docs/architecture/EXECUTION_MODE_STRATEGY.md
 | **Deployment-Scoped Validation (GAD-004 Phase 3)** | **✅ Works (tested)** | **E2E tests run on push to main/develop** | `uv run pytest tests/e2e/test_orchestrator_e2e.py -v` |
 | **Multi-Layer Integration (GAD-004 Phase 4)** | **✅ Works (tested)** | **All 3 layers integrated and verified** | `uv run pytest tests/test_multi_layer_integration.py -v` |
 | **Unavoidable MOTD (GAD-005 Week 1)** | **✅ Works (tested)** | **MOTD displays critical context before execution** | `uv run python tests/test_motd.py` |
+| **Pre-Action Kernel (GAD-005 Week 2)** | **✅ Works (tested)** | **Kernel validates dangerous operations before execution** | `uv run python tests/test_kernel_checks.py` |
 | Prompt Registry | ✅ Works | 9 governance rules injected | `uv run pytest tests/test_prompt_registry.py -v` |
 | vibe-cli | ✅ MOTD integrated | vibe-cli (862 lines, +191 LOC for MOTD) | `wc -l vibe-cli` |
 | vibe-cli Tool Loop | ⚠️ Code exists, untested E2E | vibe-cli:426-497 | `grep -A 20 "def _execute_prompt" vibe-cli \| grep tool_use` |
@@ -280,6 +281,30 @@ uv run ./vibe-cli --help
 # ✅ Critical context visible to agents without manual commands
 ```
 
+### Verify Pre-Action Kernel Works (GAD-005 Week 2)
+```bash
+# Run Pre-Action Kernel tests
+uv run python tests/test_kernel_checks.py
+# Expected: All 10 tests pass
+# - test_kernel_blocks_manifest_overwrite (blocks critical file overwrites)
+# - test_kernel_blocks_handoff_overwrite (blocks session handoff overwrites)
+# - test_kernel_allows_safe_artifacts (allows normal artifact saves)
+# - test_kernel_warns_on_dirty_git (warns on uncommitted changes)
+# - test_kernel_blocks_commit_with_linting_errors (blocks commits with linting errors)
+# - test_kernel_allows_commit_with_passing_linting (allows commits when linting passes)
+# - test_get_git_status_clean (git status detection works)
+# - test_get_git_status_dirty (detects uncommitted changes)
+# - test_get_system_status_exists (loads system status file)
+# - test_get_system_status_missing (handles missing status file)
+
+# What this validates:
+# ✅ Kernel prevents overwriting critical files (manifest, handoff)
+# ✅ Kernel warns on dirty git during state transitions
+# ✅ Kernel blocks commits with linting errors
+# ✅ Helper methods (_get_system_status, _get_git_status) work correctly
+# ✅ Kernel provides actionable remediation steps on violations
+```
+
 ---
 
 ## 🧪 META-TEST (Self-Verification)
@@ -334,6 +359,10 @@ uv run pytest tests/test_multi_layer_integration.py -v 2>&1 | grep -q "passed" &
 # Test 11: Unavoidable MOTD (GAD-005 Week 1)
 uv run python tests/test_motd.py 2>&1 | grep -q "ALL MOTD TESTS PASSED" && \
   echo "✅ Unavoidable MOTD verified" || echo "❌ MOTD tests failing"
+
+# Test 12: Pre-Action Kernel (GAD-005 Week 2)
+uv run python tests/test_kernel_checks.py 2>&1 | grep -q "ALL KERNEL TESTS PASSED" && \
+  echo "✅ Pre-Action Kernel verified" || echo "❌ Kernel tests failing"
 ```
 
 **If ANY test fails, CLAUDE.md is out of date or system is broken.**
@@ -553,9 +582,22 @@ uv run ruff format .
 
 ---
 
-**Last Updated:** 2025-11-16 19:05 UTC (GAD-005 Week 1 Complete)
-**Updated By:** Claude Code (Session: claude/review-gad-005-01JZHNcTzXs6aNCEbFa8xAmH)
+**Last Updated:** 2025-11-16 20:50 UTC (GAD-005 Week 2 Complete)
+**Updated By:** Claude Code (Session: claude/add-show-context-script-01BJiAxBtZVGfxBtXWTjXekX)
 **Current Update:**
+- ✅ **GAD-005 Week 2 COMPLETE** - Pre-Action Kernel Implementation
+- ✅ Added KernelViolationError exception to core_orchestrator.py
+- ✅ Implemented 5 kernel methods: _kernel_check_save_artifact(), _kernel_check_transition_state(), _kernel_check_git_commit(), _get_system_status(), _get_git_status()
+- ✅ Integrated kernel check into save_artifact() method - validates before saving
+- ✅ Created tests/test_kernel_checks.py - all 10 tests passing
+- ✅ Kernel prevents overwriting critical files (manifest, session handoff)
+- ✅ Kernel warns on dirty git during state transitions
+- ✅ Kernel blocks commits with linting errors (actionable remediation provided)
+- ✅ Updated CLAUDE.md with verification commands and META-TEST entry (Test 12)
+- ✅ Benefits: Runtime enforcement of safety rules, fail-fast with guidance, defense-in-depth
+- ✅ Zero regressions - all existing tests still pass (planning workflow, MOTD)
+
+**Previous Update:** 2025-11-16 19:05 UTC by Claude Code
 - ✅ **GAD-005 Week 1 COMPLETE** - Unavoidable MOTD Implementation
 - ✅ Implemented display_motd() + 5 helper functions in vibe-cli (+191 LOC)
 - ✅ MOTD shows System Health (Git, Linting, Tests) + Session Handoff + Quick Commands
