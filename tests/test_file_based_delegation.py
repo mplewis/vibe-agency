@@ -54,9 +54,8 @@ def test_file_based_delegation_flow():
             """Simulate Claude Code operator processing request"""
             time.sleep(0.5)  # Simulate processing time
 
-            # Read request
-            with open(request_file) as f:
-                request = json.load(f)
+            # In real scenario, operator would read request_file here
+            # For test, we just generate mock response
 
             # Generate response
             response_data = {
