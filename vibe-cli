@@ -313,6 +313,49 @@ def verify_system_integrity() -> bool:
         return True  # Non-fatal exception
 
 
+def get_critical_alerts(status: Dict[str, Any]) -> List[str]:
+    """
+    Extract top 3 critical alerts that agent MUST see (GAD-502 Phase 4).
+
+    Priority:
+    1. System integrity failures (CRITICAL - system compromised)
+    2. Linting errors (blocks commits)
+    3. Test failures (indicates broken code)
+    4. Dirty git (warns before transitions)
+
+    Args:
+        status: System status dict from .system_status.json
+
+    Returns:
+        List of alert strings (max 3 items)
+    """
+    alerts = []
+
+    # System integrity (highest priority)
+    if not status.get("system_integrity", {}).get("verified", True):
+        alerts.append("❌ SYSTEM INTEGRITY FAILED - Run: python scripts/verify-system-integrity.py")
+
+    # Linting (blocks commits)
+    linting = status.get("linting", {})
+    if linting.get("status") == "failing":
+        count = linting.get("error_count", 0)
+        alerts.append(f"❌ LINTING FAILED ({count} errors) - Run: uv run ruff check . --fix")
+
+    # Tests (broken code)
+    tests = status.get("tests", {})
+    if tests.get("status") == "failing":
+        count = tests.get("failed", 0)
+        alerts.append(f"❌ TESTS FAILING ({count} failed) - Run: uv run pytest")
+
+    # Git (warns before operations)
+    git = status.get("git", {})
+    if git.get("status") == "dirty":
+        count = len(git.get("uncommitted_files", []))
+        alerts.append(f"⚠️  DIRTY GIT ({count} files uncommitted)")
+
+    return alerts[:3]  # Max 3 alerts
+
+
 def display_motd():
     """
     Display Message of the Day before any vibe-cli execution.
@@ -320,6 +363,7 @@ def display_motd():
     This makes critical context UNAVOIDABLE - agents see it in stdout.
 
     GAD-005: Runtime Engineering - Unavoidable MOTD (Component A)
+    GAD-502 Phase 4: Critical alerts shown first (Haiku-readable)
     BURN THE GHEE Phase 1: Optimized 4-layer handoff + removed redundant status update
     """
     # Load data (trust git hooks to keep status fresh)
@@ -336,6 +380,18 @@ def display_motd():
     print("🚀 VIBE AGENCY - RUNTIME ENGINEERING SESSION")
     print("═" * 60)
     print()
+
+    # CRITICAL ALERTS (GAD-502 Phase 4: Haiku Hardening)
+    critical_alerts = get_critical_alerts(status)
+    if critical_alerts:
+        print("🚨 CRITICAL ALERTS (READ THIS FIRST!)")
+        print("─" * 60)
+        for alert in critical_alerts:
+            print(f"  {alert}")
+        print()
+    else:
+        print("✅ No critical alerts - system healthy")
+        print()
 
     # System health
     print("📊 SYSTEM HEALTH")
