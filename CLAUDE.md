@@ -2,7 +2,7 @@
 
 **Version:** 2.0
 **Purpose:** Prevent hallucination. Show REAL operational status, not design intent.
-**Last Updated:** 2025-11-16
+**Last Updated:** 2025-11-17
 
 ---
 
@@ -14,6 +14,47 @@
 4. **When code contradicts tests, trust tests**
 5. **When in doubt: RUN THE VERIFICATION COMMAND**
 6. **ALWAYS use `./bin/pre-push-check.sh` before git push** (Blocks bad commits, prevents CI/CD failures)
+
+---
+
+## 📋 DEVELOPMENT STANDARDS
+
+### Test-First Development (MANDATORY)
+
+**Policy:** [docs/policies/TEST_FIRST.md](./docs/policies/TEST_FIRST.md)
+**Effective:** 2025-11-17
+**Authority:** HIL Decision (Option B)
+
+**Core Rules:**
+1. **Tests BEFORE or WITH code** (max 1 commit later - NO exceptions)
+2. **Test migration is MANDATORY** (code changes → test changes)
+3. **Tests block merge** (broken tests = NO MERGE, no "fix later")
+4. **Coverage thresholds:** 80% new code, 100% bug fixes
+
+**Rationale:** Test debt pattern identified (GAD-100/GAD-500). Without test-first discipline:
+- ❌ Tests break after code changes (imports, references)
+- ❌ Regressions slip through
+- ❌ Agents fix retroactively (wasted time)
+
+**With test-first discipline:**
+- ✅ Zero test debt
+- ✅ High confidence in changes
+- ✅ Fast feedback loops
+- ✅ Safe refactors
+
+**Verification:**
+```bash
+# Before starting work
+uv run pytest tests/ -v
+
+# After changes (must pass)
+uv run pytest tests/ -v
+
+# Check coverage
+uv run pytest --cov=module_name --cov-fail-under=80
+```
+
+**See policy document for full details, examples, and enforcement.**
 
 ---
 
@@ -487,9 +528,23 @@ uv run ruff format .
 
 ---
 
-**Last Updated:** 2025-11-17 19:00 UTC (GAD-100 Phase 2 COMPLETE)
-**Updated By:** Claude Code (Session: claude/schema-auditor-phase-2-01PuiCz3B42y8jY9mvt8F4gc)
+**Last Updated:** 2025-11-17 23:00 UTC (GAD-100 Phases 1-2 MERGED & DOCUMENTED)
+**Updated By:** Claude Code (Session: claude/merge-phase-2-schemas-01JPEroF2kXyDnsQJ3RAsqCg)
 **Current Update:**
+- ✅ **GAD-100 Phases 1-2 COMPLETE** - Merged to main & documented
+- ✅ Phase 2 already merged to main via PR #93 (commits: b21a17a, e922321, 5f7949d)
+- ✅ All 14 schema tests pass on main (0.31s runtime)
+- ✅ Created comprehensive completion documentation: docs/architecture/GAD-1XX/GAD-100_PHASE_COMPLETION.md
+- ✅ Documentation includes: Phase 1 (phoenix_config vendored), Phase 2 (schemas + tests), deferred phases (3-6)
+- ✅ Phase 3-6 intentionally deferred until GAD-500 (MOTD) is complete
+- ✅ Rationale: Schemas deliver immediate value, Phase 3 is invasive, MOTD is higher priority
+- ✅ Next steps: Return to GAD-500 Week 1 (MOTD session handoff integration)
+- ✅ Updated CLAUDE.md with final GAD-100 status
+- ✅ Zero regressions: All existing functionality intact
+
+**Previous Update:** 2025-11-17 19:00 UTC (GAD-100 Phase 2 COMPLETE)
+**Updated By:** Claude Code (Session: claude/schema-auditor-phase-2-01PuiCz3B42y8jY9mvt8F4gc)
+**Update:**
 - ✅ **GAD-100 Phase 2 COMPLETE** - Canonical Schema Definition
 - ✅ Created config/schemas/project_manifest.schema.json (268 lines) - Canonical schema for project manifests
 - ✅ Created config/schemas/session_handoff.schema.json (92 lines) - Canonical schema for session handoffs
