@@ -17,6 +17,47 @@
 
 ---
 
+## 📋 DEVELOPMENT STANDARDS
+
+### Test-First Development (MANDATORY)
+
+**Policy:** [docs/policies/TEST_FIRST.md](./docs/policies/TEST_FIRST.md)
+**Effective:** 2025-11-17
+**Authority:** HIL Decision (Option B)
+
+**Core Rules:**
+1. **Tests BEFORE or WITH code** (max 1 commit later - NO exceptions)
+2. **Test migration is MANDATORY** (code changes → test changes)
+3. **Tests block merge** (broken tests = NO MERGE, no "fix later")
+4. **Coverage thresholds:** 80% new code, 100% bug fixes
+
+**Rationale:** Test debt pattern identified (GAD-100/GAD-500). Without test-first discipline:
+- ❌ Tests break after code changes (imports, references)
+- ❌ Regressions slip through
+- ❌ Agents fix retroactively (wasted time)
+
+**With test-first discipline:**
+- ✅ Zero test debt
+- ✅ High confidence in changes
+- ✅ Fast feedback loops
+- ✅ Safe refactors
+
+**Verification:**
+```bash
+# Before starting work
+uv run pytest tests/ -v
+
+# After changes (must pass)
+uv run pytest tests/ -v
+
+# Check coverage
+uv run pytest --cov=module_name --cov-fail-under=80
+```
+
+**See policy document for full details, examples, and enforcement.**
+
+---
+
 ## 📖 What This Repo Is
 
 **vibe-agency** = File-based prompt framework for AI-assisted software project planning.
