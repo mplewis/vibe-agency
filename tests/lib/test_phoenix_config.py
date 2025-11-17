@@ -5,7 +5,7 @@ import tempfile
 import yaml
 from pathlib import Path
 
-from phoenix_config import (
+from lib.phoenix_config import (
     UniversalConfig,
     DatabaseConfig,
     APIConfig,
