@@ -410,7 +410,8 @@ def display_motd():
 
     # Quick commands
     print("💡 QUICK COMMANDS")
-    print("  ./bin/show-context.sh    - Full system context")
+    print("  ./bin/show-context.py    - Full system context")
+    print("  ./bin/health-check.sh    - System health check")
     print("  ./bin/pre-push-check.sh  - Pre-push quality checks")
     print()
     print("═" * 60)
