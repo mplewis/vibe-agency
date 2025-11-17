@@ -12,11 +12,7 @@ Tests scenarios where less capable agents (Haiku or dumber) might:
 Purpose: Ensure system is "Haiku-proof" - even dumb agents can't break it.
 """
 
-import json
-import os
 import subprocess
-import tempfile
-from pathlib import Path
 
 import pytest
 
