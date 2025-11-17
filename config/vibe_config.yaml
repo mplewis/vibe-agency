@@ -1,0 +1,164 @@
+# VIBE CONFIG - Phoenix Config Definition
+# GAD-100 Phase 3 - Configuration Layer
+#
+# This file defines how vibe-agency loads state files, validates data,
+# and manages multi-source configuration.
+#
+# Used by: config/vibe_config.py (VibeConfig class)
+
+# =============================================================================
+# STATE FILES (location definitions)
+# =============================================================================
+
+state_files:
+  # Project manifests (per-workspace)
+  project_manifest:
+    path_pattern: "workspaces/{project_id}/project_manifest.json"
+    schema: "config/schemas/project_manifest.schema.json"
+    required: true
+    description: "Project manifest (SSOT for project state)"
+
+  # Session handoff (repo-level)
+  session_handoff:
+    path: ".session_handoff.json"
+    schema: "config/schemas/session_handoff.schema.json"
+    required: false
+    description: "Session handoff between agents"
+
+  # System status (repo-level, auto-generated)
+  system_status:
+    path: ".system_status.json"
+    schema: null  # No schema yet (future)
+    required: false
+    description: "System health status (auto-updated)"
+
+  # System integrity manifest (repo-level)
+  system_integrity:
+    path: ".vibe/system_integrity_manifest.json"
+    schema: null  # TODO: Create schema in Phase 4
+    required: false
+    description: "System integrity verification manifest"
+
+  # Workflows (framework-level)
+  workflows:
+    path_pattern: "agency_os/0{phase_number}_{phase_name}_framework/workflow.yaml"
+    schema: null  # TODO: Create schema in Phase 4
+    required: true
+    description: "SDLC phase workflow definitions"
+
+# =============================================================================
+# SCHEMA VALIDATION (rules)
+# =============================================================================
+
+schema_validation:
+  enabled: true  # Enable schema validation by default
+  strict_mode: false  # Don't fail on missing optional fields
+  on_error: "raise"  # raise | warn | ignore
+
+  # Validation rules per state file type
+  rules:
+    project_manifest:
+      validate_on_load: true
+      validate_on_save: true
+      required_fields:
+        - metadata.projectId
+        - metadata.name
+        - status.projectPhase
+        - artifacts
+      enum_validation: true  # Validate projectPhase enum values
+
+    session_handoff:
+      validate_on_load: true
+      validate_on_save: false  # Don't validate on save (manual edits allowed)
+      required_fields:
+        - sessionInfo.currentSession
+        - systemState.phase
+        - workContext
+      enum_validation: false
+
+# =============================================================================
+# ENVIRONMENT OVERLAYS (multi-source loading)
+# =============================================================================
+
+environments:
+  # Development environment (default)
+  development:
+    base_config: "config/base.yaml"
+    overlay: "config/dev.yaml"
+    defaults:
+      workspace_dir: "workspaces"
+      repo_root: "."
+      strict_validation: false
+
+  # Staging environment (pre-production testing)
+  staging:
+    base_config: "config/base.yaml"
+    overlay: "config/staging.yaml"
+    defaults:
+      workspace_dir: "workspaces"
+      repo_root: "."
+      strict_validation: true
+
+  # Production environment (live deployment)
+  production:
+    base_config: "config/base.yaml"
+    overlay: "config/prod.yaml"
+    defaults:
+      workspace_dir: "workspaces"
+      repo_root: "."
+      strict_validation: true
+
+# =============================================================================
+# LEGACY COMPATIBILITY (Phase 3-5 migration support)
+# =============================================================================
+
+legacy:
+  # Enable legacy config loader fallback (Phase 3-4)
+  fallback_enabled: true
+
+  # Legacy file paths (pre-GAD-100)
+  legacy_paths:
+    session_handoff: ".session_handoff.json"
+    system_status: ".system_status.json"
+
+  # Migration settings (Phase 5)
+  migration:
+    auto_migrate: false  # Don't auto-migrate by default
+    backup_before_migrate: true
+    validate_after_migrate: true
+
+# =============================================================================
+# FEATURE FLAGS (Phase 4 integration)
+# =============================================================================
+
+feature_flags:
+  # Use phoenix config by default (Phase 6)
+  use_phoenix_config: false  # Default to legacy (Phase 3)
+
+  # Enable schema validation
+  enable_schema_validation: true
+
+  # Enable environment overlays
+  enable_env_overlays: false  # Not implemented yet (Phase 4)
+
+  # Enable hot reload (future)
+  enable_hot_reload: false
+
+# =============================================================================
+# LOGGING & DEBUGGING
+# =============================================================================
+
+logging:
+  level: "INFO"  # DEBUG | INFO | WARNING | ERROR
+  log_config_loads: true
+  log_validation_errors: true
+  log_file: null  # No file logging by default
+
+# =============================================================================
+# VERSION INFO
+# =============================================================================
+
+version: "1.0"
+gad: "GAD-100 Phase 3"
+created_date: "2025-11-17"
+description: "Vibe-Agency phoenix_config integration"

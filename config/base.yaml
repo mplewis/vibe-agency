@@ -1,0 +1,175 @@
+# BASE CONFIGURATION - Vibe-Agency
+# GAD-100 Phase 3 - Configuration Layer
+#
+# This file contains base configuration shared across all environments.
+# Environment-specific overrides are in dev.yaml, staging.yaml, prod.yaml.
+#
+# Used by: config/vibe_config.py (VibeConfig class)
+
+# =============================================================================
+# PROJECT SETTINGS
+# =============================================================================
+
+project:
+  name: "vibe-agency"
+  version: "2.0"
+  description: "File-based prompt framework for AI-assisted software planning"
+
+# =============================================================================
+# PATHS (base paths, overridden by environment)
+# =============================================================================
+
+paths:
+  repo_root: "."  # Repository root (overridden by environment)
+  workspaces_dir: "workspaces"  # Where project workspaces live
+  framework_dir: "agency_os"  # Where SDLC frameworks live
+  config_dir: "config"  # Where config files live
+  schemas_dir: "config/schemas"  # Where canonical schemas live
+  lib_dir: "lib"  # Where vendored libraries live (phoenix_config, etc.)
+
+# =============================================================================
+# STATE FILES (base paths)
+# =============================================================================
+
+state:
+  # Repo-level state files
+  session_handoff: ".session_handoff.json"
+  system_status: ".system_status.json"
+  system_integrity: ".vibe/system_integrity_manifest.json"
+
+  # Workspace-level state files (per-project)
+  project_manifest: "project_manifest.json"  # Relative to workspace root
+  handoff: "handoff.json"  # Agent-to-agent handoff (relative to workspace)
+
+# =============================================================================
+# SDLC PHASES (workflow configuration)
+# =============================================================================
+
+sdlc:
+  phases:
+    - name: "PLANNING"
+      number: 1
+      workflow: "agency_os/01_planning_framework/workflow.yaml"
+      handler: "agency_os/00_system/orchestrator/handlers/planning_handler.py"
+
+    - name: "CODING"
+      number: 2
+      workflow: "agency_os/02_coding_framework/workflow.yaml"
+      handler: "agency_os/00_system/orchestrator/handlers/coding_handler.py"
+
+    - name: "TESTING"
+      number: 3
+      workflow: "agency_os/03_testing_framework/workflow.yaml"
+      handler: "agency_os/00_system/orchestrator/handlers/testing_handler.py"
+
+    - name: "DEPLOYMENT"
+      number: 4
+      workflow: "agency_os/04_deployment_framework/workflow.yaml"
+      handler: "agency_os/00_system/orchestrator/handlers/deployment_handler.py"
+
+    - name: "MAINTENANCE"
+      number: 5
+      workflow: "agency_os/05_maintenance_framework/workflow.yaml"
+      handler: "agency_os/00_system/orchestrator/handlers/maintenance_handler.py"
+
+# =============================================================================
+# BUDGET DEFAULTS
+# =============================================================================
+
+budget:
+  default_max_cost_usd: 10.0
+  default_alert_threshold: 0.80  # Alert at 80% of budget
+  cost_tracking_enabled: true
+
+# =============================================================================
+# SCHEMA VALIDATION (base rules)
+# =============================================================================
+
+validation:
+  # Validate manifest structure on load
+  validate_on_load: true
+
+  # Validate manifest structure on save
+  validate_on_save: true
+
+  # Strict mode (fail on warnings)
+  strict_mode: false
+
+  # Required fields (manifest)
+  required_manifest_fields:
+    - metadata.projectId
+    - metadata.name
+    - status.projectPhase
+    - artifacts
+
+# =============================================================================
+# LOGGING (base logging config)
+# =============================================================================
+
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  handlers:
+    console:
+      enabled: true
+      level: "INFO"
+    file:
+      enabled: false
+      level: "DEBUG"
+      path: "logs/vibe-agency.log"
+
+# =============================================================================
+# FEATURE FLAGS (base defaults)
+# =============================================================================
+
+features:
+  # Use phoenix config (GAD-100 Phase 3)
+  use_phoenix_config: false  # Default to legacy for Phase 3
+
+  # Enable schema validation (GAD-100 Phase 2)
+  enable_schema_validation: true
+
+  # Enable quality gates (GAD-004)
+  enable_quality_gates: true
+
+  # Enable MOTD (GAD-005)
+  enable_motd: true
+
+  # Enable kernel checks (GAD-005 Week 2)
+  enable_kernel_checks: true
+
+# =============================================================================
+# TOOLS (tool execution config)
+# =============================================================================
+
+tools:
+  # Research tools (GAD-003)
+  research:
+    enabled: true
+    timeout_seconds: 30
+    max_retries: 3
+
+  # Web tools
+  web:
+    enabled: true
+    user_agent: "vibe-agency/2.0"
+    timeout_seconds: 10
+
+# =============================================================================
+# LLM CLIENT (base LLM config)
+# =============================================================================
+
+llm:
+  default_provider: "anthropic"
+  default_model: "claude-sonnet-4-5"
+  max_retries: 3
+  timeout_seconds: 60
+
+# =============================================================================
+# VERSION INFO
+# =============================================================================
+
+version: "1.0"
+gad: "GAD-100 Phase 3"
+created_date: "2025-11-17"
+description: "Base configuration for vibe-agency"
