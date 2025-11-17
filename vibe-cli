@@ -147,6 +147,32 @@ def load_session_handoff() -> Optional[Dict[str, Any]]:
     return None
 
 
+def is_status_stale(timestamp_str: str, hours: int = 1) -> bool:
+    """
+    Check if system status timestamp is stale (older than N hours).
+
+    Args:
+        timestamp_str: ISO format timestamp
+        hours: Staleness threshold (default: 1 hour)
+
+    Returns:
+        True if stale, False if fresh
+
+    BURN THE GHEE: Replaces redundant subprocess call to update-system-status.sh
+    """
+    from datetime import datetime, timedelta, timezone
+
+    try:
+        # Parse ISO timestamp
+        ts = datetime.fromisoformat(timestamp_str.replace("Z", "+00:00"))
+        now = datetime.now(timezone.utc)
+        age = now - ts
+        return age > timedelta(hours=hours)
+    except Exception:
+        # If parsing fails, assume stale
+        return True
+
+
 def format_git_status(status: Dict) -> str:
     """
     Format git status for MOTD display.
@@ -294,24 +320,16 @@ def display_motd():
     This makes critical context UNAVOIDABLE - agents see it in stdout.
 
     GAD-005: Runtime Engineering - Unavoidable MOTD (Component A)
+    BURN THE GHEE Phase 1: Optimized 4-layer handoff + removed redundant status update
     """
-    # Update system status first
-    status_script = Path("bin/update-system-status.sh")
-    if status_script.exists():
-        try:
-            subprocess.run(
-                [str(status_script)],
-                capture_output=True,
-                timeout=10,
-                check=False,
-            )
-        except Exception as e:
-            # Non-fatal - continue with stale data
-            logger.debug(f"System status update failed: {e}")
-
-    # Load data
+    # Load data (trust git hooks to keep status fresh)
     status = load_system_status()
     handoff = load_session_handoff()
+
+    # Check if status is stale (warn but don't block)
+    timestamp = status.get("timestamp", "")
+    if timestamp and is_status_stale(timestamp, hours=1):
+        logger.warning("⚠️  System status is >1 hour old. Run: ./bin/update-system-status.sh")
 
     # Render MOTD
     print("═" * 60)
@@ -332,39 +350,62 @@ def display_motd():
         print(f"  Steward: {steward}")
     print()
 
-    # Session handoff (if exists)
+    # Session handoff (4-layer optimized structure)
     if handoff:
+        # Layer 0: Bedrock (always show)
+        layer0 = handoff.get("layer0_bedrock", {})
+        layer1 = handoff.get("layer1_runtime", {})
+
+        # Fallback to old structure if new layers don't exist
+        if not layer0:
+            # Old format compatibility
+            layer0 = {
+                "from": handoff.get("from_agent", "Unknown"),
+                "date": handoff.get("date", "Unknown"),
+                "state": "legacy_format",
+                "blocker": None,
+            }
+            layer1 = {
+                "completed_summary": "Legacy handoff format (pre-optimization)",
+                "todos": handoff.get("recommendations_for_next_session", [])[:3],
+                "critical_files": [],
+            }
+
         print("📋 SESSION HANDOFF")
-        from_agent = handoff.get("from_agent", "Unknown")
-        date = handoff.get("date", "Unknown")
-        print(f"  From: {from_agent}")
-        print(f"  Date: {date}")
+        print(f"  From: {layer0.get('from', 'Unknown')}")
+        print(f"  Date: {layer0.get('date', 'Unknown')}")
+        print(f"  State: {layer0.get('state', 'Unknown')}")
+
+        # Show blocker if exists (instant visibility!)
+        if layer0.get("blocker"):
+            print(f"  ⚠️  Blocker: {layer0['blocker']}")
+
         print()
 
-        # Completed items (max 3)
-        completed = handoff.get("completed", [])
-        if completed:
-            print("  Completed:")
-            for item in completed[:3]:
-                # Clean up checkmarks and formatting
-                item_clean = str(item).replace("✅", "").strip()
-                if item_clean:
-                    print(f"    ✅ {item_clean}")
-            if len(completed) > 3:
-                print(f"    ... and {len(completed) - 3} more")
+        # Layer 1: Runtime context
+        summary = layer1.get("completed_summary", "")
+        if summary:
+            print(f"  Summary: {summary}")
             print()
 
-        # Next session TODOs (max 3)
-        todos = handoff.get("recommendations_for_next_session", [])
+        # TODOs from Layer 1
+        todos = layer1.get("todos", [])
         if todos:
             print("  Your TODOs:")
             for todo in todos[:3]:
-                # Clean up formatting
-                todo_clean = str(todo).replace("🚀", "").replace("→", "").replace("✅", "").strip()
-                if todo_clean and not todo_clean.startswith("START:"):
-                    print(f"    → {todo_clean}")
+                print(f"    → {todo}")
             if len(todos) > 3:
                 print(f"    ... and {len(todos) - 3} more")
+            print()
+
+        # Critical files from Layer 1
+        files = layer1.get("critical_files", [])
+        if files:
+            print("  Critical files:")
+            for file in files[:3]:
+                print(f"    📄 {file}")
+            if len(files) > 3:
+                print(f"    ... and {len(files) - 3} more")
             print()
 
     # Quick commands
