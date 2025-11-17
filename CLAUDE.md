@@ -221,7 +221,7 @@ uv run pytest tests/test_layer1_boot_integration.py -v 2>&1 | grep -q "10 passed
 
 ---
 
-## ⚠️ KNOWN ISSUES (As of 2025-11-15 22:39 UTC)
+## ⚠️ KNOWN ISSUES (As of 2025-11-17 02:00 UTC)
 
 ### 1. No vibe-cli End-to-End Test
 **Issue:** Tool use loop (Lines 426-497) never tested with real API
@@ -241,6 +241,18 @@ uv run pytest tests/test_layer1_boot_integration.py -v 2>&1 | grep -q "10 passed
 **Fix:** Update archive documentation files
 **Status:** Deferred until after portfolio test
 
+### 4. Haiku Hardening - Planned, Not Implemented
+**Issue:** GAD-005-ADDITION Haiku Hardening has 700-line plan + 13 tests, but only 10.5% implemented
+**Impact:** System is NOT Haiku-proof (only 2/19 scenarios protected)
+**Current State:**
+- ✅ Plan complete: `docs/architecture/GAD-005-ADDITION_HAIKU_HARDENING.md` (700 lines)
+- ✅ Tests written: `tests/test_rogue_agent_scenarios.py` (13 scenarios)
+- ❌ Implementation: 11/13 tests still `pytest.skip()` (Phases 2-5 pending)
+- ⚠️ Protection coverage: 10.5% (2/19 scenarios)
+**Remaining Work:** ~11 hours (Phases 2-5)
+**Recommendation:** Use ONLY Sonnet/Opus until 79% coverage achieved
+**Verify:** `uv run pytest tests/test_rogue_agent_scenarios.py -v`
+
 ---
 
 ## 🚫 ANTI-PATTERNS (What NOT to Do)
@@ -256,6 +268,36 @@ GOOD: "README says complete → I run the test → Test missing → Status is 'u
 BAD:  "coding_handler.py has 211 lines → CODING works"
 GOOD: "coding_handler.py has 211 lines AND test_coding_workflow.py passes → CODING works"
 ```
+
+### ❌ Don't Confuse "Plan Complete" with "Work Complete"
+```
+BAD:  "✅ Phase 1 COMPLETE"
+      (Plan written, tests scaffolded, implementation TODO)
+      User thinks: "Feature is done!"
+
+GOOD: "✅ Phase 1 (Planning) COMPLETE
+      ❌ Phases 2-5 (Implementation) TODO
+      ⏱️  Remaining: 11 hours work
+      ⚠️  System NOT production-ready"
+      User knows: "Only the plan is done"
+```
+
+**Example from GAD-005-ADDITION Haiku Hardening:**
+```bash
+# What was said:
+"✅ Phase 1 COMPLETE (19 test scenarios documented)"
+
+# What user understood:
+"Haiku Hardening is complete, system is safe"
+
+# Reality:
+uv run pytest tests/test_rogue_agent_scenarios.py
+# Result: 1 failed, 1 passed, 11 SKIPPED
+# Coverage: 10.5% (2/19 scenarios protected)
+# Remaining: ~11 hours implementation work
+```
+
+**Rule:** Always clarify WHAT is complete (plan/code/tests) and WHAT remains.
 
 ### ❌ Don't Propose Features That Already Exist
 ```
