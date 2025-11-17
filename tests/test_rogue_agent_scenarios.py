@@ -28,8 +28,15 @@ This work package spans the spectrum:
 """
 
 import subprocess
+import sys
+from pathlib import Path
 
 import pytest
+
+# Add orchestrator to path for imports
+sys.path.insert(
+    0, str(Path(__file__).parent.parent / "agency_os/00_system/orchestrator")
+)
 
 
 class TestHallucinationScenarios:
@@ -38,20 +45,24 @@ class TestHallucinationScenarios:
     def test_agent_references_nonexistent_file(self):
         """
         Scenario: Agent reads MOTD, hallucinates that there's a "quick-fix.sh" script
-        Expected: System provides clear error, suggests verification command
+        Expected: Shell provides clear error (current behavior is acceptable)
+
+        Status: ✅ ACCEPTABLE - Shell error is clear enough for now
+        Future: Could enhance with "Available commands" suggestion
         """
         # Simulate agent trying to run hallucinated command
-        result = subprocess.run(
-            ["./bin/quick-fix.sh"],  # Doesn't exist
-            cwd="/home/user/vibe-agency",
-            capture_output=True,
-            text=True,
-        )
-
-        # Agent should get clear error
-        assert result.returncode != 0
-        # TODO: Should we catch this and provide better error?
-        # e.g., "Command not found. Available commands: ./bin/show-context.sh, ..."
+        try:
+            subprocess.run(
+                ["./bin/quick-fix.sh"],  # Doesn't exist
+                capture_output=True,
+                text=True,
+                check=True,  # Will raise if non-zero exit
+            )
+            assert False, "Should have failed"
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            # This is expected - shell provides clear "No such file" error
+            # Current behavior is acceptable for Haiku-level agents
+            pass  # Test passes if we get here
 
     def test_agent_invents_workflow_state(self):
         """
@@ -70,28 +81,102 @@ class TestBypassAttempts:
         Scenario: Agent uses 'echo "{}" > manifest.json' to bypass kernel
         Expected: System blocks shell command before execution
 
-        Current Status: ❌ VULNERABLE - Kernel only checks Python paths
+        Status: ✅ PROTECTED (GAD-502 Phase 2)
         """
-        pytest.skip("TODO: Implement shell command kernel checks (GAD-006 Phase 2)")
+        from pathlib import Path
+
+        from core_orchestrator import CoreOrchestrator, KernelViolationError
+
+        orchestrator = CoreOrchestrator(repo_root=Path.cwd())
+
+        with pytest.raises(KernelViolationError) as exc:
+            orchestrator._kernel_check_shell_command("echo '{}' > manifest.json")
+
+        error_msg = str(exc.value)
+        assert "🚫 BLOCKED:" in error_msg
+        assert "critical file" in error_msg.lower()
+        assert "orchestrator.save_project_manifest" in error_msg
 
     def test_agent_pushes_without_precheck(self):
         """
         Scenario: Agent runs 'git push' directly instead of './bin/pre-push-check.sh'
         Expected: System blocks git push, requires pre-push-check.sh
 
-        Current Status: ⚠️ PARTIAL - Git hooks can block, but not always available
+        Status: ✅ PROTECTED (GAD-502 Phase 2)
         """
-        pytest.skip("TODO: Implement git push kernel check (GAD-006 Phase 2)")
+        from pathlib import Path
+
+        from core_orchestrator import CoreOrchestrator, KernelViolationError
+
+        orchestrator = CoreOrchestrator(repo_root=Path.cwd())
+
+        with pytest.raises(KernelViolationError) as exc:
+            orchestrator._kernel_check_shell_command("git push origin main")
+
+        error_msg = str(exc.value)
+        assert "🚫 BLOCKED:" in error_msg
+        assert "pre-push" in error_msg.lower()
+        assert "./bin/pre-push-check.sh" in error_msg
 
     def test_agent_modifies_vibe_directory(self):
         """
         Scenario: Agent tries 'rm -rf .vibe/' or modifies system integrity files
         Expected: System blocks any .vibe/ modifications
 
-        Current Status: ✅ PROTECTED - Layer 0 integrity checks will detect tampering
-        Note: But can we PREVENT instead of just DETECT?
+        Status: ✅ PROTECTED (GAD-502 Phase 2)
         """
-        pytest.skip("TODO: Add preventive check (current: detective only)")
+        from pathlib import Path
+
+        from core_orchestrator import CoreOrchestrator, KernelViolationError
+
+        orchestrator = CoreOrchestrator(repo_root=Path.cwd())
+
+        with pytest.raises(KernelViolationError) as exc:
+            orchestrator._kernel_check_shell_command("rm -rf .vibe/")
+
+        error_msg = str(exc.value)
+        assert "🚫 BLOCKED:" in error_msg
+        assert "integrity" in error_msg.lower()
+
+    def test_agent_edits_manifest_with_vim(self):
+        """
+        Scenario: Agent tries 'vim manifest.json' to edit file directly
+        Expected: System blocks direct editing
+
+        Status: ✅ PROTECTED (GAD-502 Phase 2)
+        """
+        from pathlib import Path
+
+        from core_orchestrator import CoreOrchestrator, KernelViolationError
+
+        orchestrator = CoreOrchestrator(repo_root=Path.cwd())
+
+        with pytest.raises(KernelViolationError) as exc:
+            orchestrator._kernel_check_shell_command("vim manifest.json")
+
+        error_msg = str(exc.value)
+        assert "🚫 BLOCKED:" in error_msg
+        assert "orchestrator" in error_msg.lower()
+
+    def test_safe_shell_commands_allowed(self):
+        """
+        Scenario: Agent runs safe commands (ls, cat, grep)
+        Expected: System allows them (no exception)
+
+        Status: ✅ WORKS (GAD-502 Phase 2)
+        """
+        from pathlib import Path
+
+        from core_orchestrator import CoreOrchestrator
+
+        orchestrator = CoreOrchestrator(repo_root=Path.cwd())
+
+        # These should NOT raise exceptions
+        orchestrator._kernel_check_shell_command("ls -la")
+        orchestrator._kernel_check_shell_command("cat README.md")
+        orchestrator._kernel_check_shell_command("grep 'test' file.txt")
+        orchestrator._kernel_check_shell_command("git status")
+        orchestrator._kernel_check_shell_command("git push --dry-run")  # Dry run OK
 
 
 class TestMisinterpretationScenarios:
@@ -119,13 +204,38 @@ class TestMisinterpretationScenarios:
 
     def test_agent_doesnt_understand_error_message(self):
         """
-        Scenario: Agent sees "KernelViolationError: Cannot overwrite manifest.json"
-        Agent Response: Tries different syntax, same operation
-        Expected: Error message should be "Haiku-readable" with clear actions
+        Scenario: Agent sees kernel error and needs clear guidance
+        Expected: Error message is Haiku-readable with all required sections
 
-        Current Status: ⚠️ NEEDS IMPROVEMENT - Errors assume intelligence
+        Status: ✅ WORKS (GAD-502 Phase 3)
         """
-        pytest.skip("TODO: Simplify error messages (GAD-006 Phase 3)")
+        from pathlib import Path
+
+        from core_orchestrator import CoreOrchestrator, KernelViolationError
+
+        orchestrator = CoreOrchestrator(repo_root=Path.cwd())
+
+        with pytest.raises(KernelViolationError) as exc:
+            orchestrator._kernel_check_shell_command("echo '{}' > manifest.json")
+
+        error_msg = str(exc.value)
+
+        # Must have all required sections
+        assert "🚫 BLOCKED:" in error_msg
+        assert "WHY:" in error_msg
+        assert "WHAT TO DO INSTEAD:" in error_msg
+        assert "EXAMPLE:" in error_msg
+        assert "✅" in error_msg  # Good example
+        assert "❌" in error_msg  # Bad example
+
+        # Must have numbered steps
+        assert "1." in error_msg
+
+        # Must be concise (< 600 chars for Haiku attention span)
+        assert len(error_msg) < 600
+
+        # Must have working example (copy-pasteable)
+        assert "orchestrator" in error_msg.lower() or "bin/" in error_msg
 
 
 class TestContextOverloadScenarios:
@@ -143,12 +253,87 @@ class TestContextOverloadScenarios:
 
     def test_motd_too_complex_for_haiku(self):
         """
-        Scenario: MOTD shows 15+ lines of info, Haiku skims and misses alerts
-        Expected: MOTD should have "CRITICAL ALERTS" section at top
+        Scenario: MOTD shows many lines, Haiku might miss buried alerts
+        Expected: MOTD has "CRITICAL ALERTS" section at top
 
-        Current Status: ⚠️ NEEDS IMPROVEMENT - MOTD assumes careful reading
+        Status: ✅ WORKS (GAD-502 Phase 4)
         """
-        pytest.skip("TODO: Simplify MOTD with critical alerts section (GAD-006 Phase 4)")
+        # Test that get_critical_alerts() exists and prioritizes correctly
+        import sys
+
+        sys.path.insert(0, str(Path(__file__).parent.parent))
+        from vibe_cli_imports import get_critical_alerts
+
+        # Test: System integrity failure (highest priority)
+        status = {
+            "system_integrity": {"verified": False},
+            "linting": {"status": "failing", "error_count": 5},
+            "tests": {"status": "failing", "failed": 3},
+            "git": {"status": "dirty", "uncommitted_files": ["a", "b"]},
+        }
+
+        alerts = get_critical_alerts(status)
+
+        # Should return max 3 alerts
+        assert len(alerts) <= 3
+
+        # First alert should be system integrity (highest priority)
+        assert "SYSTEM INTEGRITY" in alerts[0]
+
+        # Should include remediation commands
+        assert any("Run:" in alert or "uv run" in alert or "python" in alert for alert in alerts)
+
+    def test_motd_prioritizes_alerts_correctly(self):
+        """
+        Scenario: Multiple issues, MOTD shows only top 3
+        Expected: Correct prioritization (integrity > linting > tests > git)
+
+        Status: ✅ WORKS (GAD-502 Phase 4)
+        """
+        import sys
+
+        sys.path.insert(0, str(Path(__file__).parent.parent))
+        from vibe_cli_imports import get_critical_alerts
+
+        # Test priority order
+        status = {
+            "linting": {"status": "failing", "error_count": 12},
+            "git": {"status": "dirty", "uncommitted_files": ["file1"]},
+        }
+
+        alerts = get_critical_alerts(status)
+
+        # Should have 2 alerts (linting + git)
+        assert len(alerts) == 2
+
+        # Linting should come before git
+        assert "LINTING" in alerts[0]
+        assert "GIT" in alerts[1]
+
+    def test_motd_healthy_state(self):
+        """
+        Scenario: No issues, MOTD shows healthy message
+        Expected: Empty alerts list (MOTD will show "No critical alerts")
+
+        Status: ✅ WORKS (GAD-502 Phase 4)
+        """
+        import sys
+
+        sys.path.insert(0, str(Path(__file__).parent.parent))
+        from vibe_cli_imports import get_critical_alerts
+
+        # All systems healthy
+        status = {
+            "system_integrity": {"verified": True},
+            "linting": {"status": "passing"},
+            "tests": {"status": "passing"},
+            "git": {"status": "clean"},
+        }
+
+        alerts = get_critical_alerts(status)
+
+        # Should have no alerts
+        assert len(alerts) == 0
 
 
 class TestRecoveryGuidance:
@@ -159,18 +344,126 @@ class TestRecoveryGuidance:
         Scenario: Kernel blocks operation
         Expected: Error message includes working example of correct approach
 
-        Current Status: ⚠️ PARTIAL - Some errors have remediation, none have examples
+        Status: ✅ WORKS (GAD-502 Phase 3)
         """
-        pytest.skip("TODO: Add examples to all kernel errors (GAD-006 Phase 5)")
+        from pathlib import Path
+
+        from core_orchestrator import CoreOrchestrator, KernelViolationError
+
+        orchestrator = CoreOrchestrator(repo_root=Path.cwd())
+
+        # Test multiple kernel violations all have examples
+        test_cases = [
+            ("echo '{}' > manifest.json", "orchestrator.save_project_manifest"),
+            ("git push origin main", "./bin/pre-push-check.sh"),
+            ("vim manifest.json", "orchestrator"),
+        ]
+
+        for command, expected_example in test_cases:
+            with pytest.raises(KernelViolationError) as exc:
+                orchestrator._kernel_check_shell_command(command)
+
+            error_msg = str(exc.value)
+            assert "EXAMPLE:" in error_msg
+            assert "✅" in error_msg
+            assert expected_example in error_msg
 
     def test_kernel_error_detects_repeated_attempts(self):
         """
         Scenario: Agent blocked 3 times for same operation
-        Expected: Error escalates, suggests asking operator for help
+        Expected: Error escalates through 3 tiers
 
-        Current Status: ❌ NOT IMPLEMENTED - No attempt tracking
+        Status: ✅ WORKS (GAD-502 Phase 5)
         """
-        pytest.skip("TODO: Implement attempt tracking and escalation (GAD-006 Phase 5)")
+        from pathlib import Path
+
+        from core_orchestrator import CoreOrchestrator, KernelViolationError
+
+        orchestrator = CoreOrchestrator(repo_root=Path.cwd())
+
+        # First attempt: Helpful error
+        with pytest.raises(KernelViolationError) as exc1:
+            orchestrator._kernel_check_save_artifact("project_manifest.json")
+
+        error1 = str(exc1.value)
+        assert "You tried to overwrite" in error1
+        assert "save_project_manifest" in error1
+        assert "SECOND ATTEMPT" not in error1
+
+        # Second attempt: More explicit
+        with pytest.raises(KernelViolationError) as exc2:
+            orchestrator._kernel_check_save_artifact("project_manifest.json")
+
+        error2 = str(exc2.value)
+        assert "SECOND ATTEMPT" in error2
+        assert "STOP trying" in error2
+
+        # Third attempt: Escalate to operator
+        with pytest.raises(KernelViolationError) as exc3:
+            orchestrator._kernel_check_save_artifact("project_manifest.json")
+
+        error3 = str(exc3.value)
+        assert "REPEATED VIOLATION" in error3
+        assert "YOU NEED OPERATOR HELP" in error3
+        assert "Do NOT retry" in error3
+
+    def test_escalation_message_gets_progressively_stronger(self):
+        """
+        Scenario: Each attempt should have stronger/clearer language
+        Expected: Tier 1 < Tier 2 < Tier 3 in urgency
+
+        Status: ✅ WORKS (GAD-502 Phase 5)
+        """
+        from pathlib import Path
+
+        from core_orchestrator import CoreOrchestrator, KernelViolationError
+
+        orchestrator = CoreOrchestrator(repo_root=Path.cwd())
+
+        errors = []
+        for _ in range(3):
+            with pytest.raises(KernelViolationError) as exc:
+                orchestrator._kernel_check_save_artifact("project_manifest.json")
+            errors.append(str(exc.value))
+
+        # Tier 1: Helpful
+        assert "You tried" in errors[0]
+
+        # Tier 2: Explicit (stronger language)
+        assert "SECOND" in errors[1]
+        assert "STOP" in errors[1]
+
+        # Tier 3: Escalate (strongest language)
+        assert "REPEATED" in errors[2]
+        assert "🚨" in errors[2]  # Emoji for urgency
+
+    def test_violation_tracking_is_per_operation(self):
+        """
+        Scenario: Different operations tracked separately
+        Expected: overwrite_manifest counter independent of overwrite_handoff
+
+        Status: ✅ WORKS (GAD-502 Phase 5)
+        """
+        from pathlib import Path
+
+        from core_orchestrator import CoreOrchestrator, KernelViolationError
+
+        orchestrator = CoreOrchestrator(repo_root=Path.cwd())
+
+        # First manifest attempt
+        with pytest.raises(KernelViolationError) as exc1:
+            orchestrator._kernel_check_save_artifact("project_manifest.json")
+        assert "SECOND ATTEMPT" not in str(exc1.value)
+
+        # First handoff attempt (different counter)
+        with pytest.raises(KernelViolationError) as exc2:
+            orchestrator._kernel_check_save_artifact(".session_handoff.json")
+        assert "SECOND ATTEMPT" not in str(exc2.value)  # Should be first for this file
+
+        # Second manifest attempt
+        with pytest.raises(KernelViolationError) as exc3:
+            orchestrator._kernel_check_save_artifact("project_manifest.json")
+        assert "SECOND ATTEMPT" in str(exc3.value)  # Should be second for manifest
 
 
 # ==============================================================================
