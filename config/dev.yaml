@@ -1,0 +1,107 @@
+# DEVELOPMENT CONFIGURATION - Vibe-Agency
+# GAD-100 Phase 3 - Configuration Layer
+#
+# This file contains development environment overrides.
+# Merges with base.yaml to create final configuration.
+#
+# Used by: config/vibe_config.py (VibeConfig class, env="development")
+
+# =============================================================================
+# PATHS (development overrides)
+# =============================================================================
+
+paths:
+  repo_root: "."  # Current directory
+  workspaces_dir: "workspaces"  # Standard location
+
+# =============================================================================
+# LOGGING (development overrides)
+# =============================================================================
+
+logging:
+  level: "DEBUG"  # More verbose logging in dev
+  handlers:
+    console:
+      enabled: true
+      level: "DEBUG"
+    file:
+      enabled: true  # Enable file logging in dev
+      level: "DEBUG"
+      path: "logs/vibe-agency-dev.log"
+
+# =============================================================================
+# VALIDATION (development overrides)
+# =============================================================================
+
+validation:
+  # Less strict validation in dev (allow quick iteration)
+  validate_on_load: true
+  validate_on_save: false  # Don't validate on save (faster iteration)
+  strict_mode: false  # Allow warnings
+
+# =============================================================================
+# BUDGET (development overrides)
+# =============================================================================
+
+budget:
+  default_max_cost_usd: 5.0  # Lower budget for dev (prevent accidental overspend)
+  default_alert_threshold: 0.70  # Alert earlier in dev
+
+# =============================================================================
+# FEATURE FLAGS (development overrides)
+# =============================================================================
+
+features:
+  # Use phoenix config (GAD-100 Phase 3 testing)
+  use_phoenix_config: false  # Default to legacy until Phase 4
+
+  # Enable schema validation
+  enable_schema_validation: true
+
+  # Enable quality gates
+  enable_quality_gates: true
+
+  # Enable MOTD
+  enable_motd: true
+
+  # Enable kernel checks
+  enable_kernel_checks: true
+
+  # Development-only features
+  dev_mode: true
+  auto_reload: false  # Hot reload (future)
+  debug_prompts: false  # Log full prompts (verbose)
+
+# =============================================================================
+# TOOLS (development overrides)
+# =============================================================================
+
+tools:
+  research:
+    enabled: true
+    timeout_seconds: 60  # Longer timeout for debugging
+    max_retries: 5  # More retries for dev
+
+  web:
+    enabled: true
+    timeout_seconds: 30  # Longer timeout for debugging
+
+# =============================================================================
+# LLM CLIENT (development overrides)
+# =============================================================================
+
+llm:
+  default_provider: "anthropic"
+  default_model: "claude-sonnet-4-5"  # Use Sonnet for dev
+  max_retries: 5  # More retries for dev
+  timeout_seconds: 120  # Longer timeout for debugging
+
+# =============================================================================
+# VERSION INFO
+# =============================================================================
+
+version: "1.0"
+gad: "GAD-100 Phase 3"
+environment: "development"
+created_date: "2025-11-17"
+description: "Development environment configuration"

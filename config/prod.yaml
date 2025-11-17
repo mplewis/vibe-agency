@@ -1,0 +1,122 @@
+# PRODUCTION CONFIGURATION - Vibe-Agency
+# GAD-100 Phase 3 - Configuration Layer
+#
+# This file contains production environment overrides.
+# Merges with base.yaml to create final configuration.
+#
+# Used by: config/vibe_config.py (VibeConfig class, env="production")
+
+# =============================================================================
+# PATHS (production overrides)
+# =============================================================================
+
+paths:
+  repo_root: "."  # Repository root (set by deployment)
+  workspaces_dir: "workspaces"  # Standard location
+
+# =============================================================================
+# LOGGING (production overrides)
+# =============================================================================
+
+logging:
+  level: "INFO"  # Less verbose in production
+  handlers:
+    console:
+      enabled: true
+      level: "WARNING"  # Only warnings/errors to console
+    file:
+      enabled: true  # Always log to file in production
+      level: "INFO"
+      path: "logs/vibe-agency-prod.log"
+
+# =============================================================================
+# VALIDATION (production overrides)
+# =============================================================================
+
+validation:
+  # Strict validation in production
+  validate_on_load: true
+  validate_on_save: true  # Always validate on save
+  strict_mode: true  # Fail on warnings
+
+# =============================================================================
+# BUDGET (production overrides)
+# =============================================================================
+
+budget:
+  default_max_cost_usd: 50.0  # Higher budget for production
+  default_alert_threshold: 0.80  # Alert at 80%
+
+# =============================================================================
+# FEATURE FLAGS (production overrides)
+# =============================================================================
+
+features:
+  # Use phoenix config (GAD-100 Phase 6 - after migration complete)
+  use_phoenix_config: false  # Default to legacy until Phase 6
+
+  # Enable schema validation (always on in production)
+  enable_schema_validation: true
+
+  # Enable quality gates (always on in production)
+  enable_quality_gates: true
+
+  # Enable MOTD (always on in production)
+  enable_motd: true
+
+  # Enable kernel checks (always on in production)
+  enable_kernel_checks: true
+
+  # Production-only settings
+  dev_mode: false
+  auto_reload: false  # No hot reload in production
+  debug_prompts: false  # No debug logging in production
+
+# =============================================================================
+# TOOLS (production overrides)
+# =============================================================================
+
+tools:
+  research:
+    enabled: true
+    timeout_seconds: 30  # Strict timeout in production
+    max_retries: 3  # Standard retries
+
+  web:
+    enabled: true
+    timeout_seconds: 10  # Strict timeout in production
+
+# =============================================================================
+# LLM CLIENT (production overrides)
+# =============================================================================
+
+llm:
+  default_provider: "anthropic"
+  default_model: "claude-sonnet-4-5"  # Use Sonnet for production
+  max_retries: 3  # Standard retries
+  timeout_seconds: 60  # Strict timeout
+
+# =============================================================================
+# SECURITY (production-only)
+# =============================================================================
+
+security:
+  # Validate all inputs
+  validate_inputs: true
+
+  # Don't expose internal errors
+  expose_errors: false
+
+  # Enable audit logging
+  audit_logging: true
+  audit_log_path: "logs/audit.log"
+
+# =============================================================================
+# VERSION INFO
+# =============================================================================
+
+version: "1.0"
+gad: "GAD-100 Phase 3"
+environment: "production"
+created_date: "2025-11-17"
+description: "Production environment configuration"
