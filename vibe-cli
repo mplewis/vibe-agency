@@ -1157,32 +1157,40 @@ Execute the workflow with domain expertise.
         print("═" * 60)
         print()
 
-    def boot_mode(self) -> None:
+    def boot_mode(self, user_input: Optional[str] = None) -> None:
         """
         Boot mode: System initialization + playbook routing.
 
         Flow:
         1. Display MOTD (system status) - already shown in main()
-        2. Load session handoff
-        3. Load playbook registry
-        4. Display boot prompt with playbook awareness
-        5. Output ready state for STEWARD
+        2. Load context from all sources
+        3. Route to task based on context/intent
+        4. Compose enriched prompt for STEWARD
+        5. Output operational prompt
 
         Note: This is called by ./bin/system-boot.sh to provide
               integrated context for STEWARD initialization.
+
+        Args:
+            user_input: Optional user intent for routing
         """
-        # Load session handoff
-        handoff = load_session_handoff()
-
-        # Load playbook registry
-        registry = self._load_playbook_registry()
-
-        # Display boot prompt
-        self._display_boot_prompt(registry, handoff)
-
-        # Ready state
-        logger.info("✅ STEWARD boot sequence complete")
-        logger.info("   Waiting for user intent...")
+        # Import BootSequence from agency_os runtime
+        try:
+            sys.path.insert(0, str(self.repo_root / "agency_os" / "00_system" / "runtime"))
+            from boot_sequence import BootSequence
+            
+            # Run the integrated boot sequence
+            boot = BootSequence(self.repo_root)
+            boot.run(user_input)
+            
+        except ImportError as e:
+            logger.warning(f"⚠️ New boot sequence not available, using legacy mode: {e}")
+            # Fallback to legacy boot
+            handoff = load_session_handoff()
+            registry = self._load_playbook_registry()
+            self._display_boot_prompt(registry, handoff)
+            logger.info("✅ STEWARD boot sequence complete (legacy mode)")
+            logger.info("   Waiting for user intent...")
 
     def match_intent(self, user_input: str) -> None:
         """
@@ -1303,7 +1311,7 @@ Notes:
     )
 
     parser.add_argument("command", type=str, choices=["run", "boot", "match"], help="Command to execute")
-    parser.add_argument("project_id", type=str, nargs="?", help="Project ID (required for 'run' command) or user intent (for 'match' command)")
+    parser.add_argument("project_id", type=str, nargs="?", help="Project ID (required for 'run' command) or user intent (for 'match'/'boot' commands)")
     parser.add_argument(
         "--mode",
         type=str,
@@ -1333,7 +1341,7 @@ Notes:
     if args.command == "run":
         cli.run_project(args.project_id, mode=args.mode)
     elif args.command == "boot":
-        cli.boot_mode()
+        cli.boot_mode(user_input=args.project_id)  # project_id is reused as optional intent
     elif args.command == "match":
         cli.match_intent(args.project_id)  # project_id is reused as intent string
     else:
