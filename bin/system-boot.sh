@@ -2,8 +2,13 @@
 #
 # system-boot.sh - STEWARD Boot Sequence
 #
-# Purpose: Initialize STEWARD with session context (< 1 second)
+# Purpose: Initialize STEWARD with session context + playbook routing
 # Usage: ./bin/system-boot.sh
+#
+# Flow:
+#   1. Pre-flight checks (dependencies, environment)
+#   2. Call vibe-cli boot (displays MOTD, session context, playbook routes)
+#   3. Ready for STEWARD to receive user intent
 #
 # Full system diagnostics: ./bin/show-status.sh
 #
@@ -14,118 +19,68 @@ VIBE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$VIBE_ROOT"
 
 # ============================================================================
-# DEPENDENCY CHECK
+# PRE-FLIGHT CHECKS
 # ============================================================================
-if [ ! -d ".venv" ] || ! python3 -c "import yaml" 2>/dev/null; then
-    echo "📦 Installing dependencies..."
-    uv sync --all-extras > /dev/null 2>&1
-fi
-
-# ============================================================================
-# BOOT HEADER
-# ============================================================================
-echo "════════════════════════════════════════════════════════════════"
-echo "⚡ STEWARD BOOT SEQUENCE"
-echo "════════════════════════════════════════════════════════════════"
+echo "🔍 Running pre-flight checks..."
 echo ""
 
-# ============================================================================
-# SESSION CONTEXT
-# ============================================================================
-echo "━━━ SESSION CONTEXT ━━━"
-echo ""
-
-if [ -f ".session_handoff.json" ]; then
-    python3 << 'PYEOF'
-import json
-import sys
-
-try:
-    with open('.session_handoff.json', 'r') as f:
-        handoff = json.load(f)
-
-    # Session metadata
-    bedrock = handoff.get('layer0_bedrock', {})
-    print(f"From: {bedrock.get('from', 'Unknown')}")
-    print(f"Date: {bedrock.get('date', 'Unknown')}")
-    print(f"State: {bedrock.get('state', 'Unknown')}")
-
-    # Current status
-    runtime = handoff.get('layer1_runtime', {})
-    summary = runtime.get('completed_summary', 'No summary available')
-    print(f"\nCurrent Status:\n  {summary}")
-
-    # Backlog
-    todos = runtime.get('todos', [])
-    if todos:
-        print("\n📋 BACKLOG:")
-        for i, todo in enumerate(todos, 1):
-            print(f"  {i}. {todo}")
-
-    # Priority actions
-    detail = handoff.get('layer2_detail', {})
-    next_steps = detail.get('next_steps_detail', [])
-    if next_steps:
-        print("\n🎯 PRIORITY ACTIONS:")
-        for step in next_steps[:2]:
-            step_name = step.get('step', 'Unknown')
-            priority = step.get('priority', '')
-            print(f"  [{priority}] {step_name}" if priority else f"  • {step_name}")
-
-except Exception as e:
-    print(f"⚠️  Could not parse handoff: {e}", file=sys.stderr)
-    sys.exit(0)
-
-PYEOF
-
-else
-    echo "⚠️  No session handoff found"
+# Check dependencies
+if [ ! -d ".venv" ]; then
+    echo "📦 Dependencies not found. Please run:"
+    echo "   make install"
+    echo "   or"
+    echo "   uv sync --all-extras"
     echo ""
-    echo "BOOTSTRAP MODE:"
-    echo "  1. Review recent commits: git log --oneline -5"
-    echo "  2. Check system status: CLAUDE.md"
-    echo "  3. Initialize handoff: .session_handoff.json"
+    exit 1
 fi
 
-echo ""
-
-# ============================================================================
-# ENVIRONMENT
-# ============================================================================
+# Check environment
 if git rev-parse --git-dir > /dev/null 2>&1; then
     BRANCH=$(git rev-parse --abbrev-ref HEAD)
-    echo "Current Branch: $BRANCH"
+    echo "✅ Git repository detected (branch: $BRANCH)"
 else
-    echo "Git: Not a repository"
+    echo "⚠️  Not a git repository"
 fi
 
 echo ""
 
 # ============================================================================
-# STEWARD OPERATIONAL PROTOCOL
+# BOOT WITH VIBE-CLI
 # ============================================================================
+echo "🚀 Starting STEWARD with playbook routing..."
+echo ""
+
+# Call vibe-cli in boot mode
+# This will:
+# - Display MOTD (system status)
+# - Load session handoff
+# - Show available playbook routes
+# - Output ready state
+python3 ./vibe-cli boot
+
+echo ""
 echo "════════════════════════════════════════════════════════════════"
-echo "📋 OPERATIONAL PROTOCOL"
+echo "📋 STEWARD OPERATIONAL PROTOCOL"
 echo "════════════════════════════════════════════════════════════════"
 echo ""
 
 cat << 'SYSTEMPROMPT'
-STEWARD OPERATIONAL PROTOCOL
+⚡ You are STEWARD, senior orchestration agent at vibe-agency.
 
 Your role: Execute strategic tasks with precision for a non-technical client.
 
 Core Protocol:
-• Read complete HANDOFF below before acting
+• Read complete HANDOFF above before acting
 • Execute top priority from backlog
 • Test-First Development (docs/policies/TEST_FIRST.md)
 • Update .session_handoff.json when phase complete
 • Run ./bin/pre-push-check.sh before push
 
-Entry Point Awareness:
-• If user request is vague, suggest optimal entry point
-• Reference: docs/playbook/ENTRY_POINTS.md (9 specialized modes)
-• Route to correct GAD pillar automatically
-• Proactively suggest 2-3 relevant options when unclear
+Playbook System:
+• Use playbook routes when user intent is clear (see available routes above)
+• If user says "restaurant app", load restaurant playbook context
+• If user says "continue work", use session_resume playbook
+• If unclear, suggest 2-3 relevant playbook options
 
 Output Standard (Client is strategic operator):
 • Status: 2-3 sentences, business terms
@@ -134,31 +89,16 @@ Output Standard (Client is strategic operator):
 
 Tone: Senior consultant. Clarity over explanation. Action over analysis.
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-HANDOFF DATA (Complete session context):
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
 SYSTEMPROMPT
 
-# Output handoff JSON
-if [ -f ".session_handoff.json" ]; then
-    cat .session_handoff.json
-else
-    echo '{"status": "bootstrap", "message": "No handoff found - initialize session"}'
-fi
-
 echo ""
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "════════════════════════════════════════════════════════════════"
 echo ""
-
-# ============================================================================
-# QUICK REFERENCE
-# ============================================================================
 echo "💡 Quick Commands:"
 echo "   Full diagnostics:  ./bin/show-status.sh"
 echo "   Pre-push check:    ./bin/pre-push-check.sh"
-echo "   Run tests:         uv run pytest tests/ -v"
+echo "   Run tests:         python3 -m pytest tests/ -v"
 echo ""
-echo "📚 Entry Points:     docs/playbook/USER_PLAYBOOK.md"
+echo "📚 Playbook Registry: docs/playbook/_registry.yaml"
 echo ""
 echo "════════════════════════════════════════════════════════════════"
