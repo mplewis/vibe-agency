@@ -112,6 +112,7 @@ Execute {task} task.
         git = context.get("git", {})
         tests = context.get("tests", {})
         env = context.get("environment", {})
+        memory = context.get("memory", {})
 
         failing_count = tests.get("failing_count", 0)
         test_status = "✅ Passing" if failing_count == 0 else f"❌ {failing_count} Failing"
@@ -123,6 +124,9 @@ Execute {task} task.
         )
 
         env_status = "✅ Ready" if env.get("status") == "ready" else f"⚠️ {env.get('status')}"
+
+        # Build semantic context from memory
+        semantic_context = self._format_semantic_context(memory)
 
         return f"""---
 
@@ -138,6 +142,8 @@ Execute {task} task.
 - Git: {git_status}
 - Environment: {env_status}
 
+{semantic_context}
+
 **Backlog:**
 {self._format_backlog(session.get("backlog", []))}
 
@@ -146,6 +152,50 @@ Execute {task} task.
 
 ---
 """
+
+    def _format_semantic_context(self, memory: dict) -> str:
+        """Format semantic memory context for prompt injection"""
+        if not memory or not memory.get("narrative"):
+            return ""
+
+        trajectory = memory.get("trajectory", {})
+        domain = memory.get("domain", {})
+        recent_sessions = memory.get("narrative", [])[-3:]
+        recent_intents = memory.get("intent_history", [])[-3:]
+
+        context = "**🧠 PROJECT UNDERSTANDING:**\n"
+
+        # Domain & concepts
+        if domain.get("type") != "general":
+            concepts = ", ".join(domain.get("concepts", [])[:5])
+            context += f"- Domain: {domain.get('type')} ({concepts})\n"
+
+        # Current trajectory
+        if trajectory:
+            completed = ", ".join(trajectory.get("completed", [])[:3]) or "None"
+            focus = trajectory.get("current_focus", "unknown")
+            context += f"- Progress: Completed [{completed}] → Current focus: {focus}\n"
+
+        # Recent evolution
+        if recent_sessions:
+            context += "- Recent sessions:\n"
+            for s in recent_sessions:
+                context += (
+                    f"  • Session {s['session']}: {s['summary']} ({s.get('phase', 'UNKNOWN')})\n"
+                )
+
+        # User intents
+        if recent_intents:
+            context += "- User intents:\n"
+            for intent in recent_intents:
+                context += f"  • Session {intent['session']}: {intent['intent']}\n"
+
+        # Concerns
+        if domain.get("concerns"):
+            concerns = ", ".join(domain["concerns"][:3])
+            context += f"- Concerns: {concerns}\n"
+
+        return context
 
     def _format_backlog(self, backlog: list) -> str:
         """Format backlog items"""
