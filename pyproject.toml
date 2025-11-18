@@ -196,8 +196,8 @@ exclude_lines = [
 # UV CONFIGURATION
 # ============================================================================
 
-[tool.uv]
-dev-dependencies = []  # Managed via [project.optional-dependencies]
+[dependency-groups]
+dev = []  # Managed via [project.optional-dependencies]
 
 # ============================================================================
 # BUILD SYSTEM
