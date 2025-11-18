@@ -12,14 +12,15 @@
   },
 
   "layer1_runtime": {
-    "current_status": "System operational. Kernel tests + dependency regression fixed. Test suite at 95.7% passing.",
+    "current_status": "Session complete. Delivered: kernel test fixes, dependency auto-sync, hidden dependencies audit. Discovered: systemic issues requiring senior review.",
+    "completed_summary": "Fixed 3 kernel test assertions (10/10 passing). Added auto-dependency sync to boot (fixes yaml regression). Identified recurring pattern: agents claim 'fixed' but changes don't persist. Created HIDDEN_DEPENDENCIES_AUDIT.md documenting 4 cases. User requested investigation of GAD-100 phoenix_config - found it's vendored (Phase 1-2 complete) but not integrated (Phase 3 deferred). Attempted Haiku safety verification - tests fail due to pytest environment issue (uv run pytest vs project venv). Multiple systemic issues surfaced requiring architectural decisions.",
     "todos": [
-      "CRITICAL (P0): Create Cold Boot Test (catches session-only fixes, 1h effort)",
-      "CRITICAL (P0): Add Persistence Checklist to CLAUDE.md (prevents rogue agent behavior, 15min)",
-      "HIGH (P1): Document Agent Policies in docs/policies/AGENT_DECISIONS.md (stops thrashing, 30min)",
-      "HIGH (P1): Create bin/verify-claude-md.sh (catches doc drift, 2h effort)",
-      "Optional: Fix 2 remaining test failures (E2E vibe_aligner, session_handoff schema validation)",
-      "Optional: Reduce TODO count in docs (currently 27 docs with TODO/FIXME/WIP)"
+      "Review session findings: docs/architecture/HIDDEN_DEPENDENCIES_AUDIT.md",
+      "Verify GAD-100 status: Phase 3 integration blocked/deferred - determine priority vs other work",
+      "Assess Haiku readiness: Tests exist but execution environment unclear - need test command policy",
+      "Evaluate systemic fixes: Cold boot test (P0), persistence checklist (P0), agent policies (P1)",
+      "Make architectural decision: Phoenix_config integration scope, effort, risk, vs alternatives",
+      "Produce senior audit report for HIL with recommendations and effort estimates"
     ],
     "critical_files": [
       "CLAUDE.md",
