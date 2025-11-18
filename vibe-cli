@@ -515,6 +515,11 @@ class VibeCLI:
             self.repo_root / "agency_os" / "00_system" / "orchestrator" / "tools"
         )
 
+        # Playbook registry path
+        self.playbook_registry_path = (
+            self.repo_root / "docs" / "playbook" / "_registry.yaml"
+        )
+
     def run_project(self, project_id: str, mode: str = "delegated") -> None:
         """
         Run SDLC for a project with Claude Code integration.
@@ -1003,6 +1008,233 @@ class VibeCLI:
         result = subprocess.run(cmd)
         sys.exit(result.returncode)
 
+    def _load_playbook_registry(self) -> Optional[Dict[str, Any]]:
+        """
+        Load playbook registry from docs/playbook/_registry.yaml.
+
+        Returns:
+            Registry dict or None if file doesn't exist
+        """
+        if not self.playbook_registry_path.exists():
+            logger.warning(f"Playbook registry not found: {self.playbook_registry_path}")
+            return None
+
+        try:
+            with open(self.playbook_registry_path) as f:
+                return yaml.safe_load(f)
+        except Exception as e:
+            logger.error(f"Failed to load playbook registry: {e}")
+            return None
+
+    def _match_playbook(self, user_input: str, registry: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """
+        Match user input against playbook registry using Tier 1 keyword matching.
+
+        Strategy:
+        - Tier 1: Simple keyword matching (fast, no dependencies)
+        - Future: Tier 2 can add semantic search with embeddings
+
+        Args:
+            user_input: User's intent
+            registry: Loaded playbook registry
+
+        Returns:
+            Matched route dict or None
+        """
+        routes = registry.get("routes", [])
+        user_lower = user_input.lower()
+
+        # Simple keyword matching
+        for route in routes:
+            patterns = route.get("intent_patterns", [])
+            for pattern in patterns:
+                if pattern.lower() in user_lower:
+                    return route
+
+        return None
+
+    def _inject_playbook_context(self, playbook_path: str) -> str:
+        """
+        Load playbook YAML and create enriched system prompt.
+
+        Args:
+            playbook_path: Path to playbook YAML file (relative to docs/playbook/)
+
+        Returns:
+            System prompt with playbook context
+        """
+        # Prepend docs/playbook/ if not already present
+        if not playbook_path.startswith("docs/playbook/"):
+            full_path = self.repo_root / "docs" / "playbook" / playbook_path
+        else:
+            full_path = self.repo_root / playbook_path
+
+        if not full_path.exists():
+            logger.warning(f"Playbook file not found: {full_path}")
+            return ""
+
+        try:
+            with open(full_path) as f:
+                playbook = yaml.safe_load(f)
+        except Exception as e:
+            logger.error(f"Failed to load playbook: {e}")
+            return ""
+
+        # Build enriched context
+        domain = playbook.get("metadata", {}).get("domain", "general")
+        target = playbook.get("target_agent", "VIBE_ALIGNER")
+        
+        # Format pre-questions
+        pre_questions = playbook.get("pre_enrichment", {}).get("pre_questions", [])
+        questions_text = ""
+        if pre_questions:
+            questions_text = "\n**Pre-Questions:**\n"
+            for q in pre_questions:
+                question = q.get("question", "")
+                questions_text += f"  - {question}\n"
+
+        # Format quality gates
+        quality_gates = playbook.get("quality_gates", [])
+        gates_text = ""
+        if quality_gates:
+            gates_text = "\n**Quality Gates:**\n"
+            for gate in quality_gates[:3]:  # Show top 3
+                desc = gate.get("description", "")
+                gates_text += f"  - {desc}\n"
+
+        context = f"""
+═══════════════════════════════════════════
+🎯 PLAYBOOK CONTEXT LOADED
+═══════════════════════════════════════════
+
+**Playbook:** {playbook_path}
+**Domain:** {domain}
+**Target Workflow:** {target}
+{questions_text}{gates_text}
+
+You are now operating with domain-specific context.
+Execute the workflow with domain expertise.
+
+═══════════════════════════════════════════
+"""
+        return context
+
+    def _display_boot_prompt(self, registry: Optional[Dict[str, Any]], handoff: Optional[Dict[str, Any]]) -> None:
+        """
+        Display boot prompt with playbook awareness.
+
+        Args:
+            registry: Playbook registry (None if unavailable)
+            handoff: Session handoff (None if unavailable)
+        """
+        print()
+        print("═" * 60)
+        print("🚀 STEWARD READY - PLAYBOOK SYSTEM AVAILABLE")
+        print("═" * 60)
+        print()
+
+        if registry:
+            routes = registry.get("routes", [])
+            # Filter out fallback routes
+            main_routes = [r for r in routes if r.get("priority") != "LOW"]
+            
+            print(f"📚 Available Playbooks: {len(main_routes)} registered")
+            print()
+            print("Available routes:")
+            for route in main_routes[:5]:  # Show top 5
+                name = route.get("name", "unknown")
+                desc = route.get("description", "")
+                print(f"  • {name}: {desc}")
+            
+            if len(main_routes) > 5:
+                print(f"  ... and {len(main_routes) - 5} more")
+            print()
+        
+        print("What would you like to do?")
+        print("  → Describe your intent (e.g., 'restaurant app', 'continue work')")
+        print("  → Say 'list routes' to see all available playbooks")
+        print()
+        print("═" * 60)
+        print()
+
+    def boot_mode(self) -> None:
+        """
+        Boot mode: System initialization + playbook routing.
+
+        Flow:
+        1. Display MOTD (system status) - already shown in main()
+        2. Load session handoff
+        3. Load playbook registry
+        4. Display boot prompt with playbook awareness
+        5. Output ready state for STEWARD
+
+        Note: This is called by ./bin/system-boot.sh to provide
+              integrated context for STEWARD initialization.
+        """
+        # Load session handoff
+        handoff = load_session_handoff()
+
+        # Load playbook registry
+        registry = self._load_playbook_registry()
+
+        # Display boot prompt
+        self._display_boot_prompt(registry, handoff)
+
+        # Ready state
+        logger.info("✅ STEWARD boot sequence complete")
+        logger.info("   Waiting for user intent...")
+
+    def match_intent(self, user_input: str) -> None:
+        """
+        Match user intent against playbook registry and display result.
+
+        This is a helper command for testing playbook matching.
+
+        Args:
+            user_input: User's intent string
+        """
+        # Load registry
+        registry = self._load_playbook_registry()
+        
+        if not registry:
+            print("❌ Failed to load playbook registry")
+            return
+
+        # Match playbook
+        matched = self._match_playbook(user_input, registry)
+
+        if matched:
+            print()
+            print("✅ PLAYBOOK MATCHED")
+            print("═" * 60)
+            print(f"Route: {matched.get('name', 'unknown')}")
+            print(f"Description: {matched.get('description', '')}")
+            print(f"Priority: {matched.get('priority', 'MEDIUM')}")
+            print(f"Target Chain: {matched.get('target_chain', 'unknown')}")
+            print()
+            
+            # Load and display context
+            target_chain = matched.get('target_chain', '')
+            if target_chain:
+                context = self._inject_playbook_context(target_chain)
+                if context:
+                    print(context)
+            
+        else:
+            print()
+            print("⚠️  NO PLAYBOOK MATCHED")
+            print("═" * 60)
+            print(f"Input: '{user_input}'")
+            print()
+            print("Available routes:")
+            routes = registry.get("routes", [])
+            for route in routes[:5]:
+                name = route.get("name", "unknown")
+                patterns = route.get("intent_patterns", [])
+                print(f"  • {name}: {', '.join(patterns[:3])}")
+            print()
+
+
 
 def main():
     """CLI entry point"""
@@ -1054,6 +1286,9 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
+  # Boot STEWARD with playbook routing (recommended)
+  vibe-cli boot
+
   # Run project in delegated mode (default - MVP)
   vibe-cli run my-project-123
 
@@ -1067,8 +1302,8 @@ Notes:
         """,
     )
 
-    parser.add_argument("command", type=str, choices=["run"], help="Command to execute")
-    parser.add_argument("project_id", type=str, help="Project ID")
+    parser.add_argument("command", type=str, choices=["run", "boot", "match"], help="Command to execute")
+    parser.add_argument("project_id", type=str, nargs="?", help="Project ID (required for 'run' command) or user intent (for 'match' command)")
     parser.add_argument(
         "--mode",
         type=str,
@@ -1085,12 +1320,22 @@ Notes:
 
     args = parser.parse_args()
 
+    # Validate command-specific requirements
+    if args.command == "run" and not args.project_id:
+        parser.error("'run' command requires project_id argument")
+    if args.command == "match" and not args.project_id:
+        parser.error("'match' command requires user intent as argument")
+
     # Initialize CLI
     cli = VibeCLI(repo_root=args.repo_root)
 
     # Execute command
     if args.command == "run":
         cli.run_project(args.project_id, mode=args.mode)
+    elif args.command == "boot":
+        cli.boot_mode()
+    elif args.command == "match":
+        cli.match_intent(args.project_id)  # project_id is reused as intent string
     else:
         parser.print_help()
         sys.exit(1)
