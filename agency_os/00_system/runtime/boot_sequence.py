@@ -47,6 +47,45 @@ class BootSequence:
         print(prompt)
         print("=" * 80 + "\n", file=sys.stderr)
     
+    def _check_git_sync(self) -> dict:
+        """Check if repo is behind remote - graceful fallback if git fails"""
+        try:
+            import subprocess
+            
+            # Fetch latest refs (non-destructive)
+            subprocess.run(
+                ['git', 'fetch', 'origin'],
+                cwd=self.project_root,
+                capture_output=True,
+                timeout=5,
+                check=False  # Don't fail if fetch fails
+            )
+            
+            # Count commits behind
+            result = subprocess.run(
+                ['git', 'rev-list', '--count', 'HEAD..origin/main'],
+                cwd=self.project_root,
+                capture_output=True,
+                text=True,
+                timeout=5,
+                check=True
+            )
+            
+            commits_behind = int(result.stdout.strip())
+            return {
+                'behind': commits_behind > 0,
+                'commits_behind': commits_behind,
+                'status': 'sync_needed' if commits_behind > 0 else 'up_to_date'
+            }
+        except Exception as e:
+            # Graceful fallback - don't break boot
+            return {
+                'behind': False,
+                'commits_behind': 0,
+                'status': 'unknown',
+                'error': str(e)
+            }
+    
     def _display_dashboard(self, context: dict, route) -> None:
         """Display system status dashboard"""
         
@@ -55,10 +94,14 @@ class BootSequence:
         tests = context.get('tests', {})
         env = context.get('environment', {})
         
+        # Check git sync status
+        sync_status = self._check_git_sync()
+        
         # Calculate status indicators
         test_emoji = '✅' if tests.get('failing_count', 0) == 0 else '❌'
         git_emoji = '✅' if git.get('uncommitted', 0) == 0 else '⚠️'
         env_emoji = '✅' if env.get('status') == 'ready' else '⚠️'
+        sync_emoji = '✅' if not sync_status.get('behind') else '⚠️'
         
         dashboard = f"""
 ╔══════════════════════════════════════════════════════════════════════════════╗
@@ -68,8 +111,20 @@ class BootSequence:
 📊 SYSTEM STATUS
   {test_emoji} Tests: {tests.get('failing_count', 0)} failing, {tests.get('status', 'unknown')}
   {git_emoji} Git: {git.get('uncommitted', 0)} uncommitted files on '{git.get('branch', 'unknown')}'
+  {sync_emoji} Sync: {sync_status.get('commits_behind', 0)} commits behind origin/main
   {env_emoji} Environment: {env.get('status', 'unknown')}
 
+"""
+        
+        # Add sync suggestion if behind
+        if sync_status.get('behind'):
+            behind_count = sync_status.get('commits_behind', 0)
+            dashboard += f"""⚠️  REPO OUT OF SYNC ({behind_count} commits behind)
+  To sync: git pull origin main
+  
+"""
+        
+        dashboard += f"""
 🎯 RECOMMENDED TASK
   Task: {route.task.upper()}
   Description: {route.description}
