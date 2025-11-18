@@ -11,6 +11,7 @@ from pathlib import Path
 
 from context_loader import ContextLoader
 from playbook_engine import PlaybookEngine
+from project_memory import ProjectMemoryManager
 from prompt_composer import PromptComposer
 
 
@@ -22,6 +23,7 @@ class BootSequence:
         self.context_loader = ContextLoader(self.project_root)
         self.playbook_engine = PlaybookEngine()
         self.prompt_composer = PromptComposer()
+        self.memory_manager = ProjectMemoryManager(self.project_root)
 
     def run(self, user_input: str | None = None):
         """Execute the boot sequence"""
@@ -36,6 +38,11 @@ class BootSequence:
         print("🔄 Loading context...", file=sys.stderr)
         context = self.context_loader.load()
 
+        # Load project memory (semantic layer)
+        print("🧠 Loading project memory...", file=sys.stderr)
+        memory = self.memory_manager.load()
+        context["memory"] = memory
+
         # Conveyor Belt 2: Route to Task
         print("🎯 Routing to task...", file=sys.stderr)
         route = self.playbook_engine.route(user_input or "", context)
@@ -48,7 +55,7 @@ class BootSequence:
         system_prompt = self._get_system_prompt(route)
         final_prompt = system_prompt + "\n\n" + prompt
 
-        # Display dashboard
+        # Display dashboard (includes memory summary)
         self._display_dashboard(context, route)
 
         # Output prompt for STEWARD
@@ -223,6 +230,9 @@ DO:
         env = context.get("environment", {})
         sync_status = self._check_git_sync()
 
+        # Get semantic memory summary
+        memory_summary = self.memory_manager.get_semantic_summary()
+
         # Kernel-style output - clean, scannable, actionable
         dashboard = f"""
 ╔════════════════════════════════════════════════════════════╗
@@ -233,6 +243,7 @@ DO:
 [BOOT SEQUENCE]
   [✓] Integrity verified
   [✓] Context loaded (5 sources)
+  [✓] Memory loaded (semantic layer)
   [✓] Playbook routed: {route.task.upper()}
   [✓] Prompt composed
 
@@ -241,6 +252,8 @@ DO:
   Tests:  {"✓" if tests.get("failing_count", 0) == 0 else "⚠"} {tests.get("failing_count", 0)} failing
   Sync:   {"✓" if not sync_status.get("behind") else "⚠"} {sync_status.get("commits_behind", 0)} behind
   Env:    {"✓" if env.get("status") == "ready" else "⚠"} {env.get("status")}
+
+{memory_summary}
 
 [NEXT ACTION]
   TASK:       {route.task.upper()}
