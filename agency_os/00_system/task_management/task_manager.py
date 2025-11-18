@@ -131,6 +131,95 @@ class TaskManager:
         }
 
     # ========================================================================
+    # BLOCKING / DEPENDENCIES
+    # ========================================================================
+
+    def block_task(self, blocker_id: str, blocked_id: str) -> None:
+        """
+        Create a blocking relationship: blocker_id blocks blocked_id.
+
+        When blocker_id is in progress, blocked_id cannot start.
+        Useful for task dependencies.
+
+        Args:
+            blocker_id: Task ID that is blocking
+            blocked_id: Task ID that is being blocked
+
+        Raises:
+            ValueError: If either task doesn't exist
+        """
+        roadmap = self.get_roadmap()
+
+        if blocker_id not in roadmap.tasks:
+            raise ValueError(f"Blocker task {blocker_id} not found")
+
+        if blocked_id not in roadmap.tasks:
+            raise ValueError(f"Blocked task {blocked_id} not found")
+
+        blocker = roadmap.tasks[blocker_id]
+        blocked = roadmap.tasks[blocked_id]
+
+        # Add relationships
+        if blocked_id not in blocker.blocking_tasks:
+            blocker.blocking_tasks.append(blocked_id)
+
+        if blocker_id not in blocked.blocked_by:
+            blocked.blocked_by.append(blocker_id)
+
+    def unblock_task(self, blocker_id: str, blocked_id: str) -> None:
+        """
+        Remove a blocking relationship.
+
+        Args:
+            blocker_id: Task ID that was blocking
+            blocked_id: Task ID that was being blocked
+        """
+        roadmap = self.get_roadmap()
+
+        if blocker_id in roadmap.tasks:
+            blocker = roadmap.tasks[blocker_id]
+            if blocked_id in blocker.blocking_tasks:
+                blocker.blocking_tasks.remove(blocked_id)
+
+        if blocked_id in roadmap.tasks:
+            blocked = roadmap.tasks[blocked_id]
+            if blocker_id in blocked.blocked_by:
+                blocked.blocked_by.remove(blocker_id)
+
+    def is_task_blocked(self, task_id: str) -> bool:
+        """Check if a task is blocked by incomplete dependencies."""
+        roadmap = self.get_roadmap()
+
+        if task_id not in roadmap.tasks:
+            return False
+
+        task = roadmap.tasks[task_id]
+
+        # Check if any blocking tasks are not DONE
+        for blocker_id in task.blocked_by:
+            blocker = roadmap.tasks.get(blocker_id)
+            if blocker and blocker.status != TaskStatus.DONE:
+                return True
+
+        return False
+
+    def get_blocked_by_tasks(self, task_id: str) -> list[Task]:
+        """Get list of tasks that are blocking this task."""
+        roadmap = self.get_roadmap()
+
+        if task_id not in roadmap.tasks:
+            return []
+
+        task = roadmap.tasks[task_id]
+        blocked_by = []
+
+        for blocker_id in task.blocked_by:
+            if blocker_id in roadmap.tasks:
+                blocked_by.append(roadmap.tasks[blocker_id])
+
+        return blocked_by
+
+    # ========================================================================
     # COMPLETION
     # ========================================================================
 

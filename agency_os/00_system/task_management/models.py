@@ -38,6 +38,8 @@ class Task(BaseModel):
     time_used_mins: int = 0
     validation_checks: list[ValidationCheck] = Field(default_factory=list)
     blocking_reason: str | None = None
+    blocked_by: list[str] = Field(default_factory=list)  # List of task IDs blocking this task
+    blocking_tasks: list[str] = Field(default_factory=list)  # List of task IDs this task blocks
     related_files: list[str] = Field(default_factory=list)
     git_commits: list[str] = Field(default_factory=list)
 
@@ -46,6 +48,10 @@ class Task(BaseModel):
 
     def get_failed_checks(self) -> list[ValidationCheck]:
         return [c for c in self.validation_checks if not c.status]
+
+    def is_blocked(self) -> bool:
+        """Check if this task is currently blocked by other tasks."""
+        return len(self.blocked_by) > 0
 
 
 class ActiveMission(BaseModel):
