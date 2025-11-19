@@ -34,8 +34,8 @@ from executor import GraphExecutor, WorkflowGraph, WorkflowNode, WorkflowEdge  #
 
 class TestAgentRouter:
     def test_router_selects_coder_for_debugging(self):
-        coder = CoderAgent(name="coder")
-        researcher = ResearcherAgent(name="researcher")
+        coder = DummyAgent(name="coder", capabilities=["coding", "debugging", "python"]) 
+        researcher = DummyAgent(name="researcher", capabilities=["research", "search", "synthesis"]) 
         router = AgentRouter([coder, researcher])
 
         action = SemanticAction(
@@ -63,8 +63,8 @@ class TestAgentRouter:
 
 class TestExecutorNeuralLink:
     def test_executor_uses_router_for_step(self):
-        coder = CoderAgent(name="coder")
-        researcher = ResearcherAgent(name="researcher")
+        coder = DummyAgent(name="coder", capabilities=["coding", "debugging"]) 
+        researcher = DummyAgent(name="researcher", capabilities=["research"]) 
         router = AgentRouter([coder, researcher])
 
         # Minimal workflow graph with one node needing debugging
