@@ -73,10 +73,20 @@ else:
 
 ## 💰 Cost Considerations
 
-**Gemini 1.5 Flash (default):**
+**Gemini 2.0 Flash Experimental (default):**
+- Input: **$0.00** per million tokens (FREE during preview!)
+- Output: **$0.00** per million tokens (FREE during preview!)
+- **Typical request: $0.00** ✨
+
+**Gemini 1.5 Flash (fallback):**
 - Input: $0.075 per million tokens
 - Output: $0.30 per million tokens
-- **Typical request: ~$0.0001** (extremely cheap!)
+- Typical request: ~$0.0001 (extremely cheap!)
+
+**Available models:**
+- `gemini-2.0-flash-exp` (default, FREE, fastest)
+- `gemini-1.5-flash` / `gemini-1.5-flash-latest` (stable)
+- `gemini-1.5-pro` / `gemini-1.5-pro-latest` (most capable)
 
 **Budget limits (set in code):**
 ```python
@@ -116,7 +126,8 @@ Expected output in logs:
 ```
 ✅ API key detected - Provider: GOOGLE - LIVE FIRE ARMED
 ✅ Real LLM invocation successful
-✅ Actual cost incurred: $0.0001
+Model: gemini-2.0-flash-exp
+✅ Actual cost incurred: $0.00 (FREE during preview!)
 ```
 
 ## 🔒 Security

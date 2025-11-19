@@ -6,17 +6,18 @@ GAD-511: Google Gemini Provider Implementation
 Concrete implementation of LLMProvider for Google's Gemini models.
 
 Features:
-- Gemini 1.5 Flash support (cost/speed efficient default)
-- Gemini 1.5 Pro support
+- Gemini 2.0 Flash (experimental, latest, fastest)
+- Gemini 1.5 Flash/Pro support (stable)
 - Cost calculation based on Google pricing
 - Retry logic with exponential backoff
 - API key validation
 
-Pricing (as of 2025-01-29):
+Pricing (as of 2025-11-19):
+- Gemini 2.0 Flash (Exp): $0.00/MTok (free during preview)
 - Gemini 1.5 Flash: $0.075/MTok input, $0.30/MTok output (≤128K tokens)
 - Gemini 1.5 Pro: $1.25/MTok input, $5.00/MTok output (≤128K tokens)
 
-Version: 1.0 (GAD-511 Addon)
+Version: 1.1 (Updated for Gemini 2.0)
 """
 
 import logging
@@ -39,12 +40,15 @@ class GoogleProvider(LLMProvider):
     """
     Google Gemini provider implementation.
 
-    Supports Gemini 1.5 Flash and Pro models.
+    Supports Gemini 2.0 and 1.5 models (Flash/Pro).
     Handles API communication, retries, and cost calculation.
     """
 
     # Pricing table (USD per million tokens, ≤128K context)
     PRICING = {
+        # Gemini 2.0 (latest - experimental, free during preview)
+        "gemini-2.0-flash-exp": {"input": 0.0, "output": 0.0},
+        # Gemini 1.5 (stable)
         "gemini-1.5-flash": {"input": 0.075, "output": 0.30},
         "gemini-1.5-flash-latest": {"input": 0.075, "output": 0.30},
         "gemini-1.5-pro": {"input": 1.25, "output": 5.00},
@@ -87,7 +91,7 @@ class GoogleProvider(LLMProvider):
     def invoke(
         self,
         prompt: str,
-        model: str = "gemini-1.5-flash",
+        model: str = "gemini-2.0-flash-exp",
         max_tokens: int = 4096,
         temperature: float = 1.0,
         max_retries: int = 3,
@@ -98,7 +102,7 @@ class GoogleProvider(LLMProvider):
 
         Args:
             prompt: Input prompt
-            model: Gemini model identifier
+            model: Gemini model identifier (default: gemini-2.0-flash-exp)
             max_tokens: Maximum output tokens
             temperature: Sampling temperature
             max_retries: Maximum retry attempts
@@ -221,8 +225,10 @@ class GoogleProvider(LLMProvider):
             Cost in USD
         """
         if model not in self.PRICING:
-            logger.warning(f"Unknown Google Gemini model pricing: {model}, using Flash defaults")
-            pricing = self.PRICING["gemini-1.5-flash"]
+            logger.warning(
+                f"Unknown Google Gemini model pricing: {model}, using 2.0 Flash defaults"
+            )
+            pricing = self.PRICING["gemini-2.0-flash-exp"]
         else:
             pricing = self.PRICING[model]
 

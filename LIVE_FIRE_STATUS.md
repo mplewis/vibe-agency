@@ -121,10 +121,15 @@ Cost tracking + telemetry
 
 ## 💰 Cost Analysis
 
-**Per request (typical):**
+**Default Model: Gemini 2.0 Flash (Experimental)**
+- **FREE during preview** ($0.00/MTok input & output)
+- Faster and more capable than 1.5
+- **Total cost per request: $0.00** ✨
+
+**Fallback: Gemini 1.5 Flash (if 2.0 unavailable)**
 - Input tokens: ~140 × $0.075/MTok = $0.000011
 - Output tokens: ~70 × $0.30/MTok = $0.000021
-- **Total: ~$0.000032** (approx $0.0001)
+- Total: ~$0.000032 (approx $0.0001)
 
 **Budget limits:**
 - Per request: $1.00 (budget_limit in code)
