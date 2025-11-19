@@ -34,16 +34,18 @@ jobs:
         uv run python demo_google_integration.py
 
     - name: Test with Google API Key (if available)
-      if: ${{ secrets.GOOGLE_API_KEY != '' }}
       env:
         GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
-        VIBE_LIVE_FIRE: true
+        VIBE_LIVE_FIRE: 'true'
       run: |
-        echo "🔥 Testing with real GOOGLE_API_KEY from GitHub Secrets"
-        uv run python scripts/prove_intelligence.py
+        if [ -n "$GOOGLE_API_KEY" ]; then
+          echo "🔥 Testing with real GOOGLE_API_KEY from GitHub Secrets"
+          uv run python scripts/prove_intelligence.py
+        else
+          echo "⚠️  GOOGLE_API_KEY not set in secrets - skipping live test"
+          echo "To enable: Settings → Secrets → Actions → New secret → GOOGLE_API_KEY"
+        fi
 
-    - name: Show cost summary
-      if: ${{ secrets.GOOGLE_API_KEY != '' }}
+    - name: Show result
       run: |
-        echo "✅ Google Gemini provider test complete"
-        echo "Check logs above for cost information"
+        echo "✅ Google Gemini provider integration test complete"
