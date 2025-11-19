@@ -282,14 +282,13 @@ echo "System has $SYSTEM_MEMORY GB RAM"
 | **Arms (GAD-6)** | ✅ DONE | Knowledge system with semantic search |
 | **Legs (GAD-3)** | ✅ DONE | 5 agent personas with integration hub |
 | **Feet (GAD-4)** | ✅ DONE | QA suite (linting + testing) |
-| **Orchestration (GAD-2)** | ✅ DONE | Atomic Git delivery with draft PR safety gate |
+| **Orchestration (GAD-2)** | ✅ DONE | Secure atomic Git delivery with draft PR safety gate |
 | **First Contact** | ✅ DONE | vibe-sysinfo & vibe-dashboard system monitoring |
 
 ### Test Coverage
 
-- **Agent Framework Tests:** 27/27 passing ✅
-- **System Info Tests:** 8/8 passing ✅
-- **Total:** 35/35 core tests passing
+- **Total Tests:** 519/532 passing (13 skipped) ✅
+- **Coverage:** 52%
 
 ### Available Commands
 
@@ -336,6 +335,12 @@ bin/vibe-sysinfo      ✅ System information
 - **psutil Integration** — CPU, Memory, Disk, Uptime collection
 - **rich Output** — Formatted tables and JSON export
 - **8 Unit Tests** — Comprehensive validation
+- **Status:** DONE ✅
+
+### GAD-8: Health Dashboard
+- **bin/vibe-dashboard** — Unified health and mission status dashboard
+- **GAD Integration** — Displays data from all GAD layers (Mission Control, Health, Git, PRs)
+- **JSON Export** — Provides machine-readable output for system integration
 - **Status:** DONE ✅
 
 ---
