@@ -138,14 +138,26 @@ def _detect_provider() -> str:
     Returns:
         Provider name string
     """
-    if os.environ.get("GOOGLE_API_KEY"):
+    def is_valid_key(key: str | None) -> bool:
+        """Check if key is valid (not None, not empty, not a placeholder)"""
+        if not key:
+            return False
+        # Filter out common placeholder values
+        placeholders = ["your-", "xxx", "placeholder", "example", "test-key"]
+        return not any(placeholder in key.lower() for placeholder in placeholders)
+
+    google_key = os.environ.get("GOOGLE_API_KEY")
+    anthropic_key = os.environ.get("ANTHROPIC_API_KEY")
+    openai_key = os.environ.get("OPENAI_API_KEY")
+
+    if is_valid_key(google_key):
         return "google"
-    elif os.environ.get("ANTHROPIC_API_KEY"):
+    elif is_valid_key(anthropic_key):
         return "anthropic"
-    elif os.environ.get("OPENAI_API_KEY"):
+    elif is_valid_key(openai_key):
         return "openai"
     else:
-        logger.info("No API keys found, using NoOp provider")
+        logger.info("No API keys detected. Activating Mock/Offline Mode (NoOp provider)")
         return "noop"
 
 
