@@ -38,6 +38,15 @@ fi
 VIBE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$VIBE_ROOT"
 
+# --- AUTO-PROVISIONING (GAD-5: Zero-Config Boot) ---
+# If no .env exists, create it from template silently
+if [ ! -f .env ]; then
+    if [ -f .env.template ]; then
+        cp .env.template .env
+        # Note: .env will have placeholder values, but phoenix.py handles missing keys gracefully
+    fi
+fi
+
 # Only clear if we have a real terminal
 if [ "$USE_COLOR" = true ]; then
     clear

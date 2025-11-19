@@ -33,15 +33,22 @@ Design Principles:
 4. Safe defaults (conservative quotas, no live fire)
 5. Self-documenting (every field has a description)
 
-Version: 1.0 (GAD-100)
+Version: 1.1 (GAD-100 + GAD-5: Zero-Config Boot)
 """
 
 import logging
 import os
 from pathlib import Path
 
+# GAD-5: Auto-load .env files (Zero-Config Boot)
+from dotenv import load_dotenv
+
 from pydantic import model_validator
 from pydantic_settings import BaseSettings
+
+# Load .env file automatically on module import
+# This ensures environment variables are available before any config is created
+load_dotenv()
 
 logger = logging.getLogger(__name__)
 
@@ -234,6 +241,7 @@ class PhoenixConfig(BaseSettings):
         env_file = ".env"
         env_file_encoding = "utf-8"
         case_sensitive = False
+        extra = "ignore"  # GAD-5: Ignore unknown env vars for robustness
 
     def validate_configuration(self) -> tuple[bool, list[str]]:
         """
