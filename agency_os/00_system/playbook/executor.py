@@ -153,6 +153,7 @@ class GraphExecutor:
         self.agent: AgentInterface = MockAgent()  # Default to mock (backward compatible)
         self.router = None  # AgentRouter (GAD-904) when connected
         self.quota = None  # OperationalQuota instance when safety layer active
+        self.lens_prompt = None  # GAD-906/907: Semantic lens injection
         self.execution_history: list[ExecutionResult] = []
 
     def set_agent(self, agent: AgentInterface) -> None:
@@ -167,6 +168,19 @@ class GraphExecutor:
     def set_quota_manager(self, quota_manager) -> None:  # type: ignore
         """Attach OperationalQuota for pre-flight cost checks"""
         self.quota = quota_manager
+
+    def set_lens(self, lens_prompt: str) -> None:
+        """
+        Set semantic lens for mindset injection (GAD-906/907).
+
+        The lens prompt will be prepended to all task contexts, transforming
+        the agent's thinking mode from worker → engineer.
+
+        Args:
+            lens_prompt: Formatted lens prompt from lens_loader.load_lens()
+        """
+        self.lens_prompt = lens_prompt
+        logger.info(f"🔬 Semantic lens activated ({len(lens_prompt)} chars)")
 
     def _topological_sort(self, graph: WorkflowGraph) -> ExecutionPlan:
         """
@@ -352,8 +366,16 @@ class GraphExecutor:
 
         node = graph.nodes[node_id]
 
-        # Build the prompt: context (if provided) + node description
-        prompt = context if context else node.description
+        # Build the prompt: [LENS] + context (if provided) + node description
+        # GAD-906/907: Semantic lens injection for mindset transformation
+        base_prompt = context if context else node.description
+
+        if self.lens_prompt:
+            # Format: [MINDSET: <lens>]\n\n[TASK]\n<actual task>
+            prompt = f"{self.lens_prompt}\n\n{'=' * 80}\n[TASK]\n{'=' * 80}\n\n{base_prompt}"
+            logger.debug(f"🔬 Lens injected into prompt ({len(self.lens_prompt)} chars)")
+        else:
+            prompt = base_prompt
 
         # Quota pre-flight check
         if self.quota:
