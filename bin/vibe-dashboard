@@ -47,7 +47,6 @@ def run_command(cmd, timeout=10):
             capture_output=True,
             text=True,
             timeout=timeout,
-            cwd="/Users/ss/projects/vibe-agency",
         )
         return result.returncode == 0, result.stdout.strip(), result.stderr.strip()
     except subprocess.TimeoutExpired:
@@ -58,7 +57,7 @@ def run_command(cmd, timeout=10):
 
 def load_mission_state():
     """Load mission state from JSON file."""
-    state_file = Path("/Users/ss/projects/vibe-agency/.vibe/state/active_mission.json")
+    state_file = Path.cwd() / ".vibe" / "state" / "active_mission.json"
     if not state_file.exists():
         return None
 

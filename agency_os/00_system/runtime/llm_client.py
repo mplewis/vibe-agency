@@ -164,8 +164,9 @@ class NoOpClient:
 
     def __init__(self):
         logger.warning("NoOpClient initialized - running in knowledge-only mode")
+        self.messages = self  # Make self.messages point to self for API compatibility
 
-    def messages_create(self, **kwargs) -> Any:
+    def create(self, **kwargs) -> Any:
         """Mock messages.create() that returns empty response"""
         logger.warning("NoOpClient: Skipping LLM call (no API key)")
 

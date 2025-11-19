@@ -37,8 +37,10 @@ Version: 1.0 (GAD-100)
 """
 
 import logging
+import os
 from pathlib import Path
 
+from pydantic import model_validator
 from pydantic_settings import BaseSettings
 
 logger = logging.getLogger(__name__)
@@ -145,6 +147,20 @@ class SafetyConfig(BaseSettings):
 
     enable_audit_logging: bool = True
     """Log all requests and results for audit trail"""
+
+    @model_validator(mode="after")
+    def check_legacy_env_vars(self) -> "SafetyConfig":
+        """Support legacy VIBE_LIVE_FIRE environment variable for backward compatibility"""
+        # Only override if live_fire_enabled is still False (not explicitly set via VIBE_SAFETY_LIVE_FIRE_ENABLED)
+        if not self.live_fire_enabled:
+            legacy_value = os.getenv("VIBE_LIVE_FIRE", "").lower()
+            if legacy_value == "true":
+                self.live_fire_enabled = True
+                logger.info(
+                    "🔥 LIVE FIRE enabled via legacy VIBE_LIVE_FIRE env var "
+                    "(prefer VIBE_SAFETY_LIVE_FIRE_ENABLED for new code)"
+                )
+        return self
 
     class Config:
         env_prefix = "VIBE_SAFETY_"
