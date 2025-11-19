@@ -41,8 +41,8 @@ spec.loader.exec_module(architect_module)
 ArchitectAgent = architect_module.ArchitectAgent
 
 __all__ = [
+    "ArchitectAgent",
     "CoderAgent",
     "ResearcherAgent",
     "ReviewerAgent",
-    "ArchitectAgent",
 ]

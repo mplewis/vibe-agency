@@ -1,7 +1,6 @@
 """Tests for priority-based task selection (GAD-701 Task 5)"""
 
 
-
 def test_priority_selection_highest_first():
     """Test that highest priority TODO task is selected."""
     roadmap = {
@@ -155,9 +154,7 @@ def test_priority_selection_skips_done_tasks():
 
     # Collect only TODO tasks (skip DONE)
     todo_tasks = [
-        (task_id, task)
-        for task_id, task in roadmap["tasks"].items()
-        if task["status"] == "TODO"
+        (task_id, task) for task_id, task in roadmap["tasks"].items() if task["status"] == "TODO"
     ]
 
     # Should have 2 TODO tasks

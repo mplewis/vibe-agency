@@ -21,7 +21,9 @@ from rich.table import Table
 from rich.text import Text
 
 # Load task_management module dynamically to handle 00_system directory name
-_task_mgmt_path = Path(__file__).parent.parent.parent / "00_system" / "task_management" / "__init__.py"
+_task_mgmt_path = (
+    Path(__file__).parent.parent.parent / "00_system" / "task_management" / "__init__.py"
+)
 _spec = importlib.util.spec_from_file_location("task_management", _task_mgmt_path)
 _task_mgmt = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(_task_mgmt)
@@ -71,11 +73,7 @@ def mission_status(manager: TaskManager) -> None:
 
     # Header
     console.print()
-    console.print(
-        Align.center(
-            Text("🎯 MISSION CONTROL", style="bold cyan", justify="center")
-        )
-    )
+    console.print(Align.center(Text("🎯 MISSION CONTROL", style="bold cyan", justify="center")))
     console.print(Align.center("─" * 60))
     console.print()
 
@@ -87,7 +85,7 @@ def mission_status(manager: TaskManager) -> None:
             Panel(
                 f"[red]❌ Error loading mission state[/red]\n{e}",
                 border_style="red",
-                title="[red]ERROR[/red]"
+                title="[red]ERROR[/red]",
             )
         )
         return
@@ -100,7 +98,7 @@ def mission_status(manager: TaskManager) -> None:
             Panel(
                 "[yellow]No active task[/yellow]\n\nUse: [bold]vibe mission start <id>[/bold] to start a task",
                 border_style="yellow",
-                title="[yellow]STATUS[/yellow]"
+                title="[yellow]STATUS[/yellow]",
             )
         )
         return
@@ -131,11 +129,7 @@ def mission_status(manager: TaskManager) -> None:
         task_info += f"[dim]Blocker:[/dim] [red]{current_task.blocking_reason}[/red]\n"
 
     console.print(
-        Panel(
-            task_info.strip(),
-            border_style=status_color,
-            title="[bold]CURRENT TASK[/bold]"
-        )
+        Panel(task_info.strip(), border_style=status_color, title="[bold]CURRENT TASK[/bold]")
     )
     console.print()
 
@@ -163,18 +157,18 @@ def mission_status(manager: TaskManager) -> None:
             error_text += f"• {check.description}: {error_msg}\n"
 
         console.print(
-            Panel(
-                error_text.strip(),
-                border_style="red",
-                title="[red]❌ VALIDATION ERRORS[/red]"
-            )
+            Panel(error_text.strip(), border_style="red", title="[red]❌ VALIDATION ERRORS[/red]")
         )
         console.print()
 
     # Quick Stats
     stats_table = Table(show_header=False, box=None)
-    stats_table.add_row("[dim]Tasks Completed:[/dim]", f"[bold]{mission.total_tasks_completed}[/bold]")
-    stats_table.add_row("[dim]Total Time Spent:[/dim]", f"[bold]{mission.total_time_spent_mins} mins[/bold]")
+    stats_table.add_row(
+        "[dim]Tasks Completed:[/dim]", f"[bold]{mission.total_tasks_completed}[/bold]"
+    )
+    stats_table.add_row(
+        "[dim]Total Time Spent:[/dim]", f"[bold]{mission.total_time_spent_mins} mins[/bold]"
+    )
     stats_table.add_row("[dim]Current Phase:[/dim]", f"[bold]{mission.current_phase}[/bold]")
 
     console.print(stats_table)
@@ -272,11 +266,7 @@ def mission_metrics(manager: TaskManager, phase_name: str | None = None) -> None
 
         console.clear()
         console.print()
-        console.print(
-            Align.center(
-                Text("📊 PROJECT METRICS", style="bold cyan", justify="center")
-            )
-        )
+        console.print(Align.center(Text("📊 PROJECT METRICS", style="bold cyan", justify="center")))
         console.print(Align.center("─" * 60))
         console.print()
 
@@ -292,12 +282,20 @@ def mission_metrics(manager: TaskManager, phase_name: str | None = None) -> None
             console.print()
 
             metrics_table = Table(show_header=False, box=None)
-            metrics_table.add_row("[dim]Total Tasks:[/dim]", f"[bold]{metrics['total_tasks']}[/bold]")
-            metrics_table.add_row("[dim]Completed:[/dim]", f"[green]{metrics['completed_tasks']}[/green]")
-            metrics_table.add_row("[dim]In Progress:[/dim]", f"[blue]{metrics['in_progress_tasks']}[/blue]")
+            metrics_table.add_row(
+                "[dim]Total Tasks:[/dim]", f"[bold]{metrics['total_tasks']}[/bold]"
+            )
+            metrics_table.add_row(
+                "[dim]Completed:[/dim]", f"[green]{metrics['completed_tasks']}[/green]"
+            )
+            metrics_table.add_row(
+                "[dim]In Progress:[/dim]", f"[blue]{metrics['in_progress_tasks']}[/blue]"
+            )
             metrics_table.add_row("[dim]Todo:[/dim]", f"[yellow]{metrics['todo_tasks']}[/yellow]")
             metrics_table.add_row("[dim]Blocked:[/dim]", f"[red]{metrics['blocked_tasks']}[/red]")
-            metrics_table.add_row("[dim]Progress:[/dim]", f"[bold]{metrics['progress_percent']}%[/bold]")
+            metrics_table.add_row(
+                "[dim]Progress:[/dim]", f"[bold]{metrics['progress_percent']}%[/bold]"
+            )
 
             console.print(metrics_table)
         else:
@@ -310,28 +308,18 @@ def mission_metrics(manager: TaskManager, phase_name: str | None = None) -> None
             console.print("[bold cyan]OVERALL PROGRESS[/bold cyan]")
             progress_table = Table(show_header=False, box=None)
             progress_table.add_row(
-                "[dim]Total Tasks:[/dim]",
-                f"[bold]{overall['total_tasks']}[/bold]"
+                "[dim]Total Tasks:[/dim]", f"[bold]{overall['total_tasks']}[/bold]"
             )
             progress_table.add_row(
-                "[dim]Completed:[/dim]",
-                f"[green]{overall['completed_tasks']}[/green]"
+                "[dim]Completed:[/dim]", f"[green]{overall['completed_tasks']}[/green]"
             )
             progress_table.add_row(
-                "[dim]In Progress:[/dim]",
-                f"[blue]{overall['in_progress_tasks']}[/blue]"
+                "[dim]In Progress:[/dim]", f"[blue]{overall['in_progress_tasks']}[/blue]"
             )
+            progress_table.add_row("[dim]Todo:[/dim]", f"[yellow]{overall['todo_tasks']}[/yellow]")
+            progress_table.add_row("[dim]Blocked:[/dim]", f"[red]{overall['blocked_tasks']}[/red]")
             progress_table.add_row(
-                "[dim]Todo:[/dim]",
-                f"[yellow]{overall['todo_tasks']}[/yellow]"
-            )
-            progress_table.add_row(
-                "[dim]Blocked:[/dim]",
-                f"[red]{overall['blocked_tasks']}[/red]"
-            )
-            progress_table.add_row(
-                "[dim]Progress:[/dim]",
-                f"[bold]{overall['progress_percent']}%[/bold]"
+                "[dim]Progress:[/dim]", f"[bold]{overall['progress_percent']}%[/bold]"
             )
             console.print(progress_table)
             console.print()
@@ -341,15 +329,15 @@ def mission_metrics(manager: TaskManager, phase_name: str | None = None) -> None
             time_table = Table(show_header=False, box=None)
             time_table.add_row(
                 "[dim]Total Budgeted:[/dim]",
-                f"[bold]{time_metrics['total_time_budgeted_mins']} mins[/bold]"
+                f"[bold]{time_metrics['total_time_budgeted_mins']} mins[/bold]",
             )
             time_table.add_row(
                 "[dim]Total Used:[/dim]",
-                f"[bold]{time_metrics['total_time_used_mins']} mins[/bold]"
+                f"[bold]{time_metrics['total_time_used_mins']} mins[/bold]",
             )
             time_table.add_row(
                 "[dim]Utilization:[/dim]",
-                f"[bold]{time_metrics['time_utilization_percent']}%[/bold]"
+                f"[bold]{time_metrics['time_utilization_percent']}%[/bold]",
             )
             console.print(time_table)
             console.print()
@@ -358,20 +346,16 @@ def mission_metrics(manager: TaskManager, phase_name: str | None = None) -> None
             console.print("[bold cyan]VALIDATION CHECKS[/bold cyan]")
             validation_table = Table(show_header=False, box=None)
             validation_table.add_row(
-                "[dim]Total Checks:[/dim]",
-                f"[bold]{validation_metrics['total_checks']}[/bold]"
+                "[dim]Total Checks:[/dim]", f"[bold]{validation_metrics['total_checks']}[/bold]"
             )
             validation_table.add_row(
-                "[dim]Passing:[/dim]",
-                f"[green]{validation_metrics['passing_checks']}[/green]"
+                "[dim]Passing:[/dim]", f"[green]{validation_metrics['passing_checks']}[/green]"
             )
             validation_table.add_row(
-                "[dim]Failing:[/dim]",
-                f"[red]{validation_metrics['failing_checks']}[/red]"
+                "[dim]Failing:[/dim]", f"[red]{validation_metrics['failing_checks']}[/red]"
             )
             validation_table.add_row(
-                "[dim]Pass Rate:[/dim]",
-                f"[bold]{validation_metrics['check_pass_percent']}%[/bold]"
+                "[dim]Pass Rate:[/dim]", f"[bold]{validation_metrics['check_pass_percent']}%[/bold]"
             )
             console.print(validation_table)
             console.print()
@@ -379,11 +363,7 @@ def mission_metrics(manager: TaskManager, phase_name: str | None = None) -> None
             # Phase Metrics
             console.print("[bold cyan]PHASE BREAKDOWN[/bold cyan]")
             phases = calc.get_all_phase_metrics()
-            phase_table = Table(
-                title="Phase Metrics",
-                show_header=True,
-                header_style="bold"
-            )
+            phase_table = Table(title="Phase Metrics", show_header=True, header_style="bold")
             phase_table.add_column("Phase", style="bold")
             phase_table.add_column("Status", style="dim")
             phase_table.add_column("Tasks", justify="right")
@@ -396,7 +376,7 @@ def mission_metrics(manager: TaskManager, phase_name: str | None = None) -> None
                     phase_metrics["phase_status"],
                     str(phase_metrics["total_tasks"]),
                     str(phase_metrics["completed_tasks"]),
-                    f"{phase_metrics['progress_percent']}%"
+                    f"{phase_metrics['progress_percent']}%",
                 )
 
             console.print(phase_table)
@@ -435,20 +415,20 @@ Examples:
 Related:
   See .vibe/config/roadmap.yaml for task definitions
   See .vibe/state/active_mission.json for current state
-        """
+        """,
     )
 
     parser.add_argument(
         "command",
         type=str,
         choices=["status", "start", "validate", "complete", "metrics"],
-        help="Mission control command"
+        help="Mission control command",
     )
     parser.add_argument(
         "task_id",
         type=str,
         nargs="?",
-        help="Task ID (required for 'start' command) or phase name (optional for 'metrics')"
+        help="Task ID (required for 'start' command) or phase name (optional for 'metrics')",
     )
 
     args = parser.parse_args()

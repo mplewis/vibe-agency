@@ -5,7 +5,9 @@ from typing import Any
 from .models import ActiveMission, Roadmap, TaskStatus
 
 
-def generate_next_task(roadmap: Roadmap, mission: ActiveMission, use_priority: bool = True) -> dict[str, Any] | None:
+def generate_next_task(
+    roadmap: Roadmap, mission: ActiveMission, use_priority: bool = True
+) -> dict[str, Any] | None:
     """
     Auto-select the next task based on roadmap state.
 

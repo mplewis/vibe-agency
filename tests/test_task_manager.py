@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 
 # Import task_management module dynamically (00_system starts with digit)
-task_management = importlib.import_module('agency_os.00_system.task_management')
+task_management = importlib.import_module("agency_os.00_system.task_management")
 TaskManager = task_management.TaskManager
 Task = task_management.Task
 ActiveMission = task_management.ActiveMission
@@ -34,10 +34,7 @@ class TestTaskManagerPersistence:
 
     def test_save_and_load_mission(self, task_manager, temp_vibe_root):
         """Test that mission state is saved and loaded correctly"""
-        mission = ActiveMission(
-            current_phase="CODING",
-            total_tasks_completed=5
-        )
+        mission = ActiveMission(current_phase="CODING", total_tasks_completed=5)
         task_manager._save_mission(mission)
 
         # Verify file was created
@@ -76,7 +73,7 @@ class TestFileLocking:
         # Verify JSON is valid (not corrupted)
         with open(task_manager.state_file) as f:
             data = json.load(f)
-            assert data['total_tasks_completed'] == 2
+            assert data["total_tasks_completed"] == 2
 
 
 class TestValidation:
@@ -95,7 +92,7 @@ class TestValidation:
             id="test-task",
             name="Test Task",
             description="A test task",
-            status=TaskStatus.IN_PROGRESS
+            status=TaskStatus.IN_PROGRESS,
         )
 
         mission = ActiveMission(current_task=task)

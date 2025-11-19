@@ -8,19 +8,18 @@ Tests verify the integration hub connects to:
   - Brain (GAD-7): Status reporting
 """
 
-import sys
-from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
-import pytest
-
 # Add agency_os to path
 import importlib.util
+from pathlib import Path
+from unittest.mock import MagicMock, patch
+
+import pytest
+
 vibe_root = Path(__file__).parent.parent
 
 # Dynamic import to handle numeric directory names
 spec = importlib.util.spec_from_file_location(
-    "base_agent",
-    vibe_root / "agency_os" / "03_agents" / "base_agent.py"
+    "base_agent", vibe_root / "agency_os" / "03_agents" / "base_agent.py"
 )
 base_agent_module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(base_agent_module)
@@ -47,11 +46,7 @@ class TestBaseAgentInit:
         (tmp_path / "bin" / "vibe-shell").write_text("#!/bin/bash\necho test")
         (tmp_path / "bin" / "vibe-knowledge").write_text("#!/bin/bash\necho test")
 
-        agent = BaseAgent(
-            name="test-agent",
-            role="Test Role",
-            vibe_root=tmp_path
-        )
+        agent = BaseAgent(name="test-agent", role="Test Role", vibe_root=tmp_path)
 
         assert agent.name == "test-agent"
         assert agent.role == "Test Role"
@@ -72,11 +67,7 @@ class TestBaseAgentInit:
         (tmp_path / "bin" / "vibe-shell").touch()
         (tmp_path / "bin" / "vibe-knowledge").touch()
 
-        agent = BaseAgent(
-            name="test-agent",
-            role="Test Role",
-            vibe_root=tmp_path
-        )
+        agent = BaseAgent(name="test-agent", role="Test Role", vibe_root=tmp_path)
 
         assert agent.context["layer"] == "RUNTIME"
         assert agent.context["user"] == "test"
@@ -86,11 +77,7 @@ class TestBaseAgentInit:
         (tmp_path / ".vibe" / "runtime").mkdir(parents=True)
 
         with pytest.raises(RuntimeError, match="Infrastructure incomplete"):
-            BaseAgent(
-                name="test-agent",
-                role="Test Role",
-                vibe_root=tmp_path
-            )
+            BaseAgent(name="test-agent", role="Test Role", vibe_root=tmp_path)
 
 
 class TestBaseAgentExecution:
@@ -103,23 +90,17 @@ class TestBaseAgentExecution:
         (tmp_path / ".vibe" / "config").mkdir(parents=True)
         (tmp_path / "bin").mkdir(parents=True)
 
-        (tmp_path / ".vibe" / "runtime" / "context.json").write_text('{}')
+        (tmp_path / ".vibe" / "runtime" / "context.json").write_text("{}")
         (tmp_path / ".vibe" / "config" / "roadmap.yaml").write_text("test")
         (tmp_path / "bin" / "vibe-shell").write_text("#!/bin/bash\necho test")
         (tmp_path / "bin" / "vibe-knowledge").write_text("#!/bin/bash\necho test")
 
-        agent = BaseAgent(
-            name="test-agent",
-            role="Test Role",
-            vibe_root=tmp_path
-        )
+        agent = BaseAgent(name="test-agent", role="Test Role", vibe_root=tmp_path)
 
         # Mock subprocess.run for vibe-shell
         with patch("subprocess.run") as mock_run:
             mock_run.return_value = MagicMock(
-                returncode=0,
-                stdout="Command executed successfully",
-                stderr=""
+                returncode=0, stdout="Command executed successfully", stderr=""
             )
 
             result = agent.execute_command("echo hello")
@@ -136,23 +117,15 @@ class TestBaseAgentExecution:
         (tmp_path / ".vibe" / "config").mkdir(parents=True)
         (tmp_path / "bin").mkdir(parents=True)
 
-        (tmp_path / ".vibe" / "runtime" / "context.json").write_text('{}')
+        (tmp_path / ".vibe" / "runtime" / "context.json").write_text("{}")
         (tmp_path / ".vibe" / "config" / "roadmap.yaml").write_text("test")
         (tmp_path / "bin" / "vibe-shell").write_text("#!/bin/bash\necho test")
         (tmp_path / "bin" / "vibe-knowledge").write_text("#!/bin/bash\necho test")
 
-        agent = BaseAgent(
-            name="test-agent",
-            role="Test Role",
-            vibe_root=tmp_path
-        )
+        agent = BaseAgent(name="test-agent", role="Test Role", vibe_root=tmp_path)
 
         with patch("subprocess.run") as mock_run:
-            mock_run.return_value = MagicMock(
-                returncode=1,
-                stdout="",
-                stderr="Command failed"
-            )
+            mock_run.return_value = MagicMock(returncode=1, stdout="", stderr="Command failed")
 
             result = agent.execute_command("false")
 
@@ -166,19 +139,16 @@ class TestBaseAgentExecution:
         (tmp_path / ".vibe" / "config").mkdir(parents=True)
         (tmp_path / "bin").mkdir(parents=True)
 
-        (tmp_path / ".vibe" / "runtime" / "context.json").write_text('{}')
+        (tmp_path / ".vibe" / "runtime" / "context.json").write_text("{}")
         (tmp_path / ".vibe" / "config" / "roadmap.yaml").write_text("test")
         (tmp_path / "bin" / "vibe-shell").write_text("#!/bin/bash\necho test")
         (tmp_path / "bin" / "vibe-knowledge").write_text("#!/bin/bash\necho test")
 
-        agent = BaseAgent(
-            name="test-agent",
-            role="Test Role",
-            vibe_root=tmp_path
-        )
+        agent = BaseAgent(name="test-agent", role="Test Role", vibe_root=tmp_path)
 
         with patch("subprocess.run") as mock_run:
             import subprocess
+
             mock_run.side_effect = subprocess.TimeoutExpired("cmd", 5)
 
             result = agent.execute_command("sleep 100", timeout=5)
@@ -196,16 +166,12 @@ class TestBaseAgentKnowledge:
         (tmp_path / ".vibe" / "config").mkdir(parents=True)
         (tmp_path / "bin").mkdir(parents=True)
 
-        (tmp_path / ".vibe" / "runtime" / "context.json").write_text('{}')
+        (tmp_path / ".vibe" / "runtime" / "context.json").write_text("{}")
         (tmp_path / ".vibe" / "config" / "roadmap.yaml").write_text("test")
         (tmp_path / "bin" / "vibe-shell").write_text("#!/bin/bash\necho test")
         (tmp_path / "bin" / "vibe-knowledge").write_text("#!/bin/bash\necho test")
 
-        agent = BaseAgent(
-            name="test-agent",
-            role="Test Role",
-            vibe_root=tmp_path
-        )
+        agent = BaseAgent(name="test-agent", role="Test Role", vibe_root=tmp_path)
 
         mock_output = """📚 Search Results for 'react'
 Path: patterns/react-component.md
@@ -213,11 +179,7 @@ Relevance: 85.0%
 """
 
         with patch("subprocess.run") as mock_run:
-            mock_run.return_value = MagicMock(
-                returncode=0,
-                stdout=mock_output,
-                stderr=""
-            )
+            mock_run.return_value = MagicMock(returncode=0, stdout=mock_output, stderr="")
 
             result = agent.consult_knowledge("react")
 
@@ -232,23 +194,15 @@ Relevance: 85.0%
         (tmp_path / ".vibe" / "config").mkdir(parents=True)
         (tmp_path / "bin").mkdir(parents=True)
 
-        (tmp_path / ".vibe" / "runtime" / "context.json").write_text('{}')
+        (tmp_path / ".vibe" / "runtime" / "context.json").write_text("{}")
         (tmp_path / ".vibe" / "config" / "roadmap.yaml").write_text("test")
         (tmp_path / "bin" / "vibe-shell").write_text("#!/bin/bash\necho test")
         (tmp_path / "bin" / "vibe-knowledge").write_text("#!/bin/bash\necho test")
 
-        agent = BaseAgent(
-            name="test-agent",
-            role="Test Role",
-            vibe_root=tmp_path
-        )
+        agent = BaseAgent(name="test-agent", role="Test Role", vibe_root=tmp_path)
 
         with patch("subprocess.run") as mock_run:
-            mock_run.return_value = MagicMock(
-                returncode=1,
-                stdout="❌ No results found",
-                stderr=""
-            )
+            mock_run.return_value = MagicMock(returncode=1, stdout="❌ No results found", stderr="")
 
             result = agent.consult_knowledge("nonexistent-thing")
 
@@ -270,11 +224,7 @@ class TestBaseAgentStatus:
         (tmp_path / "bin" / "vibe-shell").write_text("#!/bin/bash\necho test")
         (tmp_path / "bin" / "vibe-knowledge").write_text("#!/bin/bash\necho test")
 
-        agent = BaseAgent(
-            name="test-agent",
-            role="Test Role",
-            vibe_root=tmp_path
-        )
+        agent = BaseAgent(name="test-agent", role="Test Role", vibe_root=tmp_path)
 
         status = agent.report_status()
 
@@ -297,11 +247,7 @@ class TestBaseAgentStatus:
         (tmp_path / "bin" / "vibe-shell").write_text("#!/bin/bash\necho test")
         (tmp_path / "bin" / "vibe-knowledge").write_text("#!/bin/bash\necho test")
 
-        agent = BaseAgent(
-            name="test-agent",
-            role="Test Role",
-            vibe_root=tmp_path
-        )
+        agent = BaseAgent(name="test-agent", role="Test Role", vibe_root=tmp_path)
 
         context = agent.get_context()
 

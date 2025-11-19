@@ -78,8 +78,9 @@ class TaskManager:
         self._save_mission(mission)
         return task
 
-    def update_task_progress(self, time_spent_mins: int = 0,
-                             blocking_reason: str | None = None) -> Task:
+    def update_task_progress(
+        self, time_spent_mins: int = 0, blocking_reason: str | None = None
+    ) -> Task:
         """Update current task progress"""
         mission = self.get_active_mission()
 
@@ -127,7 +128,7 @@ class TaskManager:
         return {
             "valid": task.is_complete(),
             "checks": {c.id: c.status for c in task.validation_checks},
-            "failed": [c.description for c in task.get_failed_checks()]
+            "failed": [c.description for c in task.get_failed_checks()],
         }
 
     # ========================================================================
@@ -233,9 +234,7 @@ class TaskManager:
         validation = self.validate_current_task()
 
         if not validation["valid"]:
-            raise RuntimeError(
-                f"Task validation failed. Fix required: {validation['failed']}"
-            )
+            raise RuntimeError(f"Task validation failed. Fix required: {validation['failed']}")
 
         mission = self.get_active_mission()
         task = mission.current_task
@@ -256,8 +255,8 @@ class TaskManager:
         # The next_task_generator.py will be a simple stub for phase 1
         next_task_info = generate_next_task(roadmap, mission)
 
-        if next_task_info and 'id' in next_task_info:
-            next_task_id = next_task_info['id']
+        if next_task_info and "id" in next_task_info:
+            next_task_id = next_task_info["id"]
             # Load task from roadmap (since tasks are stored there)
             next_task = roadmap.tasks.get(next_task_id)
 
@@ -292,8 +291,7 @@ class TaskManager:
 
         # Build validation checks section
         checks_section = "".join(
-            f"- [{'✅' if c.status else '❌'}] {c.description}\n" 
-            for c in task.validation_checks
+            f"- [{'✅' if c.status else '❌'}] {c.description}\n" for c in task.validation_checks
         )
 
         # Build related files section
@@ -305,7 +303,7 @@ class TaskManager:
         content = f"""# {task.name}
 
 **Status:** {task.status.value}
-**Completed:** {task.completed_at.isoformat() if task.completed_at else 'N/A'}
+**Completed:** {task.completed_at.isoformat() if task.completed_at else "N/A"}
 **Time Spent:** {task.time_used_mins} mins
 
 ## Validation Checks
@@ -318,5 +316,5 @@ class TaskManager:
 {commits_section}
 """
 
-        with open(log_file, 'w') as f:
+        with open(log_file, "w") as f:
             f.write(content)

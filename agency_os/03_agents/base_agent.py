@@ -17,6 +17,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from agency_os.02_orchestration import TaskExecutor
+
 
 @dataclass
 class ExecutionResult:
@@ -415,6 +417,58 @@ class BaseAgent:
             "tests_passed": tests_passed,
             "issues": issues,
         }
+
+    # ========================================================================
+    # ATOMIC DELIVERY (GAD-2: The Atomic Gearbox)
+    # ========================================================================
+
+    def deliver_solution(self, task_id: str, message: str) -> dict[str, Any]:
+        """
+        Deliver work atomically using the TaskExecutor.
+
+        This is the SAFE, COMPLETE, ATOMIC delivery workflow:
+        1. Verify work passes QA (verify_work())
+        2. Create feature branch (feature/TASK-XXX)
+        3. Commit changes
+        4. Push to remote
+        5. Create PR on main
+        6. Return PR URL
+
+        Args:
+            task_id: Task identifier (e.g., GAD-201_TASK_EXECUTOR)
+            message: Semantic commit/PR message
+
+        Returns:
+            Dict with delivery status:
+            {
+                "success": bool,
+                "pr_url": str or None,
+                "branch": str,
+                "commit_sha": str,
+                "error": str or None
+            }
+        """
+        try:
+            executor = TaskExecutor(vibe_root=self.vibe_root)
+            result = executor.deliver(self, task_id, message)
+
+            return {
+                "success": result.success,
+                "pr_url": result.pr_url,
+                "branch": result.branch,
+                "commit_sha": result.commit_sha,
+                "error": result.error,
+                "timestamp": result.timestamp,
+            }
+        except Exception as e:
+            return {
+                "success": False,
+                "pr_url": None,
+                "branch": None,
+                "commit_sha": None,
+                "error": f"Delivery failed: {e}",
+                "timestamp": datetime.utcnow().isoformat() + "Z",
+            }
 
     # ========================================================================
     # UTILITY METHODS

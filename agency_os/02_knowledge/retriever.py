@@ -8,16 +8,14 @@ No expensive embeddings - uses keyword matching and file-based indexing.
 This is the "Librarian" that helps agents find the right knowledge artifact.
 """
 
-import os
-import re
-from pathlib import Path
 from dataclasses import dataclass
-from typing import List, Optional, Dict
+from pathlib import Path
 
 
 @dataclass
 class KnowledgeHit:
     """A knowledge artifact found in the search."""
+
     path: Path
     domain: str  # research, patterns, snippets, decisions
     title: str
@@ -36,7 +34,7 @@ class KnowledgeRetriever:
     DOMAINS = ["research", "patterns", "snippets", "decisions"]
     DEFAULT_PREVIEW_LENGTH = 200
 
-    def __init__(self, vibe_root: Optional[Path] = None):
+    def __init__(self, vibe_root: Path | None = None):
         """
         Initialize the retriever.
 
@@ -52,16 +50,10 @@ class KnowledgeRetriever:
 
         if not self.knowledge_base.exists():
             raise FileNotFoundError(
-                f"Knowledge base not found at {self.knowledge_base}. "
-                "Run GAD-601 scaffolding first."
+                f"Knowledge base not found at {self.knowledge_base}. Run GAD-601 scaffolding first."
             )
 
-    def search(
-        self,
-        query: str,
-        domain: str = "all",
-        limit: int = 10
-    ) -> List[KnowledgeHit]:
+    def search(self, query: str, domain: str = "all", limit: int = 10) -> list[KnowledgeHit]:
         """
         Search for knowledge artifacts matching the query.
 
@@ -77,7 +69,7 @@ class KnowledgeRetriever:
             raise ValueError(f"Unknown domain: {domain}. Valid: {self.DOMAINS}")
 
         query_lower = query.lower()
-        hits: List[KnowledgeHit] = []
+        hits: list[KnowledgeHit] = []
 
         # Determine which domains to search
         domains_to_search = self.DOMAINS if domain == "all" else [domain]
@@ -96,7 +88,7 @@ class KnowledgeRetriever:
 
                 # Read file content
                 try:
-                    with open(file_path, "r", encoding="utf-8") as f:
+                    with open(file_path, encoding="utf-8") as f:
                         content = f.read()
                 except (OSError, UnicodeDecodeError):
                     continue
@@ -117,7 +109,7 @@ class KnowledgeRetriever:
                         domain=search_domain,
                         title=title,
                         preview=preview,
-                        relevance_score=relevance
+                        relevance_score=relevance,
                     )
                     hits.append(hit)
 
@@ -204,7 +196,7 @@ class KnowledgeRetriever:
 
         return preview.strip() + "..."
 
-    def list_domain(self, domain: str) -> List[Path]:
+    def list_domain(self, domain: str) -> list[Path]:
         """
         List all files in a domain.
 
@@ -248,7 +240,7 @@ class KnowledgeRetriever:
         if not full_path.is_file():
             raise ValueError(f"Not a file: {file_path}")
 
-        with open(full_path, "r", encoding="utf-8") as f:
+        with open(full_path, encoding="utf-8") as f:
             return f.read()
 
     def get_vibe_root(self) -> Path:
