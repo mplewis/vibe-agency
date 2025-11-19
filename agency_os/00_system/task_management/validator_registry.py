@@ -13,10 +13,7 @@ from typing import Any
 def validate_tests_passing(vibe_root: Path, scope: str = "tests/") -> bool:
     """Run pytest in scope (e.g., 'tests/')"""
     result = subprocess.run(  # noqa: S603
-        ["pytest", scope, "-v"],
-        cwd=vibe_root,
-        capture_output=True,
-        timeout=60
+        ["pytest", scope, "-v"], cwd=vibe_root, capture_output=True, timeout=60
     )
     # Return code 0 means success
     return result.returncode == 0
@@ -24,11 +21,7 @@ def validate_tests_passing(vibe_root: Path, scope: str = "tests/") -> bool:
 
 def validate_git_clean(vibe_root: Path) -> bool:
     """Check for uncommitted changes (git status --porcelain)"""
-    result = subprocess.run(
-        ["git", "status", "--porcelain"],
-        cwd=vibe_root,
-        capture_output=True
-    )
+    result = subprocess.run(["git", "status", "--porcelain"], cwd=vibe_root, capture_output=True)
     # If stdout is empty, the working directory is clean
     return len(result.stdout.strip()) == 0
 
@@ -36,13 +29,10 @@ def validate_git_clean(vibe_root: Path) -> bool:
 def validate_docs_updated(vibe_root: Path, required_files: list) -> bool:
     """Check if all required_files were modified in the last commit (HEAD~1)"""
     result = subprocess.run(
-        ["git", "diff", "--name-only", "HEAD~1"],
-        cwd=vibe_root,
-        capture_output=True,
-        text=True
+        ["git", "diff", "--name-only", "HEAD~1"], cwd=vibe_root, capture_output=True, text=True
     )
 
-    modified_files = set(result.stdout.strip().split('\n'))
+    modified_files = set(result.stdout.strip().split("\n"))
 
     # Check if all required files are in the list of modified files
     return all(req in modified_files for req in required_files)
@@ -57,12 +47,8 @@ def validate_file_exists(vibe_root: Path, path: str) -> bool:
 def validate_shell_command_success(vibe_root: Path, command: str) -> bool:
     """Execute a shell command and return True if it succeeds (exit code 0)."""
     try:
-        result = subprocess.run(
-            command,
-            shell=True,  # noqa: S602
-            cwd=vibe_root,
-            capture_output=True,
-            timeout=10
+        result = subprocess.run(  # noqa: S602
+            command, shell=True, cwd=vibe_root, capture_output=True, timeout=10
         )
         return result.returncode == 0
     except subprocess.TimeoutExpired:
@@ -72,13 +58,8 @@ def validate_shell_command_success(vibe_root: Path, command: str) -> bool:
 def validate_shell_output_contains(vibe_root: Path, command: str, text: str) -> bool:
     """Execute a shell command and check if output contains text."""
     try:
-        result = subprocess.run(
-            command,
-            shell=True,  # noqa: S602
-            cwd=vibe_root,
-            capture_output=True,
-            text=True,
-            timeout=10
+        result = subprocess.run(  # noqa: S602
+            command, shell=True, cwd=vibe_root, capture_output=True, text=True, timeout=10
         )
         return text in result.stdout or text in result.stderr
     except subprocess.TimeoutExpired:
@@ -88,6 +69,7 @@ def validate_shell_output_contains(vibe_root: Path, command: str, text: str) -> 
 def validate_env_variable_set(vibe_root: Path, variable: str) -> bool:
     """Check if an environment variable is set in the current environment."""
     import os
+
     return variable in os.environ
 
 

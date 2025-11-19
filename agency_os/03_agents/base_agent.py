@@ -10,18 +10,18 @@ This is the abstract class that connects:
 Every specialized agent (Coder, Researcher, Reviewer, etc.) inherits from this.
 """
 
-import os
 import json
 import subprocess
-from pathlib import Path
-from typing import Optional, Dict, List, Any
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 from datetime import datetime
+from pathlib import Path
+from typing import Any
 
 
 @dataclass
 class ExecutionResult:
     """Result of executing a command."""
+
     success: bool
     output: str
     error: str
@@ -32,10 +32,11 @@ class ExecutionResult:
 @dataclass
 class KnowledgeResult:
     """Result of consulting the knowledge base."""
+
     found: bool
-    artifacts: List[str]
+    artifacts: list[str]
     query: str
-    relevance_scores: Dict[str, float]
+    relevance_scores: dict[str, float]
 
 
 class BaseAgent:
@@ -49,12 +50,7 @@ class BaseAgent:
     4. Report status to Mission Control (GAD-7)
     """
 
-    def __init__(
-        self,
-        name: str,
-        role: str,
-        vibe_root: Optional[Path] = None
-    ):
+    def __init__(self, name: str, role: str, vibe_root: Path | None = None):
         """
         Initialize the agent.
 
@@ -95,11 +91,10 @@ class BaseAgent:
                 return parent
 
         raise RuntimeError(
-            "Could not detect vibe-agency root. "
-            "Please set VIBE_ROOT environment variable."
+            "Could not detect vibe-agency root. Please set VIBE_ROOT environment variable."
         )
 
-    def _load_context(self) -> Dict[str, Any]:
+    def _load_context(self) -> dict[str, Any]:
         """Load execution context from .vibe/runtime/context.json."""
         context_file = self.vibe_root / ".vibe" / "runtime" / "context.json"
 
@@ -111,7 +106,7 @@ class BaseAgent:
             }
 
         try:
-            with open(context_file, "r") as f:
+            with open(context_file) as f:
                 return json.load(f)
         except Exception as e:
             # Return minimal context if loading fails
@@ -169,7 +164,7 @@ class BaseAgent:
 
         try:
             # Execute via vibe-shell to ensure context injection
-            result = subprocess.run(
+            result = subprocess.run(  # noqa: S603
                 [str(self.vibe_root / "bin" / "vibe-shell"), "-c", command],
                 cwd=self.vibe_root,
                 capture_output=True,
@@ -211,12 +206,7 @@ class BaseAgent:
     # CONNECTION TO ARMS (GAD-6: Knowledge)
     # ========================================================================
 
-    def consult_knowledge(
-        self,
-        query: str,
-        domain: str = "all",
-        limit: int = 5
-    ) -> KnowledgeResult:
+    def consult_knowledge(self, query: str, domain: str = "all", limit: int = 5) -> KnowledgeResult:
         """
         Consult the knowledge base via the Knowledge system (GAD-6).
 
@@ -233,7 +223,7 @@ class BaseAgent:
         """
         try:
             # Call bin/vibe-knowledge search
-            result = subprocess.run(
+            result = subprocess.run(  # noqa: S603
                 [
                     str(self.vibe_root / "bin" / "vibe-knowledge"),
                     "search",
@@ -279,7 +269,7 @@ class BaseAgent:
                 relevance_scores=relevance_scores,
             )
 
-        except Exception as e:
+        except Exception:
             return KnowledgeResult(
                 found=False,
                 artifacts=[],
@@ -287,7 +277,7 @@ class BaseAgent:
                 relevance_scores={},
             )
 
-    def read_knowledge_artifact(self, path: str) -> Optional[str]:
+    def read_knowledge_artifact(self, path: str) -> str | None:
         """
         Read the full content of a knowledge artifact.
 
@@ -298,7 +288,7 @@ class BaseAgent:
             File content or None if not found
         """
         try:
-            result = subprocess.run(
+            result = subprocess.run(  # noqa: S603
                 [
                     str(self.vibe_root / "bin" / "vibe-knowledge"),
                     "read",
@@ -321,7 +311,7 @@ class BaseAgent:
     # CONNECTION TO BRAIN (GAD-7: Mission Control)
     # ========================================================================
 
-    def report_status(self) -> Dict[str, Any]:
+    def report_status(self) -> dict[str, Any]:
         """
         Report current status to Mission Control.
 
@@ -336,9 +326,95 @@ class BaseAgent:
             "context": self.context,
         }
 
-    def get_context(self) -> Dict[str, Any]:
+    def get_context(self) -> dict[str, Any]:
         """Get the execution context loaded from .vibe/runtime/context.json."""
         return self.context.copy()
+
+    # ========================================================================
+    # CONNECTION TO FEET (GAD-4: Quality Assurance)
+    # ========================================================================
+
+    def verify_work(
+        self, check_code: bool = True, run_tests: bool = True, test_domain: str | None = None
+    ) -> dict[str, Any]:
+        """
+        Verify work before committing/reporting success.
+
+        This method integrates with GAD-4 (Quality Assurance) to ensure
+        code quality and test coverage. Agents call this before completing tasks.
+
+        Args:
+            check_code: Run vibe-check linter (default: True)
+            run_tests: Run vibe-test test suite (default: True)
+            test_domain: Optional test domain (agents, planning, coding, deployment)
+
+        Returns:
+            Dict with verification status: {
+                "success": bool,
+                "checks_passed": bool,
+                "tests_passed": bool,
+                "issues": list of problems found
+            }
+        """
+        issues = []
+        checks_passed = True
+        tests_passed = True
+
+        # Run code quality checks
+        if check_code:
+            try:
+                result = subprocess.run(  # noqa: S603
+                    [str(self.vibe_root / "bin" / "vibe-check")],
+                    cwd=self.vibe_root,
+                    capture_output=True,
+                    text=True,
+                    timeout=30,
+                )
+
+                if result.returncode != 0:
+                    checks_passed = False
+                    issues.append("Code quality checks failed")
+                    if result.stderr:
+                        issues.append(result.stderr[:200])
+
+            except Exception as e:
+                checks_passed = False
+                issues.append(f"Code check error: {e!s}")
+
+        # Run tests
+        if run_tests:
+            try:
+                cmd = [str(self.vibe_root / "bin" / "vibe-test")]
+                if test_domain:
+                    cmd.extend(["--domain", test_domain])
+
+                result = subprocess.run(  # noqa: S603
+                    cmd,
+                    cwd=self.vibe_root,
+                    capture_output=True,
+                    text=True,
+                    timeout=120,
+                )
+
+                if result.returncode != 0:
+                    tests_passed = False
+                    issues.append("Tests failed")
+                    if result.stderr:
+                        issues.append(result.stderr[:200])
+
+            except subprocess.TimeoutExpired:
+                tests_passed = False
+                issues.append("Test suite timed out")
+            except Exception as e:
+                tests_passed = False
+                issues.append(f"Test error: {e!s}")
+
+        return {
+            "success": checks_passed and tests_passed,
+            "checks_passed": checks_passed,
+            "tests_passed": tests_passed,
+            "issues": issues,
+        }
 
     # ========================================================================
     # UTILITY METHODS

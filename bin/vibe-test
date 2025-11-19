@@ -1,0 +1,186 @@
+#!/bin/bash
+set -e
+
+##############################################################################
+# vibe-test: The Test Runner (Regression Prevention)
+#
+# Part of GAD-4 (Quality Assurance - Feet)
+#
+# Runs comprehensive test suites to verify no regressions.
+# Integrated with agent workflows for work verification.
+#
+# Usage:
+#   bin/vibe-test                    # Run all tests
+#   bin/vibe-test --fast             # Run fast tests only (no slow tests)
+#   bin/vibe-test --domain agents    # Run domain-specific tests
+#   bin/vibe-test --domain planning  # Run planning tests
+#   bin/vibe-test --coverage         # Run with coverage report
+#   bin/vibe-test -k test_name       # Run specific test
+##############################################################################
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+VIBE_ROOT="$(dirname "$SCRIPT_DIR")"
+
+# Verify we're in a valid vibe environment
+if [[ ! -f "$VIBE_ROOT/.vibe/config/roadmap.yaml" ]]; then
+    echo "❌ Error: Not in a valid vibe-agency environment"
+    exit 1
+fi
+
+# Ensure virtualenv is active
+if [[ -z "$VIRTUAL_ENV" ]]; then
+    if [[ -f "$VIBE_ROOT/.venv/bin/activate" ]]; then
+        source "$VIBE_ROOT/.venv/bin/activate"
+    else
+        echo "⚠️  Warning: No virtual environment found. Attempting with system Python."
+    fi
+fi
+
+# Display header
+echo "🧪 vibe-test: Test Runner"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+# Check if pytest is installed
+if ! command -v pytest &> /dev/null; then
+    echo "❌ Error: pytest is not installed"
+    echo "   Install with: pip install pytest"
+    exit 1
+fi
+
+# Default test arguments
+TEST_ARGS=(-v --tb=short)
+TEST_MODE="all"
+TEST_DOMAIN=""
+TEST_MARKER=""
+
+# Parse options
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --fast)
+            echo "⚡ Mode: Fast tests (skipping slow tests)"
+            TEST_MODE="fast"
+            TEST_MARKER="-m 'not slow'"
+            shift
+            ;;
+        --domain)
+            if [[ -z "$2" ]]; then
+                echo "❌ Error: --domain requires an argument"
+                echo "   Available domains: agents, planning, coding, deployment"
+                exit 1
+            fi
+            TEST_DOMAIN="$2"
+            TEST_MODE="domain"
+            echo "🎯 Mode: Domain-specific tests ($TEST_DOMAIN)"
+            shift 2
+            ;;
+        --coverage)
+            echo "📊 Mode: With coverage report"
+            TEST_ARGS+=(--cov=agency_os --cov-report=term-missing)
+            shift
+            ;;
+        --help|-h)
+            echo ""
+            echo "Usage: bin/vibe-test [OPTIONS] [PYTEST_ARGS]"
+            echo ""
+            echo "Options:"
+            echo "  --fast               Run fast tests only (skip slow tests)"
+            echo "  --domain DOMAIN      Run domain-specific tests"
+            echo "                       Available: agents, planning, coding, deployment"
+            echo "  --coverage           Generate coverage report"
+            echo "  --help               Show this help message"
+            echo ""
+            echo "Pytest Arguments (pass through):"
+            echo "  -k TEST_NAME         Run specific test by name"
+            echo "  -x                   Stop on first failure"
+            echo "  -v                   Verbose output"
+            echo ""
+            exit 0
+            ;;
+        -k|-x|-v|--tb=*)
+            # Pass through pytest arguments
+            TEST_ARGS+=("$1")
+            if [[ "$1" == "-k" ]] && [[ -n "$2" ]]; then
+                TEST_ARGS+=("$2")
+                shift 2
+            else
+                shift
+            fi
+            ;;
+        *)
+            TEST_ARGS+=("$1")
+            shift
+            ;;
+    esac
+done
+
+# Determine which tests to run
+case "$TEST_MODE" in
+    all)
+        echo "📋 Running all tests..."
+        TEST_PATH="tests/"
+        ;;
+    fast)
+        echo "⚡ Running fast tests (excluding slow)..."
+        TEST_PATH="tests/"
+        ;;
+    domain)
+        case "$TEST_DOMAIN" in
+            agents)
+                echo "🤖 Running agent tests..."
+                TEST_PATH="tests/test_base_agent.py tests/test_personas.py"
+                ;;
+            planning)
+                echo "📋 Running planning tests..."
+                TEST_PATH="tests/test_planning_workflow.py"
+                ;;
+            coding)
+                echo "💻 Running coding tests..."
+                TEST_PATH="tests/test_coding_workflow.py"
+                ;;
+            deployment)
+                echo "🚀 Running deployment tests..."
+                TEST_PATH="tests/test_deployment_workflow.py"
+                ;;
+            *)
+                echo "❌ Error: Unknown domain: $TEST_DOMAIN"
+                echo "   Available: agents, planning, coding, deployment"
+                exit 1
+                ;;
+        esac
+        ;;
+esac
+
+# Run tests
+echo ""
+cd "$VIBE_ROOT"
+
+# Build full command
+PYTEST_CMD="pytest $TEST_PATH ${TEST_ARGS[@]}"
+if [[ -n "$TEST_MARKER" ]]; then
+    PYTEST_CMD="pytest $TEST_PATH $TEST_MARKER ${TEST_ARGS[@]}"
+fi
+
+echo "Running: $PYTEST_CMD"
+echo ""
+
+if eval "$PYTEST_CMD"; then
+    TEST_PASS=true
+else
+    TEST_PASS=false
+fi
+
+# Summary
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+if [[ "$TEST_PASS" == true ]]; then
+    echo ""
+    echo "✅ PASS: All tests passed"
+    echo ""
+    exit 0
+else
+    echo ""
+    echo "❌ FAIL: Tests failed"
+    echo ""
+    exit 1
+fi

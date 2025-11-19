@@ -1,0 +1,123 @@
+#!/bin/bash
+set -e
+
+##############################################################################
+# vibe-check: The Linter (Quality Control for Code)
+#
+# Part of GAD-4 (Quality Assurance - Feet)
+#
+# Ensures code meets formatting and style standards before agents commit.
+# Wraps ruff with integrated reporting.
+#
+# Usage:
+#   bin/vibe-check               # Check all Python files
+#   bin/vibe-check --fix         # Auto-fix formatting issues
+#   bin/vibe-check <file>        # Check specific file
+##############################################################################
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+VIBE_ROOT="$(dirname "$SCRIPT_DIR")"
+
+# Verify we're in a valid vibe environment
+if [[ ! -f "$VIBE_ROOT/.vibe/config/roadmap.yaml" ]]; then
+    echo "❌ Error: Not in a valid vibe-agency environment"
+    exit 1
+fi
+
+# Ensure virtualenv is active
+if [[ -z "$VIRTUAL_ENV" ]]; then
+    if [[ -f "$VIBE_ROOT/.venv/bin/activate" ]]; then
+        source "$VIBE_ROOT/.venv/bin/activate"
+    else
+        echo "⚠️  Warning: No virtual environment found. Attempting with system Python."
+    fi
+fi
+
+# Display header
+echo "🔍 vibe-check: Code Quality Linter"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+# Check if ruff is installed
+if ! command -v ruff &> /dev/null; then
+    echo "❌ Error: ruff is not installed"
+    echo "   Install with: pip install ruff"
+    exit 1
+fi
+
+# Prepare arguments
+CHECK_MODE=true
+TARGET_PATH="${1:-.}"
+
+# Parse options
+case "$1" in
+    --fix)
+        echo "🔧 Mode: Auto-fix formatting issues"
+        CHECK_MODE=false
+        TARGET_PATH="${2:-.}"
+        ;;
+    --help|-h)
+        echo ""
+        echo "Usage: bin/vibe-check [OPTIONS] [PATH]"
+        echo ""
+        echo "Options:"
+        echo "  --fix              Auto-fix formatting and import issues"
+        echo "  --help             Show this help message"
+        echo ""
+        echo "Arguments:"
+        echo "  PATH               File or directory to check (default: current directory)"
+        echo ""
+        exit 0
+        ;;
+esac
+
+# Run ruff check
+echo ""
+if [[ "$CHECK_MODE" == true ]]; then
+    echo "📋 Running code quality checks..."
+    if ruff check "$TARGET_PATH" --config "$VIBE_ROOT/pyproject.toml"; then
+        RUFF_CHECK_PASS=true
+    else
+        RUFF_CHECK_PASS=false
+    fi
+else
+    echo "🔧 Running auto-fix..."
+    ruff check "$TARGET_PATH" --config "$VIBE_ROOT/pyproject.toml" --fix || true
+    ruff format "$TARGET_PATH" --config "$VIBE_ROOT/pyproject.toml"
+    RUFF_CHECK_PASS=true
+fi
+
+echo ""
+echo "📋 Checking code formatting..."
+
+# Run ruff format check
+if ruff format "$TARGET_PATH" --config "$VIBE_ROOT/pyproject.toml" --check; then
+    RUFF_FORMAT_PASS=true
+else
+    RUFF_FORMAT_PASS=false
+fi
+
+# Summary
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+if [[ "$RUFF_CHECK_PASS" == true ]] && [[ "$RUFF_FORMAT_PASS" == true ]]; then
+    echo ""
+    echo "✅ PASS: Code quality checks passed"
+    echo ""
+    exit 0
+else
+    if [[ "$CHECK_MODE" == true ]]; then
+        echo ""
+        echo "❌ FAIL: Code quality issues found"
+        echo ""
+        echo "To auto-fix formatting issues:"
+        echo "  bin/vibe-check --fix"
+        echo ""
+        exit 1
+    else
+        echo ""
+        echo "⚠️  Auto-fix completed. Please review changes."
+        echo ""
+        exit 0
+    fi
+fi
