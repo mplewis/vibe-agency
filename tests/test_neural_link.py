@@ -16,8 +16,15 @@ from semantic_actions import SemanticAction, SemanticActionType  # noqa: E402
 # Import personas and router
 personas_dir = Path(__file__).parent.parent / "agency_os" / "03_agents" / "personas"
 sys.path.insert(0, str(personas_dir))
-from coder import CoderAgent  # noqa: E402
-from researcher import ResearcherAgent  # noqa: E402
+# Use simple dummy agents to avoid runtime infrastructure dependencies
+class DummyAgent:
+    def __init__(self, name: str, capabilities: list[str]):
+        self.name = name
+        self.capabilities = capabilities
+
+# Real personas available but not used to keep tests $0 and infra-free
+# from coder import CoderAgent  # noqa: E402
+# from researcher import ResearcherAgent  # noqa: E402
 
 router_dir = Path(__file__).parent.parent / "agency_os" / "00_system" / "playbook"
 sys.path.insert(0, str(router_dir))
@@ -42,7 +49,7 @@ class TestAgentRouter:
         assert best is coder
 
     def test_router_returns_none_if_no_match(self):
-        coder = CoderAgent(name="coder")
+        coder = DummyAgent(name="coder", capabilities=["coding", "debugging"]) 
         router = AgentRouter([coder])
         action = SemanticAction(
             action_type=SemanticActionType.RESEARCH,
