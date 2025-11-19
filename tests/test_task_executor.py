@@ -16,13 +16,12 @@ Tests verify the atomic delivery workflow:
 All operations go through bin/vibe-shell (GAD-5 Runtime) for safety.
 """
 
+# Dynamic import for numeric directory names
+import importlib.util
 from pathlib import Path
 from unittest import mock
 
 import pytest
-
-# Dynamic import for numeric directory names
-import importlib.util
 
 spec = importlib.util.spec_from_file_location(
     "task_executor_module",
@@ -143,7 +142,7 @@ class TestAtomicWorkflow:
                 # git status --porcelain
                 (0, "M file.txt", ""),
                 # git checkout -b (BRANCH CREATION)
-                (0, f"Switched to new branch 'feature/test-001'", ""),
+                (0, "Switched to new branch 'feature/test-001'", ""),
                 # git add .
                 (0, "", ""),
                 # git commit
@@ -161,7 +160,7 @@ class TestAtomicWorkflow:
             agent = mock.Mock()
             agent.verify_work.return_value = {"success": True}
 
-            result = executor.deliver(agent, "TEST-001", "Test")
+            executor.deliver(agent, "TEST-001", "Test")
 
             # Verify git checkout -b was called
             branch_call = [c for c in mock_run.call_args_list if "git checkout -b" in str(c)]
@@ -182,9 +181,7 @@ class TestAtomicWorkflow:
                 return (0, "M file.txt", "")
             elif "git checkout -b" in command:
                 return (0, "Switched to new branch", "")
-            elif "git add" in command:
-                return (0, "", "")
-            elif "git commit" in command:
+            elif "git add" in command or "git commit" in command:
                 return (0, "", "")
             elif "git rev-parse" in command:
                 return (0, "abc123def456", "")
@@ -289,6 +286,33 @@ class TestAtomicWorkflow:
             assert len(pr_calls) > 0
             assert "--base main" in str(pr_calls[0])
 
+    def test_pr_created_with_draft_flag(self, executor):
+        """Test that PR is created with --draft flag to prevent auto-merge."""
+        with mock.patch.object(executor, "_run_via_vibe_shell") as mock_run:
+            mock_run.side_effect = [
+                (0, "gh version 1.0.0", ""),
+                (0, "M file.txt", ""),
+                (0, "", ""),
+                (0, "", ""),
+                (0, "", ""),
+                (0, "abc123", ""),
+                (0, "", ""),
+                (0, "https://github.com/owner/repo/pull/42", ""),
+                (0, "Mission completed", ""),
+            ]
+
+            agent = mock.Mock()
+            agent.verify_work.return_value = {"success": True}
+
+            result = executor.deliver(agent, "TEST-001", "Test commit message")
+
+            # Check that gh pr create was called with --draft flag
+            pr_calls = [c for c in mock_run.call_args_list if "gh pr create" in str(c)]
+            assert len(pr_calls) > 0
+            # Verify --draft flag is present (forces PENDING REVIEW state, prevents auto-merge)
+            assert "--draft" in str(pr_calls[0])
+            assert result.success is True
+
     def test_mission_complete_called_with_pr_url(self, executor):
         """Test that bin/mission complete is called with PR metadata."""
         with mock.patch.object(executor, "_run_via_vibe_shell") as mock_run:
@@ -308,7 +332,7 @@ class TestAtomicWorkflow:
             agent = mock.Mock()
             agent.verify_work.return_value = {"success": True}
 
-            result = executor.deliver(agent, "TEST-001", "Test")
+            executor.deliver(agent, "TEST-001", "Test")
 
             # Check that mission complete was called with PR URL
             mission_calls = [c for c in mock_run.call_args_list if "mission complete" in str(c)]
