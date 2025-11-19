@@ -22,6 +22,7 @@ Version: 0.1 (Logic Foundation)
 """
 
 import logging
+import os
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
@@ -318,9 +319,16 @@ class GraphExecutor:
         return result
 
     def execute_step(self, graph: WorkflowGraph, node_id: str) -> ExecutionResult:
-        """Execute a single workflow node using routed agent (mocked)."""
+        """Execute a single workflow node using routed agent.
+
+        Execution mode is determined by VIBE_LIVE_FIRE environment variable:
+        - VIBE_LIVE_FIRE=true: Real execution (actual tokens, real cost)
+        - VIBE_LIVE_FIRE=false or unset: Mock execution ($0 cost)
+        """
         node = graph.nodes[node_id]
-        # Quota pre-flight (mocked tokens)
+        live_fire_enabled = os.getenv("VIBE_LIVE_FIRE", "false").lower() == "true"
+
+        # Quota pre-flight check
         if self.quota:
             try:
                 self.quota.check_before_request(estimated_tokens=50, operation=node.action)
@@ -332,29 +340,81 @@ class GraphExecutor:
                     output=None,
                     error=str(e),
                 )
+
         # Select agent
         selected_agent = None
         if self.router:
             selected_agent = self.router.find_best_agent_for_skills(node.required_skills)
         if selected_agent is None and hasattr(self, "agent"):
             selected_agent = self.agent  # Fallback
-        # Mock execution result (no real LLM call)
-        result = ExecutionResult(
-            workflow_id=graph.id,
-            node_id=node_id,
-            status=ExecutionStatus.SUCCESS,
-            output={
-                "message": f"[ROUTED MOCK] {node.action} executed",
-                "agent": getattr(selected_agent, "name", "unknown"),
-                "skills_used": node.required_skills,
-            },
-            cost_usd=0.0,
-            duration_seconds=0.0,
-        )
+
+        # EXECUTION MODE: Real vs Mock
+        if live_fire_enabled:
+            # REAL EXECUTION: Actual agent invocation (real tokens, real cost)
+            logger.info(f"🔥 LIVE FIRE: Executing {node_id} with real agent: {getattr(selected_agent, 'name', 'unknown')}")
+            try:
+                # Real execution path - would call agent.execute_command or similar
+                if hasattr(selected_agent, 'execute_command'):
+                    result = selected_agent.execute_command(
+                        node.action,
+                        prompt=node.description,
+                        timeout_seconds=node.timeout_seconds
+                    )
+                elif hasattr(selected_agent, 'execute_action'):
+                    result = selected_agent.execute_action(
+                        action=node.action,
+                        prompt=node.description,
+                        timeout_seconds=node.timeout_seconds
+                    )
+                else:
+                    # Fallback if agent doesn't have execution methods
+                    result = ExecutionResult(
+                        workflow_id=graph.id,
+                        node_id=node_id,
+                        status=ExecutionStatus.FAILED,
+                        output=None,
+                        error=f"Agent {getattr(selected_agent, 'name', 'unknown')} does not support execute_command or execute_action",
+                    )
+                # Record actual cost from execution
+                cost_usd = result.cost_usd if hasattr(result, 'cost_usd') else 0.0
+            except Exception as e:
+                logger.error(f"🔥 LIVE FIRE execution failed for {node_id}: {e}")
+                result = ExecutionResult(
+                    workflow_id=graph.id,
+                    node_id=node_id,
+                    status=ExecutionStatus.FAILED,
+                    output=None,
+                    error=str(e),
+                )
+                cost_usd = 0.0
+        else:
+            # MOCK EXECUTION: Zero cost, safe default
+            logger.debug(f"Mock execution: {node_id} (VIBE_LIVE_FIRE not enabled)")
+            result = ExecutionResult(
+                workflow_id=graph.id,
+                node_id=node_id,
+                status=ExecutionStatus.SUCCESS,
+                output={
+                    "message": f"[ROUTED MOCK] {node.action} executed",
+                    "agent": getattr(selected_agent, "name", "unknown"),
+                    "skills_used": node.required_skills,
+                    "mode": "mock",
+                },
+                cost_usd=0.0,
+                duration_seconds=0.0,
+            )
+            cost_usd = 0.0
+
         self.execution_history.append(result)
-        # Record quota usage (zero cost)
+
+        # Record quota usage
         if self.quota:
-            self.quota.record_request(tokens_used=50, cost_usd=0.0, operation=node.action)
+            self.quota.record_request(
+                tokens_used=50,
+                cost_usd=cost_usd,
+                operation=node.action
+            )
+
         return result
 
     def execute(self, graph: WorkflowGraph) -> dict[str, Any]:

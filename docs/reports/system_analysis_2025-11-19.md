@@ -80,7 +80,30 @@ The repository is organized into several key high-level directories, each with a
 
 ## Test Coverage Reality
 
-[Actual numbers and what’s tested]
+The project has a significant number of tests, but the claims in the documentation are not accurate. The actual test results provide a more realistic picture of the system's maturity.
+
+**Actual Test Metrics (from `bin/vibe-test --coverage`):**
+- **Total Tests:** 589
+- **Passed:** 576
+- **Skipped:** 13
+- **Coverage:** 59%
+
+**Analysis:**
+
+- **Inaccurate Documentation:** Both the `README.md` (claiming 519/532 passed, 52% coverage) and `GAD_IMPLEMENTATION_STATUS.md` (claiming 369/383 passed) have outdated and incorrect test metrics. The real numbers show more tests exist and pass than documented, and the coverage is slightly higher than claimed in the README.
+
+- **What's Actually Tested:** The test suite is extensive, covering:
+    - **Architecture:** GAD integrations and pillar interactions (`tests/architecture/`).
+    - **Core Components:** The runtime (`vibe-shell`), orchestrator, state machine, and various handlers are well-tested.
+    - **Workflows:** The planning, coding, and deployment workflows have dedicated tests.
+    - **Unit Tests:** Individual components like the safety layer (circuit breaker, quota manager), personas, and utility modules have unit tests.
+
+- **What's NOT Tested (The Skipped Tests):**
+    - The 13 skipped tests are highly significant. The majority of them are in `tests/test_tool_use_e2e.py`.
+    - The skip messages explicitly state that the Vibe CLI no longer directly executes tools, and that this functionality is delegated to the "Claude Code operator".
+    - **This is direct evidence that GAD-3 (Agents) is not fully implemented.** The core capability of agents using tools within the workflow is not being tested because it's not implemented in the way it was originally designed. This supports the "Implementation Pending" status from `ARCHITECTURE_MAP.md` and contradicts the "DONE" status in the `README.md`.
+
+In summary, while the project has a strong testing culture, the documentation has not kept pace with the reality of the test suite. The test results themselves reveal critical gaps in the implementation of the Agent framework (GAD-3).
 
 ## System Capabilities Matrix
 
