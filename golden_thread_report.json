@@ -1,0 +1,28 @@
+{
+  "test_timestamp": "2025-11-19T18:32:11.571061",
+  "environment": {
+    "api_keys_available": {
+      "GOOGLE_API_KEY": false,
+      "ANTHROPIC_API_KEY": false,
+      "OPENAI_API_KEY": false
+    },
+    "selected_provider": "noop",
+    "live_fire_enabled": false
+  },
+  "workflow": {
+    "id": "auto_debug",
+    "name": "Automated Debug & Fix Workflow",
+    "intent": "Investigate failing code, identify root cause, generate and verify fixes",
+    "nodes_count": 4,
+    "is_valid": false
+  },
+  "execution": {
+    "first_step": "analyze_logs",
+    "status": "success",
+    "cost_usd": 0.0,
+    "duration_seconds": 0.0,
+    "has_output": true,
+    "has_error": false
+  },
+  "golden_thread_status": "VERIFIED"
+}
