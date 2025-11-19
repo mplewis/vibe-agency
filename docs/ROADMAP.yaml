@@ -1,0 +1,75 @@
+# VIBE Agency Roadmap
+# Version: 1.0
+# Last Updated: 2025-11-19
+
+phases:
+  - name: "Phase v0.9: The Philosopher"
+    status: DONE
+    completed_date: "2025-11-19"
+    description: "Zero-config boot, multi-provider support, playbook supremacy, and semantic lenses"
+    key_achievements:
+      - name: "Zero-Config Boot (GAD-100 Update)"
+        description: "Automatic system initialization and context loading"
+        status: complete
+      - name: "Multi-Provider Support (GAD-511)"
+        description: "Google Gemini integration with seamless provider switching"
+        status: complete
+      - name: "Playbook Supremacy"
+        description: "Unified execution model via bin/vibe-exec"
+        status: complete
+      - name: "Semantic Lenses (GAD-906)"
+        description: "Intelligence injection and mindset control"
+        status: complete
+      - name: "Lens Injection Mechanism (GAD-907)"
+        description: "Philosophy injection layer for AI agents"
+        status: complete
+    tag: "v0.9.0-beta"
+
+  - name: "Phase v1.0: Dogfooding"
+    status: IN_PROGRESS
+    started_date: "2025-11-19"
+    description: "Using VIBE to build VIBE - self-hosting and production readiness"
+    objectives:
+      - name: "Self-Hosting"
+        description: "Use VIBE system to manage its own development workflow"
+        status: pending
+      - name: "Production Hardening"
+        description: "Stabilize core workflows for production use"
+        status: pending
+      - name: "Documentation Complete"
+        description: "Comprehensive user and developer documentation"
+        status: pending
+      - name: "Performance Optimization"
+        description: "Optimize agent execution and context management"
+        status: pending
+      - name: "Community Readiness"
+        description: "Prepare for external contributors and users"
+        status: pending
+    target_date: "2025-Q1"
+
+  - name: "Phase v1.1: Public Beta"
+    status: PLANNED
+    description: "Public release with community engagement"
+    objectives:
+      - name: "Public Release"
+        description: "Make VIBE publicly available"
+      - name: "Community Onboarding"
+        description: "Documentation and examples for new users"
+      - name: "Feedback Integration"
+        description: "Implement community feedback and improvements"
+    target_date: "2025-Q2"
+
+# Historical phases for reference
+history:
+  - version: "v0.8"
+    name: "Operations Reconciliation"
+    completed: "2025-11-15"
+    description: "Real LLM support, graph executor, workflow integration"
+  - version: "v0.7"
+    name: "Foundation Hardening"
+    completed: "2025-11-10"
+    description: "UV migration, test infrastructure, documentation"
+  - version: "v0.6"
+    name: "Core Framework"
+    completed: "2025-11-05"
+    description: "Basic agent framework and SDLC workflows"
