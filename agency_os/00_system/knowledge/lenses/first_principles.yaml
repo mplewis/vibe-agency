@@ -118,9 +118,9 @@ lens:
     - name: "Assumption Identification"
       definition: "Separate inherited beliefs from verified facts"
       examples:
-        - "We must use React" → Why? (Could be Vue, Svelte, or vanilla JS)
-        - "Microservices are best" → Why? (Could be monolith for MVP)
-        - "Users want feature X" → Proven? (Could be assumption)
+        - "We must use React - Why? (Could be Vue, Svelte, or vanilla JS)"
+        - "Microservices are best - Why? (Could be monolith for MVP)"
+        - "Users want feature X - Proven? (Could be assumption)"
 
       how_to_identify: |
         Ask: "Is this a FACT or a TRADITION?"

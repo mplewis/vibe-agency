@@ -14,21 +14,31 @@ Architecture:
   6. Execute via Graph Executor (GAD-902)
 
 Usage:
-  ./bin/vibe-exec <workflow.yaml> [context]
+  ./bin/vibe-exec <workflow.yaml> [context] [--lens <lens_id>]
 
 Examples:
   # Mock execution (default, safe)
   ./bin/vibe-exec agency_os/00_system/playbook/workflows/research_topic.yaml "AI Safety"
 
+  # With semantic lens (GAD-906/907: Intelligence injection)
+  ./bin/vibe-exec agency_os/00_system/playbook/workflows/research_topic.yaml "AI Safety" --lens first_principles
+
   # Live fire execution (requires API key)
   VIBE_LIVE_FIRE=true ./bin/vibe-exec agency_os/00_system/playbook/workflows/research_topic.yaml "AI Safety"
+
+  # Live fire + lens (maximum intelligence)
+  VIBE_LIVE_FIRE=true ./bin/vibe-exec agency_os/00_system/playbook/workflows/research_topic.yaml "AI Safety" --lens first_principles
 
 Environment Variables:
   VIBE_LIVE_FIRE=true        Enable real LLM execution (default: false)
   GOOGLE_API_KEY=...         Google Gemini API key
   ANTHROPIC_API_KEY=...      Anthropic Claude API key
 
-Version: 1.0 (Operation Playbook Supremacy)
+Semantic Lenses (GAD-906/907):
+  --lens first_principles    Apply First Principles Thinking mindset
+  (More lenses coming soon: systems_thinking, user_centric, etc.)
+
+Version: 1.0 (Operation Playbook Supremacy + Mindset Injection)
 """
 
 import logging
@@ -51,13 +61,27 @@ logger = logging.getLogger(__name__)
 def main():
     """Execute a workflow using the playbook architecture."""
 
-    # Parse arguments
+    # Parse arguments (including --lens flag)
     if len(sys.argv) < 2:
         print(__doc__)
         sys.exit(1)
 
     workflow_path = Path(sys.argv[1])
-    context = " ".join(sys.argv[2:]) if len(sys.argv) > 2 else None
+
+    # Parse remaining arguments: context and optional --lens flag
+    lens_id = None
+    context_parts = []
+
+    i = 2
+    while i < len(sys.argv):
+        if sys.argv[i] == "--lens" and i + 1 < len(sys.argv):
+            lens_id = sys.argv[i + 1]
+            i += 2
+        else:
+            context_parts.append(sys.argv[i])
+            i += 1
+
+    context = " ".join(context_parts) if context_parts else None
 
     if not workflow_path.exists():
         print(f"❌ Workflow not found: {workflow_path}")
@@ -108,6 +132,48 @@ def main():
         print(f"     Nodes: {len(workflow.nodes)}")
         print(f"     Entry: {workflow.entry_point}")
         print(f"     Est. Cost: ${workflow.estimated_cost_usd:.2f}")
+
+        # STEP 2.5: Load Semantic Lens (GAD-906/907)
+        lens_prompt = None
+        if lens_id:
+            print("\n📍 STEP 2.5: Loading Semantic Lens (GAD-906/907)")
+            print("-" * 80)
+
+            try:
+                # Load lens loader module
+                lens_loader_path = repo_root / "agency_os" / "00_system" / "knowledge" / "lens_loader.py"
+                spec = spec_from_file_location("lens_loader", lens_loader_path)
+                lens_module = module_from_spec(spec)
+                sys.modules["lens_loader"] = lens_module
+                spec.loader.exec_module(lens_module)
+
+                load_lens = lens_module.load_lens
+                get_lens_metadata = lens_module.get_lens_metadata
+
+                # Load lens metadata first
+                metadata = get_lens_metadata(lens_id)
+                if metadata:
+                    print(f"  🔬 Lens: {metadata['name']}")
+                    print(f"     ID: {lens_id}")
+                    print(f"     Category: {metadata['category']}")
+                    print(f"     Description: {metadata['description']}")
+                else:
+                    print(f"  🔬 Lens: {lens_id}")
+
+                # Load full lens prompt
+                lens_prompt = load_lens(lens_id)
+                print(f"  ✅ Lens loaded ({len(lens_prompt)} chars)")
+                print(f"     Mindset injection: ACTIVE")
+
+            except Exception as e:
+                print(f"  ❌ Failed to load lens '{lens_id}': {e}")
+                print(f"     Continuing without lens...")
+                lens_prompt = None
+        else:
+            print("\n📍 STEP 2.5: Semantic Lens")
+            print("-" * 80)
+            print("  ℹ️  No lens specified (standard execution)")
+            print("     💡 Use --lens first_principles to inject mindset")
 
         # STEP 3: Initialize LLM Client (GAD-511)
         print("\n📍 STEP 3: Initializing LLM Client (GAD-511)")
@@ -281,9 +347,15 @@ def main():
         executor = GraphExecutor()
         executor.set_router(router)
 
+        # GAD-906/907: Inject semantic lens if loaded
+        if lens_prompt:
+            executor.set_lens(lens_prompt)
+
         print(f"  ✅ Executor initialized")
         print(f"     Workflow: {workflow.id}")
         print(f"     Router: Connected")
+        if lens_prompt:
+            print(f"     🔬 Lens: INJECTED (mindset transformation active)")
 
         # STEP 7: Execute Workflow
         print("\n📍 STEP 7: Executing Workflow")
