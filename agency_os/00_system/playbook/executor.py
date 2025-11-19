@@ -49,6 +49,8 @@ class WorkflowNode:
     required_skills: list[str] = field(default_factory=list)
     timeout_seconds: int = 300
     retries: int = 3
+    prompt_key: str | None = None  # Optional key to lookup prompt in registry
+    knowledge_context: bool = False  # If True, inject relevant knowledge artifacts before execution
 
 
 @dataclass
@@ -366,10 +368,124 @@ class GraphExecutor:
 
         node = graph.nodes[node_id]
 
-        # Build the prompt: [LENS] + context (if provided) + node description
-        # GAD-906/907: Semantic lens injection for mindset transformation
-        base_prompt = context if context else node.description
+        # Build the prompt: [REGISTRY] → [LENS] + context (if provided) + node description
+        # OPERATION VOICE: Check if node has a prompt_key for registry lookup
+        if node.prompt_key:
+            try:
+                # Import with proper path handling (00_system module structure)
+                import sys
+                from pathlib import Path
 
+                # Get the 00_system directory
+                system_dir = Path(__file__).parent.parent
+                if str(system_dir) not in sys.path:
+                    sys.path.insert(0, str(system_dir))
+
+                from runtime.prompt_registry import PromptRegistry
+                from runtime.prompt_context import get_prompt_context
+
+                # Build context dict for prompt interpolation
+                prompt_context = {"node_id": node_id, "action": node.action}
+                if context:
+                    prompt_context["context"] = context
+
+                # GAD-909: Resolve dynamic context (The Flesh / OPERATION CONTEXT)
+                # Load standard system context for prompt placeholders
+                try:
+                    context_engine = get_prompt_context()
+                    system_context = context_engine.resolve([
+                        "system_time",
+                        "current_branch",
+                        "git_status"
+                    ])
+                    # Merge system context into prompt context
+                    prompt_context.update(system_context)
+                    logger.debug(f"🔌 CONTEXT: Resolved {len(system_context)} system contexts")
+                except Exception as e:
+                    logger.warning(f"⚠️  Failed to resolve system context: {e}")
+
+                # Get prompt from registry (with context interpolation)
+                base_prompt = PromptRegistry.get(node.prompt_key, prompt_context)
+                logger.info(
+                    f"🎙️ VOICE: Retrieved prompt from registry: {node.prompt_key} ({len(base_prompt)} chars)"
+                )
+            except Exception as e:
+                logger.warning(
+                    f"⚠️  Prompt registry lookup failed for key '{node.prompt_key}': {e}. "
+                    f"Falling back to node description."
+                )
+                base_prompt = context if context else node.description
+        else:
+            # No prompt_key: use context or description (legacy behavior)
+            base_prompt = context if context else node.description
+
+        # GAD-908: Knowledge Context Injection (OPERATION INSIGHT)
+        # Check if this node needs knowledge context
+        if node.knowledge_context:
+            try:
+                # Import with proper path handling
+                import importlib.util
+
+                retriever_path = Path(__file__).parent.parent.parent / "02_knowledge" / "retriever.py"
+
+                spec = importlib.util.spec_from_file_location("retriever", retriever_path)
+                retriever_module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(retriever_module)
+
+                KnowledgeRetriever = retriever_module.KnowledgeRetriever
+
+                # Initialize retriever with repo root
+                vibe_root = Path(__file__).parent.parent.parent.parent
+                retriever = KnowledgeRetriever(vibe_root)
+
+                # Extract query from context (use first 100 chars as search query)
+                query = context[:100] if context else node.action
+                logger.info(f"👁️ INSIGHT: Retrieving knowledge for query: '{query[:50]}...'")
+
+                # Search for relevant knowledge
+                hits = retriever.search(query, limit=5)
+
+                if hits:
+                    logger.info(f"👁️ INSIGHT: Found {len(hits)} relevant knowledge artifacts")
+
+                    # Format knowledge context
+                    knowledge_section = "\n\n" + "=" * 80 + "\n"
+                    knowledge_section += "[INTERNAL KNOWLEDGE FOUND]\n"
+                    knowledge_section += "=" * 80 + "\n\n"
+                    knowledge_section += "The following knowledge artifacts from our knowledge base are relevant to this task:\n\n"
+
+                    for i, hit in enumerate(hits, 1):
+                        rel_path = hit.path.relative_to(retriever.knowledge_base)
+                        knowledge_section += f"## Artifact {i}: {hit.title}\n"
+                        knowledge_section += f"**Domain:** {hit.domain} | **Relevance:** {hit.relevance_score:.1%}\n"
+                        knowledge_section += f"**Path:** {rel_path}\n\n"
+
+                        # Read full content for high-relevance matches
+                        if hit.relevance_score >= 0.5:
+                            try:
+                                content = retriever.read_file(rel_path)
+                                knowledge_section += f"**Content:**\n```\n{content}\n```\n\n"
+                            except Exception as e:
+                                logger.warning(f"Failed to read knowledge file {rel_path}: {e}")
+                                knowledge_section += f"**Preview:** {hit.preview}\n\n"
+                        else:
+                            knowledge_section += f"**Preview:** {hit.preview}\n\n"
+
+                    knowledge_section += "=" * 80 + "\n"
+                    knowledge_section += "[END INTERNAL KNOWLEDGE]\n"
+                    knowledge_section += "=" * 80 + "\n"
+
+                    # Inject knowledge into prompt
+                    base_prompt = base_prompt + knowledge_section
+                    logger.info(f"👁️ INSIGHT: Injected {len(hits)} knowledge artifacts into prompt")
+                else:
+                    logger.info("👁️ INSIGHT: No relevant knowledge found")
+
+            except Exception as e:
+                logger.warning(f"⚠️  Knowledge retrieval failed: {e}. Continuing without knowledge context.")
+                # Continue execution without knowledge context
+
+        # GAD-906/907: Semantic lens injection for mindset transformation
         if self.lens_prompt:
             # Format: [MINDSET: <lens>]\n\n[TASK]\n<actual task>
             prompt = f"{self.lens_prompt}\n\n{'=' * 80}\n[TASK]\n{'=' * 80}\n\n{base_prompt}"
