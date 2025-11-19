@@ -231,8 +231,8 @@ class TaskExecutor:
                 )
 
             # STEP 5: Create PR using GitHub CLI (ATOMIC ACTION)
-            # Use --fill to auto-populate from commits
-            pr_command = f'gh pr create --base main --head {branch_name} --title "{message}" --body "Automated delivery via GAD-201 TaskExecutor\\n\\nTask: {task_id}\\nBranch: {branch_name}"'
+            # Use --draft to force PENDING REVIEW state (prevents auto-merge, requires human review)
+            pr_command = f'gh pr create --draft --base main --head {branch_name} --title "{message}" --body "Automated delivery via GAD-201 TaskExecutor\\n\\nTask: {task_id}\\nBranch: {branch_name}"'
             returncode, pr_output, stderr = self._run_via_vibe_shell(pr_command)
 
             if returncode != 0:

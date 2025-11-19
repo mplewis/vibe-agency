@@ -289,6 +289,33 @@ class TestAtomicWorkflow:
             assert len(pr_calls) > 0
             assert "--base main" in str(pr_calls[0])
 
+    def test_pr_created_with_draft_flag(self, executor):
+        """Test that PR is created with --draft flag to prevent auto-merge."""
+        with mock.patch.object(executor, "_run_via_vibe_shell") as mock_run:
+            mock_run.side_effect = [
+                (0, "gh version 1.0.0", ""),
+                (0, "M file.txt", ""),
+                (0, "", ""),
+                (0, "", ""),
+                (0, "", ""),
+                (0, "abc123", ""),
+                (0, "", ""),
+                (0, "https://github.com/owner/repo/pull/42", ""),
+                (0, "Mission completed", ""),
+            ]
+
+            agent = mock.Mock()
+            agent.verify_work.return_value = {"success": True}
+
+            result = executor.deliver(agent, "TEST-001", "Test commit message")
+
+            # Check that gh pr create was called with --draft flag
+            pr_calls = [c for c in mock_run.call_args_list if "gh pr create" in str(c)]
+            assert len(pr_calls) > 0
+            # Verify --draft flag is present (forces PENDING REVIEW state, prevents auto-merge)
+            assert "--draft" in str(pr_calls[0])
+            assert result.success is True
+
     def test_mission_complete_called_with_pr_url(self, executor):
         """Test that bin/mission complete is called with PR metadata."""
         with mock.patch.object(executor, "_run_via_vibe_shell") as mock_run:
