@@ -23,9 +23,9 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
-from circuit_breaker import CircuitBreaker, CircuitBreakerConfig, CircuitBreakerOpenError
-from providers import LLMProvider, LLMProviderError, NoOpProvider, get_default_provider
-from quota_manager import OperationalQuota, QuotaExceededError, QuotaLimits
+from .circuit_breaker import CircuitBreaker, CircuitBreakerConfig, CircuitBreakerOpenError
+from .providers import LLMProvider, LLMProviderError, NoOpProvider, get_default_provider
+from .quota_manager import OperationalQuota, QuotaExceededError, QuotaLimits
 
 logger = logging.getLogger(__name__)
 

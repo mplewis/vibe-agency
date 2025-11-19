@@ -1560,12 +1560,14 @@ dependencies = [
     { name = "beautifulsoup4" },
     { name = "google-api-python-client" },
     { name = "google-generativeai" },
+    { name = "jsonschema" },
     { name = "psutil" },
     { name = "pydantic" },
     { name = "pydantic-settings" },
     { name = "python-dotenv" },
     { name = "pyyaml" },
     { name = "requests" },
+    { name = "rich" },
 ]
 
 [package.optional-dependencies]
@@ -1608,6 +1610,7 @@ requires-dist = [
     { name = "google-api-python-client", specifier = ">=2.100.0" },
     { name = "google-generativeai", specifier = ">=0.8.5" },
     { name = "isort", marker = "extra == 'dev'", specifier = ">=5.13.0" },
+    { name = "jsonschema", specifier = ">=4.17.0" },
     { name = "jsonschema", marker = "extra == 'dev'", specifier = ">=4.17.0" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.7.0" },
     { name = "pip-audit", marker = "extra == 'security'", specifier = ">=2.6.0" },
@@ -1620,6 +1623,7 @@ requires-dist = [
     { name = "python-dotenv", specifier = ">=1.0.0" },
     { name = "pyyaml", specifier = ">=6.0.1" },
     { name = "requests", specifier = ">=2.31.0" },
+    { name = "rich", specifier = ">=13.0.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.1.0" },
     { name = "vibe-agency", extras = ["dev", "security", "hooks"], marker = "extra == 'all'" },
     { name = "yamllint", marker = "extra == 'dev'", specifier = ">=1.35.0" },
