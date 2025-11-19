@@ -55,21 +55,21 @@ echo ""
 # ============================================================================
 # CHECK 1: Dependency Integrity (GAD-4 Upgrade)
 # ============================================================================
-echo "1️⃣  Checking dependency integrity (uv sync --check)..."
+echo "1️⃣  Checking dependency integrity (uv sync --extra dev --check)..."
 echo "   Ensures pyproject.toml, uv.lock, and environment are in sync..."
 echo ""
 
 if ! command -v uv &>/dev/null; then
   echo "   ⚠️  uv not available - skipping dependency check"
 else
-  if ! uv sync --check &>/dev/null; then
+  if ! uv sync --extra dev --check &>/dev/null; then
     echo "   ❌ DEPENDENCY INTEGRITY FAILED"
     echo ""
     echo "   Your local dependencies don't match pyproject.toml!"
     echo "   This is a systemic failure that MUST be fixed before push."
     echo ""
     echo "   How to fix:"
-    echo "     uv sync                         # Sync environment to pyproject.toml"
+    echo "     uv sync --extra dev             # Sync environment to pyproject.toml"
     echo "     uv add <package>                # Add missing declared dependencies"
     echo "     # Then re-run this check"
     echo ""
