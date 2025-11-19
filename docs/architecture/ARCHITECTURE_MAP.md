@@ -12,7 +12,7 @@
 
 ```
 STATUS: GAD-5 (Runtime) ✅ LIVE | GAD-6 (Knowledge) ✅ LIVE | GAD-7 (Steward) ✅ LIVE
-        GAD-9 (Semantic Orchestration) ✅ OPERATIONAL
+        GAD-906 (Semantic Lenses) 🔬 PROTOTYPE | GAD-9 (Semantic Orchestration) ✅ OPERATIONAL
 NEXT:   GAD-3 (Agents/Legs) ⏳ READY | GAD-4 (QA/Feet) ⏳ PLANNED
 ┌────────────────────────────────────────────────────────────┐
 │                    VIBE AGENCY ARCHITECTURE                │
@@ -33,6 +33,7 @@ NEXT:   GAD-3 (Agents/Legs) ⏳ READY | GAD-4 (QA/Feet) ⏳ PLANNED
 │  │ GAD-6: KNOWLEDGE FOUNDATION (ARMS) ✅ LIVE          │ │
 │  │ • GAD-601: Knowledge Scaffold (4 domains)          │ │
 │  │ • GAD-602: Semantic Search (Phase 1: keyword)      │ │
+│  │ • GAD-906: Semantic Lenses (Intelligence Injection)│ │
 │  │ • bin/vibe-knowledge CLI (search/list/read)        │ │
 │  │ Status: Initialized & Operational, Phase 1 Done   │ │
 │  └──────────────────────────────────────────────────────┘ │
@@ -43,6 +44,15 @@ NEXT:   GAD-3 (Agents/Legs) ⏳ READY | GAD-4 (QA/Feet) ⏳ PLANNED
 │  │ • Playbook Routing System                           │ │
 │  │ • Delegation & Validation                           │ │
 │  │ Status: Fully Operational                           │ │
+│  └──────────────────────────────────────────────────────┘ │
+│                          ↕                                 │
+│  ┌──────────────────────────────────────────────────────┐ │
+│  │ GAD-906: SEMANTIC LENSES 🔬 PROTOTYPE               │ │
+│  │ • Mental Model Injection (Worker → Engineer)        │ │
+│  │ • Context Enrichment Before Execution               │ │
+│  │ • First Principles Thinking (v1.0)                  │ │
+│  │ • Location: knowledge/lenses/*.yaml                 │ │
+│  │ Status: Prototype, Data Structure Designed          │ │
 │  └──────────────────────────────────────────────────────┘ │
 │                          ↕                                 │
 │  ┌──────────────────────────────────────────────────────┐ │
@@ -173,12 +183,19 @@ use_case: "Agencies, teams, production deployments, client work"
 │   GAD-6     │     │   GAD-7     │
 │  Knowledge  │  ←→ │  STEWARD    │
 │(GAD-6XX/)   │     │ (GAD-7XX/)  │
+│ + GAD-906   │     │             │
 └─────────────┘     └─────────────┘
        ↓                   ↓
        └────────┬──────────┘
                 ↓
         ┌─────────────┐
-        │   GAD-9     │  ← Playbook Engine (NEW)
+        │  GAD-906    │  ← Intelligence Injection (NEW)
+        │  Semantic   │     (Mental Models / Lenses)
+        │   Lenses    │     Worker → Engineer Mode
+        └─────────────┘
+                ↓ enriches context for
+        ┌─────────────┐
+        │   GAD-9     │  ← Playbook Engine
         │  Semantic   │     (Docs: GAD-9XX/)
         │Orchestration│     Executor + Loader
         └─────────────┘
@@ -192,6 +209,8 @@ Dependencies:
 - GAD-6 needs GAD-5 (uses receipts, integrity)
 - GAD-7 needs GAD-5 (governs context layers)
 - GAD-6 ↔ GAD-7 (bidirectional - knowledge needs governance, governance uses knowledge)
+- GAD-906 needs GAD-6 (lenses stored in knowledge department)
+- GAD-906 feeds GAD-9 (enriches agent context before execution)
 - GAD-9 needs GAD-5 (safety layer: circuit breaker, quota manager)
 - GAD-8 needs all (orchestrates everything)
 ```
@@ -337,6 +356,11 @@ vibe-agency/
 │   │   │   │   ├── google.py            #   - Gemini provider
 │   │   │   │   └── factory.py           #   - Auto-detection
 │   │   │   └── llm_client.py
+│   │   ├── knowledge/                   # GAD-6 Knowledge Base
+│   │   │   ├── lenses/                  # GAD-906 (Semantic Lenses)
+│   │   │   │   └── first_principles.yaml # Mental models
+│   │   │   ├── AOS_Ontology.yaml
+│   │   │   └── ORCHESTRATION_technology_comparison.yaml
 │   │   ├── playbook/
 │   │   │   ├── executor.py              # GAD-902 (Graph Executor)
 │   │   │   ├── loader.py                # GAD-903 (Workflow Loader)
@@ -879,4 +903,5 @@ Vibe Agency is a **three-layer, gracefully degrading, hybrid-governance software
 - GAD-800: Integration Matrix (VISION)
 - GAD-902: Graph Executor (COMPLETE - Topology & Dependencies)
 - GAD-903: Workflow Loader (COMPLETE - Data → Logic)
+- GAD-906: Semantic Lenses (PROTOTYPE - Intelligence Injection)
 - ARCHITECTURE_MAP: This document
