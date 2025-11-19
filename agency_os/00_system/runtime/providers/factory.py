@@ -67,7 +67,7 @@ def create_provider(
 
         elif provider_name == "google":
             logger.info(
-                f"Creating Google Gemini provider (model: {model_name or 'gemini-2.0-flash-exp'})"
+                f"Creating Google Gemini provider (model: {model_name or 'gemini-2.5-flash-exp'})"
             )
             return GoogleProvider(api_key=api_key, **kwargs)
 
