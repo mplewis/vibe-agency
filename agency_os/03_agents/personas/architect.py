@@ -15,16 +15,15 @@ This agent consults decisions/research knowledge domains by default.
 """
 
 import importlib.util
-from typing import Optional, List, Dict, Any
 from pathlib import Path
+from typing import Any
 
 # Dynamic import for BaseAgent (handles numeric directory names)
 # Path: agency_os/03_agents/personas/architect.py
 # Need to go up 4 levels to get to vibe-agency root
 vibe_root = Path(__file__).parent.parent.parent.parent
 spec = importlib.util.spec_from_file_location(
-    "base_agent",
-    vibe_root / "agency_os" / "03_agents" / "base_agent.py"
+    "base_agent", vibe_root / "agency_os" / "03_agents" / "base_agent.py"
 )
 base_agent_module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(base_agent_module)
@@ -44,7 +43,7 @@ class ArchitectAgent(BaseAgent):
         self,
         name: str = "claude-architect",
         role: str = "System Architect",
-        vibe_root: Optional[Path] = None
+        vibe_root: Path | None = None,
     ):
         """
         Initialize Architect agent.
@@ -57,10 +56,7 @@ class ArchitectAgent(BaseAgent):
         super().__init__(name=name, role=role, vibe_root=vibe_root)
 
     def consult_knowledge(
-        self,
-        query: str,
-        domain: str = "decisions",
-        limit: int = 10
+        self, query: str, domain: str = "decisions", limit: int = 10
     ) -> KnowledgeResult:
         """
         Consult knowledge with default domain biased toward design decisions.
@@ -76,11 +72,8 @@ class ArchitectAgent(BaseAgent):
         return super().consult_knowledge(query=query, domain=domain, limit=limit)
 
     def design_system(
-        self,
-        system_name: str,
-        requirements: List[str],
-        constraints: Optional[List[str]] = None
-    ) -> Dict[str, Any]:
+        self, system_name: str, requirements: list[str], constraints: list[str] | None = None
+    ) -> dict[str, Any]:
         """
         Design a system based on requirements and constraints.
 
@@ -116,12 +109,7 @@ class ArchitectAgent(BaseAgent):
             },
         }
 
-    def evaluate_tradeoff(
-        self,
-        decision: str,
-        option_a: str,
-        option_b: str
-    ) -> Dict[str, Any]:
+    def evaluate_tradeoff(self, decision: str, option_a: str, option_b: str) -> dict[str, Any]:
         """
         Evaluate tradeoffs between two architectural options.
 
@@ -134,16 +122,8 @@ class ArchitectAgent(BaseAgent):
             Dict with tradeoff analysis
         """
         # Research both options
-        result_a = self.consult_knowledge(
-            f"{decision} {option_a}",
-            domain="decisions",
-            limit=5
-        )
-        result_b = self.consult_knowledge(
-            f"{decision} {option_b}",
-            domain="decisions",
-            limit=5
-        )
+        result_a = self.consult_knowledge(f"{decision} {option_a}", domain="decisions", limit=5)
+        result_b = self.consult_knowledge(f"{decision} {option_b}", domain="decisions", limit=5)
 
         return {
             "decision": decision,
@@ -168,10 +148,10 @@ class ArchitectAgent(BaseAgent):
         self,
         title: str,
         status: str = "PROPOSED",
-        context: Optional[str] = None,
-        decision: Optional[str] = None,
-        consequences: Optional[List[str]] = None
-    ) -> Dict[str, Any]:
+        context: str | None = None,
+        decision: str | None = None,
+        consequences: list[str] | None = None,
+    ) -> dict[str, Any]:
         """
         Document an Architecture Decision Record (ADR).
 
@@ -212,26 +192,28 @@ class ArchitectAgent(BaseAgent):
             Context dict with agent role and capabilities
         """
         context = self.get_context()
-        context.update({
-            "persona": "Architect",
-            "capabilities": [
-                "System design",
-                "Architecture decision making",
-                "Tradeoff analysis",
-                "Scalability planning",
-                "ADR documentation",
-                "Technology evaluation",
-            ],
-            "knowledge_domains": ["decisions", "research"],
-            "design_focus": [
-                "scalability",
-                "maintainability",
-                "resilience",
-                "performance",
-                "security",
-                "cost-effectiveness",
-            ],
-        })
+        context.update(
+            {
+                "persona": "Architect",
+                "capabilities": [
+                    "System design",
+                    "Architecture decision making",
+                    "Tradeoff analysis",
+                    "Scalability planning",
+                    "ADR documentation",
+                    "Technology evaluation",
+                ],
+                "knowledge_domains": ["decisions", "research"],
+                "design_focus": [
+                    "scalability",
+                    "maintainability",
+                    "resilience",
+                    "performance",
+                    "security",
+                    "cost-effectiveness",
+                ],
+            }
+        )
         return context
 
     def __repr__(self) -> str:

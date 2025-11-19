@@ -15,7 +15,6 @@ This agent consults patterns/decisions knowledge domains by default.
 """
 
 import importlib.util
-from typing import Optional, List
 from pathlib import Path
 
 # Dynamic import for BaseAgent (handles numeric directory names)
@@ -23,8 +22,7 @@ from pathlib import Path
 # Need to go up 4 levels to get to vibe-agency root
 vibe_root = Path(__file__).parent.parent.parent.parent
 spec = importlib.util.spec_from_file_location(
-    "base_agent",
-    vibe_root / "agency_os" / "03_agents" / "base_agent.py"
+    "base_agent", vibe_root / "agency_os" / "03_agents" / "base_agent.py"
 )
 base_agent_module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(base_agent_module)
@@ -44,7 +42,7 @@ class ReviewerAgent(BaseAgent):
         self,
         name: str = "claude-reviewer",
         role: str = "Code Reviewer",
-        vibe_root: Optional[Path] = None
+        vibe_root: Path | None = None,
     ):
         """
         Initialize Reviewer agent.
@@ -57,10 +55,7 @@ class ReviewerAgent(BaseAgent):
         super().__init__(name=name, role=role, vibe_root=vibe_root)
 
     def consult_knowledge(
-        self,
-        query: str,
-        domain: str = "patterns",
-        limit: int = 5
+        self, query: str, domain: str = "patterns", limit: int = 5
     ) -> KnowledgeResult:
         """
         Consult knowledge for review standards and best practices.
@@ -75,11 +70,7 @@ class ReviewerAgent(BaseAgent):
         """
         return super().consult_knowledge(query=query, domain=domain, limit=limit)
 
-    def review_code(
-        self,
-        code_path: str,
-        focus_areas: Optional[List[str]] = None
-    ) -> dict:
+    def review_code(self, code_path: str, focus_areas: list[str] | None = None) -> dict:
         """
         Review code for quality and architectural soundness.
 
@@ -114,11 +105,7 @@ class ReviewerAgent(BaseAgent):
 
         return findings
 
-    def compare_architectures(
-        self,
-        architecture_a: str,
-        architecture_b: str
-    ) -> dict:
+    def compare_architectures(self, architecture_a: str, architecture_b: str) -> dict:
         """
         Compare two architectural approaches.
 
@@ -151,26 +138,28 @@ class ReviewerAgent(BaseAgent):
             Context dict with agent role and capabilities
         """
         context = self.get_context()
-        context.update({
-            "persona": "Reviewer",
-            "capabilities": [
-                "Code quality analysis",
-                "Architectural review",
-                "Best practices checking",
-                "Performance assessment",
-                "Security review",
-                "Test coverage analysis",
-            ],
-            "knowledge_domains": ["patterns", "decisions"],
-            "review_criteria": [
-                "code quality",
-                "error handling",
-                "test coverage",
-                "documentation",
-                "performance",
-                "security",
-            ],
-        })
+        context.update(
+            {
+                "persona": "Reviewer",
+                "capabilities": [
+                    "Code quality analysis",
+                    "Architectural review",
+                    "Best practices checking",
+                    "Performance assessment",
+                    "Security review",
+                    "Test coverage analysis",
+                ],
+                "knowledge_domains": ["patterns", "decisions"],
+                "review_criteria": [
+                    "code quality",
+                    "error handling",
+                    "test coverage",
+                    "documentation",
+                    "performance",
+                    "security",
+                ],
+            }
+        )
         return context
 
     def __repr__(self) -> str:

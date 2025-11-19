@@ -15,7 +15,6 @@ This agent consults research knowledge domain by default.
 """
 
 import importlib.util
-from typing import Optional, List
 from pathlib import Path
 
 # Dynamic import for BaseAgent (handles numeric directory names)
@@ -23,8 +22,7 @@ from pathlib import Path
 # Need to go up 4 levels to get to vibe-agency root
 vibe_root = Path(__file__).parent.parent.parent.parent
 spec = importlib.util.spec_from_file_location(
-    "base_agent",
-    vibe_root / "agency_os" / "03_agents" / "base_agent.py"
+    "base_agent", vibe_root / "agency_os" / "03_agents" / "base_agent.py"
 )
 base_agent_module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(base_agent_module)
@@ -44,7 +42,7 @@ class ResearcherAgent(BaseAgent):
         self,
         name: str = "claude-researcher",
         role: str = "Researcher",
-        vibe_root: Optional[Path] = None
+        vibe_root: Path | None = None,
     ):
         """
         Initialize Researcher agent.
@@ -57,10 +55,7 @@ class ResearcherAgent(BaseAgent):
         super().__init__(name=name, role=role, vibe_root=vibe_root)
 
     def consult_knowledge(
-        self,
-        query: str,
-        domain: str = "research",
-        limit: int = 10
+        self, query: str, domain: str = "research", limit: int = 10
     ) -> KnowledgeResult:
         """
         Consult knowledge with default domain biased toward research.
@@ -130,19 +125,21 @@ class ResearcherAgent(BaseAgent):
             Context dict with agent role and capabilities
         """
         context = self.get_context()
-        context.update({
-            "persona": "Researcher",
-            "capabilities": [
-                "Deep research on topics",
-                "Synthesize information",
-                "Compare approaches",
-                "Analyze patterns",
-                "Document findings",
-                "Evidence-based analysis",
-            ],
-            "knowledge_domains": ["research", "decisions"],
-            "preferred_output": "comprehensive analysis with sources",
-        })
+        context.update(
+            {
+                "persona": "Researcher",
+                "capabilities": [
+                    "Deep research on topics",
+                    "Synthesize information",
+                    "Compare approaches",
+                    "Analyze patterns",
+                    "Document findings",
+                    "Evidence-based analysis",
+                ],
+                "knowledge_domains": ["research", "decisions"],
+                "preferred_output": "comprehensive analysis with sources",
+            }
+        )
         return context
 
     def __repr__(self) -> str:

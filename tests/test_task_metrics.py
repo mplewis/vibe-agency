@@ -31,12 +31,12 @@ def test_overall_progress_calculation():
 def test_progress_percent_calculation():
     """Test progress percentage calculation accuracy."""
     test_cases = [
-        (0, 5, 0),      # 0 of 5 = 0%
-        (1, 5, 20),     # 1 of 5 = 20%
-        (2, 5, 40),     # 2 of 5 = 40%
-        (3, 5, 60),     # 3 of 5 = 60%
-        (5, 5, 100),    # 5 of 5 = 100%
-        (0, 0, 0),      # 0 of 0 = 0% (no division by zero)
+        (0, 5, 0),  # 0 of 5 = 0%
+        (1, 5, 20),  # 1 of 5 = 20%
+        (2, 5, 40),  # 2 of 5 = 40%
+        (3, 5, 60),  # 3 of 5 = 60%
+        (5, 5, 100),  # 5 of 5 = 100%
+        (0, 0, 0),  # 0 of 0 = 0% (no division by zero)
     ]
 
     for completed, total, expected_percent in test_cases:

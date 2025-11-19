@@ -15,7 +15,6 @@ This agent consults patterns/snippets knowledge domains by default.
 """
 
 import importlib.util
-from typing import Optional
 from pathlib import Path
 
 # Dynamic import for BaseAgent (handles numeric directory names)
@@ -23,8 +22,7 @@ from pathlib import Path
 # Need to go up 4 levels to get to vibe-agency root
 vibe_root = Path(__file__).parent.parent.parent.parent
 spec = importlib.util.spec_from_file_location(
-    "base_agent",
-    vibe_root / "agency_os" / "03_agents" / "base_agent.py"
+    "base_agent", vibe_root / "agency_os" / "03_agents" / "base_agent.py"
 )
 base_agent_module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(base_agent_module)
@@ -44,7 +42,7 @@ class CoderAgent(BaseAgent):
         self,
         name: str = "claude-coder",
         role: str = "Code Developer",
-        vibe_root: Optional[Path] = None
+        vibe_root: Path | None = None,
     ):
         """
         Initialize Coder agent.
@@ -57,10 +55,7 @@ class CoderAgent(BaseAgent):
         super().__init__(name=name, role=role, vibe_root=vibe_root)
 
     def consult_knowledge(
-        self,
-        query: str,
-        domain: str = "patterns",
-        limit: int = 5
+        self, query: str, domain: str = "patterns", limit: int = 5
     ) -> KnowledgeResult:
         """
         Consult knowledge with default domain biased toward code patterns.
@@ -83,19 +78,21 @@ class CoderAgent(BaseAgent):
             Context dict with agent role and capabilities
         """
         context = self.get_context()
-        context.update({
-            "persona": "Coder",
-            "capabilities": [
-                "Write Python code",
-                "Write JavaScript code",
-                "Refactor existing code",
-                "Create unit tests",
-                "Optimize performance",
-                "Follow design patterns",
-            ],
-            "knowledge_domains": ["patterns", "snippets"],
-            "preferred_languages": ["python", "javascript", "typescript"],
-        })
+        context.update(
+            {
+                "persona": "Coder",
+                "capabilities": [
+                    "Write Python code",
+                    "Write JavaScript code",
+                    "Refactor existing code",
+                    "Create unit tests",
+                    "Optimize performance",
+                    "Follow design patterns",
+                ],
+                "knowledge_domains": ["patterns", "snippets"],
+                "preferred_languages": ["python", "javascript", "typescript"],
+            }
+        )
         return context
 
     def __repr__(self) -> str:

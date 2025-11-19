@@ -118,16 +118,12 @@ def test_blocking_chain(temp_blocking_roadmap):
 
     # After Task 1 done: Task 2 can start
     tasks["task-001"]["status"] = "DONE"
-    blocker1_done = (
-        tasks["task-001"]["status"] == "DONE"
-    )
+    blocker1_done = tasks["task-001"]["status"] == "DONE"
     assert blocker1_done, "Task 1 should be marked DONE"
 
     # After Task 2 done: Task 3 can start
     tasks["task-002"]["status"] = "DONE"
-    blocker2_done = (
-        tasks["task-002"]["status"] == "DONE"
-    )
+    blocker2_done = tasks["task-002"]["status"] == "DONE"
     assert blocker2_done, "Task 2 should be marked DONE"
 
 
@@ -168,7 +164,9 @@ def test_blocking_with_in_progress():
     roadmap = {
         "version": 1,
         "project_name": "test",
-        "phases": [{"name": "TEST", "status": "TODO", "progress": 0, "task_ids": ["task-001", "task-002"]}],
+        "phases": [
+            {"name": "TEST", "status": "TODO", "progress": 0, "task_ids": ["task-001", "task-002"]}
+        ],
         "tasks": {
             "task-001": {
                 "id": "task-001",
@@ -222,7 +220,9 @@ def test_no_circular_blocking():
     roadmap = {
         "version": 1,
         "project_name": "test",
-        "phases": [{"name": "TEST", "status": "TODO", "progress": 0, "task_ids": ["task-001", "task-002"]}],
+        "phases": [
+            {"name": "TEST", "status": "TODO", "progress": 0, "task_ids": ["task-001", "task-002"]}
+        ],
         "tasks": {
             "task-001": {
                 "id": "task-001",

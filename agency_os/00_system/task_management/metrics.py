@@ -38,9 +38,7 @@ class MetricsCalculator:
             }
 
         completed = sum(1 for t in tasks.values() if t.status == TaskStatus.DONE)
-        in_progress = sum(
-            1 for t in tasks.values() if t.status == TaskStatus.IN_PROGRESS
-        )
+        in_progress = sum(1 for t in tasks.values() if t.status == TaskStatus.IN_PROGRESS)
         todo = sum(1 for t in tasks.values() if t.status == TaskStatus.TODO)
         blocked = sum(1 for t in tasks.values() if t.status == TaskStatus.BLOCKED)
 
@@ -74,9 +72,7 @@ class MetricsCalculator:
             return None
 
         task_ids = phase.task_ids
-        phase_tasks = [
-            self.roadmap.tasks[tid] for tid in task_ids if tid in self.roadmap.tasks
-        ]
+        phase_tasks = [self.roadmap.tasks[tid] for tid in task_ids if tid in self.roadmap.tasks]
 
         if not phase_tasks:
             return {
@@ -92,9 +88,7 @@ class MetricsCalculator:
 
         total = len(phase_tasks)
         completed = sum(1 for t in phase_tasks if t.status == TaskStatus.DONE)
-        in_progress = sum(
-            1 for t in phase_tasks if t.status == TaskStatus.IN_PROGRESS
-        )
+        in_progress = sum(1 for t in phase_tasks if t.status == TaskStatus.IN_PROGRESS)
         todo = sum(1 for t in phase_tasks if t.status == TaskStatus.TODO)
         blocked = sum(1 for t in phase_tasks if t.status == TaskStatus.BLOCKED)
 
@@ -137,11 +131,7 @@ class MetricsCalculator:
         total_budgeted = sum(t.time_budget_mins for t in tasks.values())
         total_used = sum(t.time_used_mins for t in tasks.values())
 
-        utilization = (
-            int((total_used / total_budgeted) * 100)
-            if total_budgeted > 0
-            else 0
-        )
+        utilization = int((total_used / total_budgeted) * 100) if total_budgeted > 0 else 0
 
         return {
             "total_time_budgeted_mins": total_budgeted,

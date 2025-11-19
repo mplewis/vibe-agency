@@ -29,10 +29,10 @@ def atomic_write_json(path: Path, data: dict[str, Any]):
     - Race conditions (via exclusive lock on the temporary file)
     - Corrupted JSON (via temp file)
     """
-    temp_path = path.with_suffix('.tmp')
+    temp_path = path.with_suffix(".tmp")
 
     # Write to temp file
-    with open(temp_path, 'w') as f:
+    with open(temp_path, "w") as f:
         # Exclusive lock on the temporary file
         fcntl.flock(f.fileno(), fcntl.LOCK_EX)
         try:

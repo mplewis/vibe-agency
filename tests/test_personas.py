@@ -6,19 +6,18 @@ Tests verify specialized personas inherit BaseAgent correctly and have
 domain-specific capabilities.
 """
 
-import sys
-from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
-import pytest
-
 # Add agency_os to path
 import importlib.util
+from pathlib import Path
+from unittest.mock import MagicMock, patch
+
+import pytest
+
 vibe_root = Path(__file__).parent.parent
 
 # Dynamic import to handle numeric directory names
 spec = importlib.util.spec_from_file_location(
-    "personas",
-    vibe_root / "agency_os" / "03_agents" / "personas" / "__init__.py"
+    "personas", vibe_root / "agency_os" / "03_agents" / "personas" / "__init__.py"
 )
 personas_module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(personas_module)
@@ -39,7 +38,7 @@ class TestCoderAgent:
         (tmp_path / ".vibe" / "config").mkdir(parents=True)
         (tmp_path / "bin").mkdir(parents=True)
 
-        (tmp_path / ".vibe" / "runtime" / "context.json").write_text('{}')
+        (tmp_path / ".vibe" / "runtime" / "context.json").write_text("{}")
         (tmp_path / ".vibe" / "config" / "roadmap.yaml").write_text("test")
         (tmp_path / "bin" / "vibe-shell").write_text("#!/bin/bash\necho test")
         (tmp_path / "bin" / "vibe-knowledge").write_text("#!/bin/bash\necho test")
@@ -56,7 +55,7 @@ class TestCoderAgent:
         (tmp_path / ".vibe" / "config").mkdir(parents=True)
         (tmp_path / "bin").mkdir(parents=True)
 
-        (tmp_path / ".vibe" / "runtime" / "context.json").write_text('{}')
+        (tmp_path / ".vibe" / "runtime" / "context.json").write_text("{}")
         (tmp_path / ".vibe" / "config" / "roadmap.yaml").write_text("test")
         (tmp_path / "bin" / "vibe-shell").write_text("#!/bin/bash\necho test")
         (tmp_path / "bin" / "vibe-knowledge").write_text("#!/bin/bash\necho test")
@@ -67,7 +66,7 @@ class TestCoderAgent:
             mock_run.return_value = MagicMock(
                 returncode=0,
                 stdout="Path: patterns/python-context.md\nRelevance: 90.0%\n",
-                stderr=""
+                stderr="",
             )
 
             result = agent.consult_knowledge("context manager")
@@ -81,7 +80,7 @@ class TestCoderAgent:
         (tmp_path / ".vibe" / "config").mkdir(parents=True)
         (tmp_path / "bin").mkdir(parents=True)
 
-        (tmp_path / ".vibe" / "runtime" / "context.json").write_text('{}')
+        (tmp_path / ".vibe" / "runtime" / "context.json").write_text("{}")
         (tmp_path / ".vibe" / "config" / "roadmap.yaml").write_text("test")
         (tmp_path / "bin" / "vibe-shell").write_text("#!/bin/bash\necho test")
         (tmp_path / "bin" / "vibe-knowledge").write_text("#!/bin/bash\necho test")
@@ -103,7 +102,7 @@ class TestResearcherAgent:
         (tmp_path / ".vibe" / "config").mkdir(parents=True)
         (tmp_path / "bin").mkdir(parents=True)
 
-        (tmp_path / ".vibe" / "runtime" / "context.json").write_text('{}')
+        (tmp_path / ".vibe" / "runtime" / "context.json").write_text("{}")
         (tmp_path / ".vibe" / "config" / "roadmap.yaml").write_text("test")
         (tmp_path / "bin" / "vibe-shell").write_text("#!/bin/bash\necho test")
         (tmp_path / "bin" / "vibe-knowledge").write_text("#!/bin/bash\necho test")
@@ -120,7 +119,7 @@ class TestResearcherAgent:
         (tmp_path / ".vibe" / "config").mkdir(parents=True)
         (tmp_path / "bin").mkdir(parents=True)
 
-        (tmp_path / ".vibe" / "runtime" / "context.json").write_text('{}')
+        (tmp_path / ".vibe" / "runtime" / "context.json").write_text("{}")
         (tmp_path / ".vibe" / "config" / "roadmap.yaml").write_text("test")
         (tmp_path / "bin" / "vibe-shell").write_text("#!/bin/bash\necho test")
         (tmp_path / "bin" / "vibe-knowledge").write_text("#!/bin/bash\necho test")
@@ -129,9 +128,7 @@ class TestResearcherAgent:
 
         with patch("subprocess.run") as mock_run:
             mock_run.return_value = MagicMock(
-                returncode=0,
-                stdout="Path: research/ai-trends.md\nRelevance: 85.0%\n",
-                stderr=""
+                returncode=0, stdout="Path: research/ai-trends.md\nRelevance: 85.0%\n", stderr=""
             )
 
             result = agent.consult_knowledge("vector embeddings")
@@ -144,7 +141,7 @@ class TestResearcherAgent:
         (tmp_path / ".vibe" / "config").mkdir(parents=True)
         (tmp_path / "bin").mkdir(parents=True)
 
-        (tmp_path / ".vibe" / "runtime" / "context.json").write_text('{}')
+        (tmp_path / ".vibe" / "runtime" / "context.json").write_text("{}")
         (tmp_path / ".vibe" / "config" / "roadmap.yaml").write_text("test")
         (tmp_path / "bin" / "vibe-shell").write_text("#!/bin/bash\necho test")
         (tmp_path / "bin" / "vibe-knowledge").write_text("#!/bin/bash\necho test")
@@ -153,9 +150,7 @@ class TestResearcherAgent:
 
         with patch("subprocess.run") as mock_run:
             mock_run.return_value = MagicMock(
-                returncode=0,
-                stdout="Path: research/topic.md\nRelevance: 80.0%\n",
-                stderr=""
+                returncode=0, stdout="Path: research/topic.md\nRelevance: 80.0%\n", stderr=""
             )
 
             result = agent.research_topic("machine learning")
@@ -169,7 +164,7 @@ class TestResearcherAgent:
         (tmp_path / ".vibe" / "config").mkdir(parents=True)
         (tmp_path / "bin").mkdir(parents=True)
 
-        (tmp_path / ".vibe" / "runtime" / "context.json").write_text('{}')
+        (tmp_path / ".vibe" / "runtime" / "context.json").write_text("{}")
         (tmp_path / ".vibe" / "config" / "roadmap.yaml").write_text("test")
         (tmp_path / "bin" / "vibe-shell").write_text("#!/bin/bash\necho test")
         (tmp_path / "bin" / "vibe-knowledge").write_text("#!/bin/bash\necho test")
@@ -178,16 +173,10 @@ class TestResearcherAgent:
 
         with patch("subprocess.run") as mock_run:
             mock_run.return_value = MagicMock(
-                returncode=0,
-                stdout="Path: research/approach.md\nRelevance: 75.0%\n",
-                stderr=""
+                returncode=0, stdout="Path: research/approach.md\nRelevance: 75.0%\n", stderr=""
             )
 
-            result = agent.compare_approaches(
-                "databases",
-                "sql databases",
-                "nosql databases"
-            )
+            result = agent.compare_approaches("databases", "sql databases", "nosql databases")
 
             assert result["topic"] == "databases"
             assert result["approach_a"] == "sql databases"
@@ -199,7 +188,7 @@ class TestResearcherAgent:
         (tmp_path / ".vibe" / "config").mkdir(parents=True)
         (tmp_path / "bin").mkdir(parents=True)
 
-        (tmp_path / ".vibe" / "runtime" / "context.json").write_text('{}')
+        (tmp_path / ".vibe" / "runtime" / "context.json").write_text("{}")
         (tmp_path / ".vibe" / "config" / "roadmap.yaml").write_text("test")
         (tmp_path / "bin" / "vibe-shell").write_text("#!/bin/bash\necho test")
         (tmp_path / "bin" / "vibe-knowledge").write_text("#!/bin/bash\necho test")
@@ -221,7 +210,7 @@ class TestReviewerAgent:
         (tmp_path / ".vibe" / "config").mkdir(parents=True)
         (tmp_path / "bin").mkdir(parents=True)
 
-        (tmp_path / ".vibe" / "runtime" / "context.json").write_text('{}')
+        (tmp_path / ".vibe" / "runtime" / "context.json").write_text("{}")
         (tmp_path / ".vibe" / "config" / "roadmap.yaml").write_text("test")
         (tmp_path / "bin" / "vibe-shell").write_text("#!/bin/bash\necho test")
         (tmp_path / "bin" / "vibe-knowledge").write_text("#!/bin/bash\necho test")
@@ -237,7 +226,7 @@ class TestReviewerAgent:
         (tmp_path / ".vibe" / "config").mkdir(parents=True)
         (tmp_path / "bin").mkdir(parents=True)
 
-        (tmp_path / ".vibe" / "runtime" / "context.json").write_text('{}')
+        (tmp_path / ".vibe" / "runtime" / "context.json").write_text("{}")
         (tmp_path / ".vibe" / "config" / "roadmap.yaml").write_text("test")
         (tmp_path / "bin" / "vibe-shell").write_text("#!/bin/bash\necho test")
         (tmp_path / "bin" / "vibe-knowledge").write_text("#!/bin/bash\necho test")
@@ -256,17 +245,14 @@ class TestReviewerAgent:
         (tmp_path / ".vibe" / "config").mkdir(parents=True)
         (tmp_path / "bin").mkdir(parents=True)
 
-        (tmp_path / ".vibe" / "runtime" / "context.json").write_text('{}')
+        (tmp_path / ".vibe" / "runtime" / "context.json").write_text("{}")
         (tmp_path / ".vibe" / "config" / "roadmap.yaml").write_text("test")
         (tmp_path / "bin" / "vibe-shell").write_text("#!/bin/bash\necho test")
         (tmp_path / "bin" / "vibe-knowledge").write_text("#!/bin/bash\necho test")
 
         agent = ReviewerAgent(vibe_root=tmp_path)
 
-        comparison = agent.compare_architectures(
-            "monolith",
-            "microservices"
-        )
+        comparison = agent.compare_architectures("monolith", "microservices")
 
         assert comparison["approach_a"] == "monolith"
         assert comparison["approach_b"] == "microservices"
@@ -278,7 +264,7 @@ class TestReviewerAgent:
         (tmp_path / ".vibe" / "config").mkdir(parents=True)
         (tmp_path / "bin").mkdir(parents=True)
 
-        (tmp_path / ".vibe" / "runtime" / "context.json").write_text('{}')
+        (tmp_path / ".vibe" / "runtime" / "context.json").write_text("{}")
         (tmp_path / ".vibe" / "config" / "roadmap.yaml").write_text("test")
         (tmp_path / "bin" / "vibe-shell").write_text("#!/bin/bash\necho test")
         (tmp_path / "bin" / "vibe-knowledge").write_text("#!/bin/bash\necho test")
@@ -300,7 +286,7 @@ class TestArchitectAgent:
         (tmp_path / ".vibe" / "config").mkdir(parents=True)
         (tmp_path / "bin").mkdir(parents=True)
 
-        (tmp_path / ".vibe" / "runtime" / "context.json").write_text('{}')
+        (tmp_path / ".vibe" / "runtime" / "context.json").write_text("{}")
         (tmp_path / ".vibe" / "config" / "roadmap.yaml").write_text("test")
         (tmp_path / "bin" / "vibe-shell").write_text("#!/bin/bash\necho test")
         (tmp_path / "bin" / "vibe-knowledge").write_text("#!/bin/bash\necho test")
@@ -316,7 +302,7 @@ class TestArchitectAgent:
         (tmp_path / ".vibe" / "config").mkdir(parents=True)
         (tmp_path / "bin").mkdir(parents=True)
 
-        (tmp_path / ".vibe" / "runtime" / "context.json").write_text('{}')
+        (tmp_path / ".vibe" / "runtime" / "context.json").write_text("{}")
         (tmp_path / ".vibe" / "config" / "roadmap.yaml").write_text("test")
         (tmp_path / "bin" / "vibe-shell").write_text("#!/bin/bash\necho test")
         (tmp_path / "bin" / "vibe-knowledge").write_text("#!/bin/bash\necho test")
@@ -326,7 +312,7 @@ class TestArchitectAgent:
         design = agent.design_system(
             "user-service",
             ["user authentication", "user profiles"],
-            ["100k users", "single region"]
+            ["100k users", "single region"],
         )
 
         assert design["system"] == "user-service"
@@ -339,7 +325,7 @@ class TestArchitectAgent:
         (tmp_path / ".vibe" / "config").mkdir(parents=True)
         (tmp_path / "bin").mkdir(parents=True)
 
-        (tmp_path / ".vibe" / "runtime" / "context.json").write_text('{}')
+        (tmp_path / ".vibe" / "runtime" / "context.json").write_text("{}")
         (tmp_path / ".vibe" / "config" / "roadmap.yaml").write_text("test")
         (tmp_path / "bin" / "vibe-shell").write_text("#!/bin/bash\necho test")
         (tmp_path / "bin" / "vibe-knowledge").write_text("#!/bin/bash\necho test")
@@ -348,16 +334,10 @@ class TestArchitectAgent:
 
         with patch("subprocess.run") as mock_run:
             mock_run.return_value = MagicMock(
-                returncode=0,
-                stdout="Path: decisions/api-design.md\nRelevance: 80.0%\n",
-                stderr=""
+                returncode=0, stdout="Path: decisions/api-design.md\nRelevance: 80.0%\n", stderr=""
             )
 
-            tradeoff = agent.evaluate_tradeoff(
-                "api design",
-                "rest",
-                "graphql"
-            )
+            tradeoff = agent.evaluate_tradeoff("api design", "rest", "graphql")
 
             assert tradeoff["decision"] == "api design"
             assert tradeoff["option_a"] == "rest"
@@ -369,7 +349,7 @@ class TestArchitectAgent:
         (tmp_path / ".vibe" / "config").mkdir(parents=True)
         (tmp_path / "bin").mkdir(parents=True)
 
-        (tmp_path / ".vibe" / "runtime" / "context.json").write_text('{}')
+        (tmp_path / ".vibe" / "runtime" / "context.json").write_text("{}")
         (tmp_path / ".vibe" / "config" / "roadmap.yaml").write_text("test")
         (tmp_path / "bin" / "vibe-shell").write_text("#!/bin/bash\necho test")
         (tmp_path / "bin" / "vibe-knowledge").write_text("#!/bin/bash\necho test")
@@ -381,7 +361,7 @@ class TestArchitectAgent:
             status="ACCEPTED",
             context="Need to define service communication strategy",
             decision="Use REST API",
-            consequences=["Standard HTTP semantics", "Wide tooling support"]
+            consequences=["Standard HTTP semantics", "Wide tooling support"],
         )
 
         assert adr["title"] == "Use REST API for service communication"
@@ -394,7 +374,7 @@ class TestArchitectAgent:
         (tmp_path / ".vibe" / "config").mkdir(parents=True)
         (tmp_path / "bin").mkdir(parents=True)
 
-        (tmp_path / ".vibe" / "runtime" / "context.json").write_text('{}')
+        (tmp_path / ".vibe" / "runtime" / "context.json").write_text("{}")
         (tmp_path / ".vibe" / "config" / "roadmap.yaml").write_text("test")
         (tmp_path / "bin" / "vibe-shell").write_text("#!/bin/bash\necho test")
         (tmp_path / "bin" / "vibe-knowledge").write_text("#!/bin/bash\necho test")
