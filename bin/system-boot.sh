@@ -11,9 +11,11 @@
 set -euo pipefail
 
 # --- TERM CHECK (GAD-501: CI/CD Compatibility) ---
-# If TERM is not set (e.g., in CI), disable color output
-if [ -z "${TERM:-}" ]; then
+# If TERM is not set (e.g., in CI), set it to dumb and disable color output
+if [ -z "${TERM:-}" ] || [ "${TERM:-}" = "" ]; then
     export TERM=dumb
+    USE_COLOR=false
+elif [ "${TERM}" = "dumb" ]; then
     USE_COLOR=false
 else
     USE_COLOR=true
@@ -112,7 +114,7 @@ echo ""
 
 # The primary system prompt is displayed via the Mission Control Dashboard
 # This replaces the old hardcoded SYSTEMPROMPT block.
-python3 bin/mission status
+python3 bin/mission status 2>&1 || echo "⚠️  Mission Control not initialized (run scripts/bootstrap_mission.py)"
 echo ""
 
 if ./bin/vibe-shell --health 2>&1; then
@@ -138,7 +140,7 @@ echo ""
 # - Load session handoff
 # - Show available playbook routes
 # - Output ready state
-python3 ./vibe-cli boot
+python3 ./vibe-cli boot 2>&1 || echo "⚠️  VIBE-CLI boot check failed (system may need initialization)"
 
 echo ""
 echo "════════════════════════════════════════════════════════════════"
@@ -184,3 +186,13 @@ echo ""
 echo "📚 Playbook Registry: docs/playbook/_registry.yaml"
 echo ""
 echo "════════════════════════════════════════════════════════════════"
+echo ""
+
+# ============================================================================
+# CLEANUP ROADMAP: Show next task if cleanup mode active
+# ============================================================================
+if [ -f .vibe/config/cleanup_roadmap.json ]; then
+    echo "🧹 CLEANUP MODE ACTIVE"
+    echo ""
+    python3 ./bin/next-task.py
+fi
