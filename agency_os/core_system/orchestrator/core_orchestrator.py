@@ -28,14 +28,14 @@ import uuid
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
 from datetime import datetime
-from enum import Enum
 from pathlib import Path
 from typing import Any
 
 import yaml
 
+from agency_os.core_system.orchestrator.types import PlanningSubState, ProjectPhase
 from agency_os.core_system.runtime.llm_client import BudgetExceededError, LLMClient
-from agency_os.persistence.sqlite_store import SQLiteStore
+from vibe_core.store.sqlite_store import SQLiteStore
 
 # Initialize logger BEFORE using it
 logger = logging.getLogger(__name__)
@@ -57,26 +57,6 @@ except ImportError:
 # =============================================================================
 # DATA STRUCTURES
 # =============================================================================
-
-
-class ProjectPhase(Enum):
-    """SDLC lifecycle phases"""
-
-    PLANNING = "PLANNING"
-    CODING = "CODING"
-    TESTING = "TESTING"
-    AWAITING_QA_APPROVAL = "AWAITING_QA_APPROVAL"
-    DEPLOYMENT = "DEPLOYMENT"
-    PRODUCTION = "PRODUCTION"
-    MAINTENANCE = "MAINTENANCE"
-
-
-class PlanningSubState(Enum):
-    """Planning phase sub-states"""
-
-    RESEARCH = "RESEARCH"
-    BUSINESS_VALIDATION = "BUSINESS_VALIDATION"
-    FEATURE_SPECIFICATION = "FEATURE_SPECIFICATION"
 
 
 @dataclass
