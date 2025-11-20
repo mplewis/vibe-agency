@@ -17,11 +17,7 @@ Test Strategy:
 """
 
 import os
-import sqlite3
 import tempfile
-import threading
-from datetime import datetime
-from pathlib import Path
 
 import pytest
 
@@ -90,7 +86,7 @@ class TestSQLiteStoreInitialization:
     def test_init_with_existing_database_does_not_recreate_schema(self):
         """Test that opening existing DB doesn't re-run schema"""
         with tempfile.TemporaryDirectory() as tmpdir:
-            db_path = os.path.join(tmpdir, "test_vibe_agency.db")
+            db_path = os.path.join(tmpdir, "test_vibe_agency.db")  # noqa: F841
 
             # # Create DB first time
             # store1 = SQLiteStore(db_path)
@@ -361,7 +357,7 @@ class TestThreadSafety:
     def test_multiple_threads_can_access_database(self):
         """Test that SQLiteStore is thread-safe"""
         with tempfile.TemporaryDirectory() as tmpdir:
-            db_path = os.path.join(tmpdir, "test_threadsafe.db")
+            db_path = os.path.join(tmpdir, "test_threadsafe.db")  # noqa: F841
             # store = SQLiteStore(db_path)
 
             # results = []
