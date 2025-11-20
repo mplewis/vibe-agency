@@ -21,7 +21,8 @@ _ORCHESTRATOR_PATH = _REPO_ROOT / "agency_os" / "core_system" / "orchestrator"
 
 
 from agency_os_orchestrator import PROMPT_REGISTRY_AVAILABLE, CoreOrchestrator
-from runtime.prompt_registry import PromptRegistry
+
+from agency_os.core_system.runtime.prompt_registry import PromptRegistry
 
 
 def test_prompt_registry_integration():
@@ -162,9 +163,9 @@ def test_prompt_registry_integration():
             inject_governance=False,
         )
 
-        assert "GUARDIAN DIRECTIVES" not in prompt_no_gov, (
-            "Should not have directives when inject_governance=False"
-        )
+        assert (
+            "GUARDIAN DIRECTIVES" not in prompt_no_gov
+        ), "Should not have directives when inject_governance=False"
         print("✓ inject_governance=False works")
 
         # With tools (if agent supports them)
@@ -187,9 +188,9 @@ def test_prompt_registry_integration():
             inject_sops=["SOP_001"],
         )
 
-        assert "STANDARD OPERATING PROCEDURES" in prompt_with_sops, (
-            "SOPs should be present when inject_sops specified"
-        )
+        assert (
+            "STANDARD OPERATING PROCEDURES" in prompt_with_sops
+        ), "SOPs should be present when inject_sops specified"
         print("✓ inject_sops works\n")
 
     except Exception as e:

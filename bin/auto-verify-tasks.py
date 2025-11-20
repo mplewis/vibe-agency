@@ -10,8 +10,8 @@ It auto-fixes the roadmap if it finds discrepancies.
 
 import json
 import sys
+from datetime import UTC, datetime
 from pathlib import Path
-from datetime import datetime, timezone
 
 
 def load_roadmap():
@@ -27,8 +27,8 @@ def load_roadmap():
 
 def save_roadmap(roadmap, roadmap_path):
     """Save updated roadmap"""
-    roadmap["progress_tracking"]["last_updated"] = datetime.now(timezone.utc).isoformat()
-    with open(roadmap_path, 'w') as f:
+    roadmap["progress_tracking"]["last_updated"] = datetime.now(UTC).isoformat()
+    with open(roadmap_path, "w") as f:
         json.dump(roadmap, f, indent=2)
 
 
@@ -54,7 +54,7 @@ def check_q001_complete():
         "GAD-102.md",
         "GAD-103.md",
         "GAD-200.md",
-        "GAD-300.md"
+        "GAD-300.md",
     ]
 
     for file in required_files:
@@ -102,13 +102,13 @@ def check_q004_complete():
 def check_b001_complete():
     """Check if B001 acceptance criteria are met"""
     # B001: Boot script auto-provisioning works
-    # Check if bootstrap_mission.py exists and is called from system-boot.sh
+    # Check if genesis.py is called from system-boot.sh (Genesis Protocol)
     boot_script = Path("bin/system-boot.sh")
     if not boot_script.exists():
         return False
 
     content = boot_script.read_text()
-    return "bootstrap_mission.py" in content
+    return "genesis.py" in content or "Genesis Protocol" in content
 
 
 def check_b002_complete():

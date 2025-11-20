@@ -16,7 +16,11 @@ Run:
 import logging
 from pathlib import Path
 
-from agency_os.core_system.orchestrator.core_orchestrator import CoreOrchestrator, ProjectManifest, ProjectPhase
+from agency_os.core_system.orchestrator.core_orchestrator import (
+    CoreOrchestrator,
+    ProjectManifest,
+    ProjectPhase,
+)
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
@@ -149,9 +153,9 @@ def test_data_contracts_has_audit_schema():
             required_fields = ["check_type", "severity", "blocking", "status", "timestamp"]
 
             for req_field in required_fields:
-                assert req_field in fields, (
-                    f"Required field '{req_field}' missing from audit_report schema"
-                )
+                assert (
+                    req_field in fields
+                ), f"Required field '{req_field}' missing from audit_report schema"
                 logger.info(f"     ✓ {req_field}")
 
             break
