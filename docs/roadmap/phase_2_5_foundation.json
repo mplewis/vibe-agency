@@ -357,12 +357,13 @@
     "current_phase": "PHASE_0",
     "current_task": null,
     "completed_tasks": [
-      "ARCH-001"
+      "ARCH-001",
+      "ARCH-002"
     ],
     "blocked_tasks": [],
     "estimated_total_time_mins": 1920,
     "estimated_total_sessions": 12,
-    "last_updated": "2025-11-20T12:36:58.043705Z"
+    "last_updated": "2025-11-20T13:00:44.097918Z"
   },
   "metrics": {
     "before": {
