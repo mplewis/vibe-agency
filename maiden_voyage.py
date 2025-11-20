@@ -33,9 +33,9 @@ logging.basicConfig(
 
 
 def main():
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("🚢 MAIDEN VOYAGE - Vibe Agency OS v2.5 Architecture Test")
-    print("="*80)
+    print("=" * 80)
 
     print("\n📋 MISSION: Documentation Harmonization")
     print("   Task: Update README.md to reflect v2.5 architecture completion")
@@ -45,7 +45,7 @@ def main():
     print("🔧 Initializing CoreOrchestrator...")
     orchestrator = CoreOrchestrator(
         repo_root=Path.cwd(),
-        execution_mode="autonomous"  # Run without file delegation
+        execution_mode="autonomous",  # Run without file delegation
     )
 
     # Create mission manifest
@@ -59,14 +59,14 @@ def main():
                 "Update README.md and docs/architecture/INDEX.md to reflect "
                 "the completed v2.5 architecture (HAP, SQLite, Registry patterns)"
             ),
-            "workspace_root": str(Path.cwd() / "workspaces" / "maiden-voyage")
-        }
+            "workspace_root": str(Path.cwd() / "workspaces" / "maiden-voyage"),
+        },
     )
 
     # Execute planning phase
-    print("\n" + "-"*80)
+    print("\n" + "-" * 80)
     print("🎯 PHASE 1: PLANNING (via PlanningSpecialist)")
-    print("-"*80)
+    print("-" * 80)
 
     try:
         # This should trigger:
@@ -87,13 +87,14 @@ def main():
     except Exception as e:
         print(f"\n❌ Planning phase failed: {e}")
         import traceback
+
         traceback.print_exc()
         return 1
 
     # Execute coding phase
-    print("\n" + "-"*80)
+    print("\n" + "-" * 80)
     print("🎯 PHASE 2: CODING (via CodingSpecialist)")
-    print("-"*80)
+    print("-" * 80)
 
     try:
         # This should trigger:
@@ -115,15 +116,17 @@ def main():
     except Exception as e:
         print(f"\n❌ Coding phase failed: {e}")
         import traceback
+
         traceback.print_exc()
         return 1
 
     # Verify SQLite logging
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("🔍 VERIFICATION: Check SQLite Decisions Table")
-    print("="*80)
+    print("=" * 80)
 
     import sqlite3
+
     db_path = Path.cwd() / ".vibe" / "state" / "vibe_agency.db"
 
     if not db_path.exists():
@@ -157,9 +160,9 @@ def main():
     conn.close()
 
     # Final report
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("🎉 MAIDEN VOYAGE COMPLETE")
-    print("="*80)
+    print("=" * 80)
 
     if count > 0:
         print("\n✅ SUCCESS: v2.5 Architecture operational")
@@ -172,6 +175,7 @@ def main():
         print("\n⚠️  WARNING: No decisions logged to SQLite")
         print("   • Mission completed but shadow mode may not be active")
         return 1
+
 
 if __name__ == "__main__":
     sys.exit(main())

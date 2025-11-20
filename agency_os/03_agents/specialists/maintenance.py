@@ -164,7 +164,9 @@ class MaintenanceSpecialist(BaseSpecialist):
         )
 
         # Load deploy_receipt from DEPLOYMENT
-        _deploy_receipt = self.orchestrator.load_artifact(context.mission_uuid, "deploy_receipt.json")
+        _deploy_receipt = self.orchestrator.load_artifact(
+            context.mission_uuid, "deploy_receipt.json"
+        )
         logger.info("✅ Loaded deploy_receipt.json from DEPLOYMENT phase")
 
         # STUB: Create mock maintenance_log

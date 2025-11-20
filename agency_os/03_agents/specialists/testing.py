@@ -112,7 +112,9 @@ class TestingSpecialist(BaseSpecialist):
                 logger.error(f"Precondition failed: Error loading code_gen_spec.json: {e}")
                 return False
         else:
-            logger.error("Precondition failed: orchestrator not available (required for load_artifact)")
+            logger.error(
+                "Precondition failed: orchestrator not available (required for load_artifact)"
+            )
             return False
 
         # Check: phase is TESTING
