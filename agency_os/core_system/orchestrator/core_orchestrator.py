@@ -337,6 +337,12 @@ class CoreOrchestrator:
         self.tool_safety_guard = ToolSafetyGuard()
         logger.info("✅ Tool Safety Guard initialized")
 
+        # ARCH-009: Initialize Agent Registry (HAP pattern)
+        from agency_os.agents.registry import AgentRegistry
+
+        self.agent_registry = AgentRegistry()
+        logger.info(f"✅ Agent Registry initialized: {self.agent_registry.list_specialists()}")
+
         # Lazy-load handlers
         self._handlers = {}
 
@@ -367,70 +373,31 @@ class CoreOrchestrator:
 
     def get_phase_handler(self, phase: ProjectPhase):
         """
-        Get handler for a phase (lazy loading).
+        Get handler for a phase (lazy loading via AgentRegistry).
 
-        Implements GAD-002 Decision 1: Hierarchical Architecture
-        ARCH-006: PLANNING phase now uses PlanningSpecialist (HAP pattern)
+        ARCH-009: Refactored to use AgentRegistry pattern (eliminates hardcoded routing)
+
+        This method now:
+        1. Looks up specialist class from registry
+        2. Wraps it in SpecialistHandlerAdapter
+        3. Caches the adapter for reuse
+
+        Future (5D/6D): Registry will accept MAD context for variant selection
         """
         if phase not in self._handlers:
-            # Import handler dynamically
-            if phase == ProjectPhase.PLANNING:
-                # ARCH-006: Use PlanningSpecialist via adapter (Hierarchical Agent Pattern)
-                from handlers.specialist_handler_adapter import SpecialistHandlerAdapter
+            # Import adapter (constant across all phases)
+            from handlers.specialist_handler_adapter import SpecialistHandlerAdapter
 
-                from agency_os.agents import PlanningSpecialist
+            # Get specialist class from registry (ARCH-009: Dynamic lookup)
+            specialist_class = self.agent_registry.get_specialist(phase)
 
-                self._handlers[phase] = SpecialistHandlerAdapter(
-                    specialist_class=PlanningSpecialist,
-                    orchestrator=self,
-                )
-                logger.info("✅ PLANNING handler: Using PlanningSpecialist (HAP)")
-            elif phase == ProjectPhase.CODING:
-                # ARCH-007: Use CodingSpecialist via adapter (Hierarchical Agent Pattern)
-                from handlers.specialist_handler_adapter import SpecialistHandlerAdapter
+            # Wrap specialist in adapter
+            self._handlers[phase] = SpecialistHandlerAdapter(
+                specialist_class=specialist_class,
+                orchestrator=self,
+            )
 
-                from agency_os.agents.specialists import CodingSpecialist
-
-                self._handlers[phase] = SpecialistHandlerAdapter(
-                    specialist_class=CodingSpecialist,
-                    orchestrator=self,
-                )
-                logger.info("✅ CODING handler: Using CodingSpecialist (HAP)")
-            elif phase == ProjectPhase.TESTING:
-                # ARCH-008: Use TestingSpecialist via adapter (Hierarchical Agent Pattern)
-                from handlers.specialist_handler_adapter import SpecialistHandlerAdapter
-
-                from agency_os.agents.specialists import TestingSpecialist
-
-                self._handlers[phase] = SpecialistHandlerAdapter(
-                    specialist_class=TestingSpecialist,
-                    orchestrator=self,
-                )
-                logger.info("✅ TESTING handler: Using TestingSpecialist (HAP)")
-            elif phase == ProjectPhase.DEPLOYMENT:
-                # ARCH-008: Use DeploymentSpecialist via adapter (Hierarchical Agent Pattern)
-                from handlers.specialist_handler_adapter import SpecialistHandlerAdapter
-
-                from agency_os.agents.specialists import DeploymentSpecialist
-
-                self._handlers[phase] = SpecialistHandlerAdapter(
-                    specialist_class=DeploymentSpecialist,
-                    orchestrator=self,
-                )
-                logger.info("✅ DEPLOYMENT handler: Using DeploymentSpecialist (HAP)")
-            elif phase == ProjectPhase.MAINTENANCE:
-                # ARCH-008: Use MaintenanceSpecialist via adapter (Hierarchical Agent Pattern)
-                from handlers.specialist_handler_adapter import SpecialistHandlerAdapter
-
-                from agency_os.agents.specialists import MaintenanceSpecialist
-
-                self._handlers[phase] = SpecialistHandlerAdapter(
-                    specialist_class=MaintenanceSpecialist,
-                    orchestrator=self,
-                )
-                logger.info("✅ MAINTENANCE handler: Using MaintenanceSpecialist (HAP)")
-            else:
-                raise ValueError(f"No handler for phase: {phase}")
+            logger.info(f"✅ {phase.value} handler: Using {specialist_class.__name__} (HAP)")
 
         return self._handlers[phase]
 
