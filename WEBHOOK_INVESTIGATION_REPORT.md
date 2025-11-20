@@ -104,16 +104,35 @@ The previous agent designed a **two-tier defense system**:
 
 ## Issues Found & Fixed
 
-### Issue 1: Dependency Mismatch ⚠️ FIXED
+### Issue 1: Dependency Mismatch ⚠️ FIXED STRUCTURALLY
 **Symptom:** Pre-push check was failing on dependency integrity
-**Cause:** `pyproject.toml` declared dev dependencies that weren't installed
-**Fix:** `uv sync --extra dev`
-**Result:** All checks now pass
+**Root Cause:** Inconsistent dependency sync commands between boot and pre-push check
+**The Bug:**
+```bash
+# bin/system-boot.sh (BEFORE)
+uv sync --all-extras        # Installs dev + security + hooks
 
-**Why this happened:**
-- The system-boot.sh runs `uv sync --all-extras` on first boot
-- But pre-push-check.sh expects `--extra dev` specifically
-- These should be aligned
+# bin/pre-push-check.sh
+uv sync --extra dev --check # Expects ONLY dev
+```
+
+**Why this is unstable:**
+- Boot installs MORE dependencies than pre-push expects
+- If security/hooks packages get removed later, pre-push fails
+- Creates phantom dependency mismatches
+- Band-aid fix (`uv sync --extra dev`) would work ONCE but fail on next clean boot
+
+**Structural Fix Applied:**
+```bash
+# bin/system-boot.sh (AFTER)
+uv sync --extra dev         # Now ALIGNED with pre-push check
+```
+
+**Result:**
+- ✅ Boot and pre-push now use identical dependency sets
+- ✅ Verified with clean venv test (`rm -rf .venv && ./bin/system-boot.sh`)
+- ✅ Pre-push check passes consistently
+- ✅ No phantom mismatches possible
 
 ### Issue 2: None - Architecture is Sound
 The hook design is **exactly what it should be**:
