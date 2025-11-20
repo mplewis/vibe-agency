@@ -397,17 +397,38 @@ class CoreOrchestrator:
                 )
                 logger.info("✅ CODING handler: Using CodingSpecialist (HAP)")
             elif phase == ProjectPhase.TESTING:
-                from handlers.testing_handler import TestingHandler
+                # ARCH-008: Use TestingSpecialist via adapter (Hierarchical Agent Pattern)
+                from handlers.specialist_handler_adapter import SpecialistHandlerAdapter
 
-                self._handlers[phase] = TestingHandler(self)
+                from agency_os.agents.specialists import TestingSpecialist
+
+                self._handlers[phase] = SpecialistHandlerAdapter(
+                    specialist_class=TestingSpecialist,
+                    orchestrator=self,
+                )
+                logger.info("✅ TESTING handler: Using TestingSpecialist (HAP)")
             elif phase == ProjectPhase.DEPLOYMENT:
-                from handlers.deployment_handler import DeploymentHandler
+                # ARCH-008: Use DeploymentSpecialist via adapter (Hierarchical Agent Pattern)
+                from handlers.specialist_handler_adapter import SpecialistHandlerAdapter
 
-                self._handlers[phase] = DeploymentHandler(self)
+                from agency_os.agents.specialists import DeploymentSpecialist
+
+                self._handlers[phase] = SpecialistHandlerAdapter(
+                    specialist_class=DeploymentSpecialist,
+                    orchestrator=self,
+                )
+                logger.info("✅ DEPLOYMENT handler: Using DeploymentSpecialist (HAP)")
             elif phase == ProjectPhase.MAINTENANCE:
-                from handlers.maintenance_handler import MaintenanceHandler
+                # ARCH-008: Use MaintenanceSpecialist via adapter (Hierarchical Agent Pattern)
+                from handlers.specialist_handler_adapter import SpecialistHandlerAdapter
 
-                self._handlers[phase] = MaintenanceHandler(self)
+                from agency_os.agents.specialists import MaintenanceSpecialist
+
+                self._handlers[phase] = SpecialistHandlerAdapter(
+                    specialist_class=MaintenanceSpecialist,
+                    orchestrator=self,
+                )
+                logger.info("✅ MAINTENANCE handler: Using MaintenanceSpecialist (HAP)")
             else:
                 raise ValueError(f"No handler for phase: {phase}")
 
