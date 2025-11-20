@@ -17,20 +17,20 @@ import logging
 import sys
 from pathlib import Path
 
-# Setup logging to see component activity
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-
 # Add project to path
 sys.path.insert(0, str(Path(__file__).parent))
 
 from agency_os.core_system.orchestrator.core_orchestrator import (
     CoreOrchestrator,
     ProjectManifest,
-    ProjectPhase
+    ProjectPhase,
 )
+
+# Setup logging to see component activity
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+
 
 def main():
     print("\n" + "="*80)
