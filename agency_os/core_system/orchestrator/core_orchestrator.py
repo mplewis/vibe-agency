@@ -331,6 +331,12 @@ class CoreOrchestrator:
         self.sqlite_store = SQLiteStore(str(db_path))
         logger.info(f"✅ SQLite persistence initialized: {db_path}")
 
+        # Initialize Tool Safety Guard (ARCH-006: Required for specialists)
+        from agency_os.core_system.runtime.tool_safety_guard import ToolSafetyGuard
+
+        self.tool_safety_guard = ToolSafetyGuard()
+        logger.info("✅ Tool Safety Guard initialized")
+
         # Lazy-load handlers
         self._handlers = {}
 
@@ -364,13 +370,21 @@ class CoreOrchestrator:
         Get handler for a phase (lazy loading).
 
         Implements GAD-002 Decision 1: Hierarchical Architecture
+        ARCH-006: PLANNING phase now uses PlanningSpecialist (HAP pattern)
         """
         if phase not in self._handlers:
             # Import handler dynamically
             if phase == ProjectPhase.PLANNING:
-                from handlers.planning_handler import PlanningHandler
+                # ARCH-006: Use PlanningSpecialist via adapter (Hierarchical Agent Pattern)
+                from handlers.specialist_handler_adapter import SpecialistHandlerAdapter
 
-                self._handlers[phase] = PlanningHandler(self)
+                from agency_os.agents import PlanningSpecialist
+
+                self._handlers[phase] = SpecialistHandlerAdapter(
+                    specialist_class=PlanningSpecialist,
+                    orchestrator=self,
+                )
+                logger.info("✅ PLANNING handler: Using PlanningSpecialist (HAP)")
             elif phase == ProjectPhase.CODING:
                 from handlers.coding_handler import CodingHandler
 
