@@ -183,12 +183,7 @@ class SQLiteStore:
         # Infer status from phase (Reality Check requirement)
         # If completed_at exists → completed, else in_progress
         completed_at = status_section.get("completedAt")
-        if completed_at:
-            status = "completed"
-        elif phase == "PRODUCTION":
-            status = "completed"
-        else:
-            status = "in_progress"
+        status = "completed" if completed_at or phase == "PRODUCTION" else "in_progress"
 
         # Timestamps
         created_at = metadata_section.get("createdAt")
@@ -442,7 +437,8 @@ class SQLiteStore:
             return  # Nothing to update
 
         params.append(mission_id)
-        sql = f"UPDATE missions SET {', '.join(updates)} WHERE id = ?"
+        # S608: False positive - joining safe column names from code, not user input
+        sql = f"UPDATE missions SET {', '.join(updates)} WHERE id = ?"  # noqa: S608
         self.conn.execute(sql, params)
         self._commit()
 
@@ -880,7 +876,8 @@ class SQLiteStore:
 
             update_values.append(mission_id)
 
-            sql = f"UPDATE missions SET {', '.join(update_fields)} WHERE id = ?"
+            # S608: False positive - joining safe column names from code, not user input
+            sql = f"UPDATE missions SET {', '.join(update_fields)} WHERE id = ?"  # noqa: S608
             self.conn.execute(sql, update_values)
             self._commit()
         else:
@@ -998,7 +995,9 @@ class SQLiteStore:
         self._commit()
         return cursor.lastrowid
 
-    def get_artifacts(self, mission_id: int, artifact_type: str | None = None) -> list[dict[str, Any]]:
+    def get_artifacts(
+        self, mission_id: int, artifact_type: str | None = None
+    ) -> list[dict[str, Any]]:
         """
         Get artifacts for a mission (v2)
 
