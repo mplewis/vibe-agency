@@ -83,8 +83,8 @@ if [ ! -d ".venv" ]; then
 
     # Check if uv is available
     if command -v uv &> /dev/null; then
-        echo "   Running: uv sync --all-extras"
-        uv sync --all-extras || {
+        echo "   Running: uv sync --extra dev"
+        uv sync --extra dev || {
             echo -e "❌ ${RED}Failed to install dependencies with uv${NC}"
             exit 1
         }
