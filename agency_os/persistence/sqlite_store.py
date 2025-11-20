@@ -560,3 +560,58 @@ class SQLiteStore:
         if run.get("metrics"):
             run["metrics"] = json.loads(run["metrics"])
         return run
+
+    # ========================================================================
+    # LEGACY MIGRATION (ARCH-003)
+    # ========================================================================
+
+    def import_legacy_mission(self, json_data: dict[str, Any]) -> int | None:
+        """
+        Import legacy mission from active_mission.json
+
+        Args:
+            json_data: Mission data from JSON file
+
+        Returns:
+            mission_id if imported, None if already exists
+
+        This method provides backward compatibility for JSON-based missions.
+        If the mission already exists in the database (by UUID), it will NOT
+        be imported again (idempotent).
+        """
+        mission_uuid = json_data.get("mission_id", "unknown")
+
+        # Check if mission already exists (idempotent)
+        existing = self.get_mission_by_uuid(mission_uuid)
+        if existing:
+            return None  # Already imported
+
+        # Extract mission data
+        phase = json_data.get("context", {}).get("phase", "PLANNING")
+
+        # Map legacy status to schema-compliant status
+        legacy_status = json_data.get("status", "active")
+        status_mapping = {
+            "active": "in_progress",
+            "pending": "pending",
+            "in_progress": "in_progress",
+            "completed": "completed",
+            "failed": "failed",
+        }
+        status = status_mapping.get(legacy_status, "in_progress")
+
+        created_at = json_data.get("created_at", json_data.get("genesis_time"))
+
+        # Store full JSON as metadata (preserve everything)
+        metadata = json_data
+
+        # Create mission in database
+        mission_id = self.create_mission(
+            mission_uuid=mission_uuid,
+            phase=phase,
+            status=status,
+            created_at=created_at,
+            metadata=metadata,
+        )
+
+        return mission_id
