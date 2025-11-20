@@ -47,6 +47,7 @@ class DeploymentHandler:
 
         if not qa_report:
             from agency_os.core_system.orchestrator.core_orchestrator import ArtifactNotFoundError
+
             raise ArtifactNotFoundError(
                 "qa_report.json not found - TESTING phase must complete first"
             )

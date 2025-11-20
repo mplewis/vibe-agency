@@ -48,6 +48,7 @@ class CodingHandler:
 
         if not feature_spec:
             from agency_os.core_system.orchestrator.core_orchestrator import ArtifactNotFoundError
+
             raise ArtifactNotFoundError(
                 "feature_spec.json not found - PLANNING phase must complete first"
             )
