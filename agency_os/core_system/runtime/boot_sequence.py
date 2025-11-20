@@ -6,13 +6,17 @@ Orchestrates the conveyor belt:
 3. Prompt Composer → Compose final prompt
 """
 
+import json
+import os
 import sys
+from datetime import datetime
 from pathlib import Path
 
 from agency_os.core_system.runtime.context_loader import ContextLoader
 from agency_os.core_system.runtime.playbook_engine import PlaybookEngine
 from agency_os.core_system.runtime.project_memory import ProjectMemoryManager
 from agency_os.core_system.runtime.prompt_composer import PromptComposer
+from agency_os.persistence.sqlite_store import SQLiteStore
 
 
 class BootSequence:
@@ -25,6 +29,10 @@ class BootSequence:
         self.prompt_composer = PromptComposer()
         self.memory_manager = ProjectMemoryManager(self.project_root)
 
+        # Initialize SQLite persistence (ARCH-003)
+        db_path = self.project_root / ".vibe" / "state" / "vibe_agency.db"
+        self.sqlite_store = SQLiteStore(str(db_path))
+
     def run(self, user_input: str | None = None):
         """Execute the boot sequence"""
 
@@ -33,6 +41,9 @@ class BootSequence:
         if git_status["has_uncommitted"] and not git_status["is_clean_state"]:
             self._display_commit_warning(git_status)
             return  # Soft halt - exit cleanly, agent sees warning
+
+        # MIGRATION: Import legacy JSON state if present (ARCH-003)
+        self._migrate_legacy_json()
 
         # Conveyor Belt 1: Load Context
         print("🔄 Loading context...", file=sys.stderr)
@@ -314,6 +325,58 @@ DO:
             print(f"   {route['description']}")
             print(f"   Examples: {', '.join(route['examples'])}")
             print()
+
+    def _migrate_legacy_json(self) -> None:
+        """
+        Migrate legacy active_mission.json to SQLite (ARCH-003)
+
+        Strategy: Phase 1 - Dual-Write/Import
+        - Check for existing active_mission.json
+        - Import to SQLite if not already present
+        - Rename JSON (keep as backup, DO NOT DELETE)
+        - Log migration status
+
+        Safety: NO DATA LOSS - JSON is preserved
+        """
+        json_file = self.project_root / ".vibe" / "state" / "active_mission.json"
+
+        if not json_file.exists():
+            # No legacy JSON - nothing to migrate
+            return
+
+        try:
+            # Load JSON data
+            with open(json_file) as f:
+                json_data = json.load(f)
+
+            mission_uuid = json_data.get("mission_id", "unknown")
+
+            # Import to SQLite (idempotent - won't duplicate)
+            imported_id = self.sqlite_store.import_legacy_mission(json_data)
+
+            if imported_id:
+                # Mission was imported - rename JSON as backup
+                timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+                backup_name = f"active_mission_migrated_{timestamp}.json"
+                backup_path = json_file.parent / backup_name
+
+                os.rename(json_file, backup_path)
+
+                print("✅ Legacy mission imported to SQLite", file=sys.stderr)
+                print(f"   Mission UUID: {mission_uuid}", file=sys.stderr)
+                print(f"   SQLite ID: {imported_id}", file=sys.stderr)
+                print(f"   Backup: {backup_path.name}", file=sys.stderr)
+            else:
+                # Mission already in DB - just log it
+                print(f"ℹ️  Mission '{mission_uuid}' already in database", file=sys.stderr)
+
+        except json.JSONDecodeError as e:
+            print(f"⚠️ Failed to parse legacy JSON: {e}", file=sys.stderr)
+            print(f"   File preserved at: {json_file}", file=sys.stderr)
+        except Exception as e:
+            print(f"⚠️ Migration error (non-critical): {e}", file=sys.stderr)
+            print(f"   JSON file preserved at: {json_file}", file=sys.stderr)
+            # Continue boot - JSON is still available
 
     def health_check(self) -> bool:
         """Quick health check - returns True if system is operational"""
