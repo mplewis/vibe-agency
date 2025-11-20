@@ -12,8 +12,8 @@ from pathlib import Path
 # Debug: Print working directory
 print(f"Working directory: {os.getcwd()}")
 
-# Check if prompt_runtime file exists
-runtime_path = Path("agency_os/core_system/runtime/prompt_runtime.py")
+# Check if prompt_runtime file exists (moved from agency_os to vibe_core post-split)
+runtime_path = Path("vibe_core/runtime/prompt_runtime.py")
 if not runtime_path.exists():
     print(f"❌ ERROR: prompt_runtime.py not found at {runtime_path.absolute()}")
     print(f"   Current dir contents: {list(Path('.').iterdir())[:10]}")
