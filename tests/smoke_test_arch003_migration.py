@@ -113,9 +113,7 @@ def test_migration():
 
     conn = sqlite3.connect(str(db_path))
     conn.row_factory = sqlite3.Row
-    cursor = conn.execute(
-        "SELECT * FROM missions WHERE mission_uuid = 'test-migration-001'"
-    )
+    cursor = conn.execute("SELECT * FROM missions WHERE mission_uuid = 'test-migration-001'")
     row = cursor.fetchone()
 
     if row:
