@@ -114,6 +114,11 @@ echo ""
 
 # The primary system prompt is displayed via the Mission Control Dashboard
 # This replaces the old hardcoded SYSTEMPROMPT block.
+if [ ! -f .vibe/state/active_mission.json ]; then
+    echo "⚠️  Mission state not found. Auto-provisioning..."
+    python3 scripts/bootstrap_mission.py > /dev/null 2>&1 || echo "❌ Failed to bootstrap mission."
+fi
+
 python3 bin/mission status 2>&1 || echo "⚠️  Mission Control not initialized (run scripts/bootstrap_mission.py)"
 echo ""
 
