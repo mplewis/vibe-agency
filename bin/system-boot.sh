@@ -112,9 +112,12 @@ echo "🚀 Transferring control to STEWARD (Mission Control)..."
 echo "════════════════════════════════════════════════════════════════"
 echo ""
 
-# The primary system prompt is displayed via the Mission Control Dashboard
-# This replaces the old hardcoded SYSTEMPROMPT block.
-python3 bin/mission status 2>&1 || echo "⚠️  Mission Control not initialized (run scripts/bootstrap_mission.py)"
+# Auto-provision cleanup roadmap if missing
+if [ ! -f .vibe/config/cleanup_roadmap.json ] && [ -f docs/cleanup_roadmap.json ]; then
+    mkdir -p .vibe/config
+    cp docs/cleanup_roadmap.json .vibe/config/cleanup_roadmap.json
+    echo "✅ Cleanup roadmap auto-provisioned"
+fi
 echo ""
 
 if ./bin/vibe-shell --health 2>&1; then
