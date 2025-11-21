@@ -13,6 +13,8 @@ import pytest
 
 # Legacy backward compatibility: Create module aliases for old test code
 # These map old bare imports to new package imports
+# NOTE: These are OPTIONAL - only needed for integration tests that use the orchestrator
+# Unit tests (like provider tests) should NOT require these dependencies
 try:
     import apps.agency.orchestrator as orchestrator_module
     import vibe_core.playbook.executor as executor_module
@@ -26,26 +28,25 @@ try:
     sys.modules["router"] = router_module
     sys.modules["loader"] = loader_module
     sys.modules["agency_os_orchestrator"] = orchestrator_module
-except ImportError as e:
-    # If package not installed, provide helpful error message
-    print(
-        f"\n❌ Import error: {e}\n"
-        "Please install the package in editable mode:\n"
-        "  uv pip install -e .\n"
-        "Or:\n"
-        "  make install\n"
-    )
-    raise
+except ImportError:
+    # These imports are optional - only needed for orchestrator integration tests
+    # Unit tests (providers, utilities) can run without them
+    pass
 
 # Load legacy_config_loader dynamically (it's not in the main package)
+# NOTE: This is also OPTIONAL - only needed for tests that use legacy config
 repo_root = Path(__file__).parent.parent
 legacy_config_path = repo_root / "config" / "legacy_config_loader.py"
 if legacy_config_path.exists():
-    spec = spec_from_file_location("legacy_config_loader", legacy_config_path)
-    if spec and spec.loader:
-        legacy_config = module_from_spec(spec)
-        sys.modules["legacy_config_loader"] = legacy_config
-        spec.loader.exec_module(legacy_config)
+    try:
+        spec = spec_from_file_location("legacy_config_loader", legacy_config_path)
+        if spec and spec.loader:
+            legacy_config = module_from_spec(spec)
+            sys.modules["legacy_config_loader"] = legacy_config
+            spec.loader.exec_module(legacy_config)
+    except ImportError:
+        # Legacy config loader is optional
+        pass
 
 # Load handlers module with fallback
 try:
