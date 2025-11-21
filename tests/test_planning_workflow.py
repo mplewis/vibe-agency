@@ -12,17 +12,15 @@ This is a "Tracer Bullet" test proving the core routing mechanism works:
 4. Database hydration reconstructs state from DB
 """
 
-import json
 import tempfile
-from pathlib import Path
 from datetime import datetime
-from unittest.mock import MagicMock, patch
+from pathlib import Path
 
 import pytest
 
 from apps.agency.orchestrator.core_orchestrator import CoreOrchestrator
+from vibe_core.playbook.router_bridge import WorkflowPhaseMapping
 from vibe_core.store.sqlite_store import SQLiteStore
-from vibe_core.playbook.router_bridge import RouterBridge, WorkflowPhaseMapping
 
 
 class TestPlanningWorkflowRouting:
@@ -123,7 +121,7 @@ class TestPlanningWorkflowRouting:
         """Test 5: PLANNING phase tasks can be created and routed"""
 
         # Create a mission
-        mission_id = sqlite_store.create_mission(
+        _ = sqlite_store.create_mission(
             mission_uuid="test-planning-mission-002",
             phase="PLANNING",
             status="in_progress",
@@ -146,8 +144,6 @@ class TestPlanningWorkflowRouting:
 
     def test_database_hydration_after_mission_creation(self, sqlite_store):
         """Test 6: Database state can be hydrated (ARCH-007 verification)"""
-        from vibe_core.task_management.task_manager import TaskManager
-
         # Create multiple tasks
         for i in range(3):
             sqlite_store.add_task(
@@ -178,7 +174,9 @@ class TestPlanningWorkflowRouting:
         )
 
         # Simulate planning completion - update to CODING
-        sqlite_store.update_mission_status(mission_id, "completed", completed_at=datetime.utcnow().isoformat())
+        sqlite_store.update_mission_status(
+            mission_id, "completed", completed_at=datetime.utcnow().isoformat()
+        )
 
         # Create new mission for CODING
         coding_mission_id = sqlite_store.create_mission(
@@ -213,7 +211,9 @@ class TestPlanningWorkflowRouting:
         assert data is not None
         # Check for v3.0 structure (phases + transitions)
         assert "phases" in data or "states" in data, "YAML must define phases or states"
-        assert "transitions" in data or "workflows" in data, "YAML must define transitions or workflows"
+        assert "transitions" in data or "workflows" in data, (
+            "YAML must define transitions or workflows"
+        )
 
     def test_data_contracts_defined(self):
         """Test 9: Data contracts for PLANNING phase are defined"""
@@ -268,7 +268,9 @@ class TestRouterBridgeIntegration:
 
         for workflow_name, expected_phase in mappings.items():
             enum_val = WorkflowPhaseMapping[workflow_name]
-            assert enum_val.value == expected_phase, f"{workflow_name} should map to {expected_phase}"
+            assert enum_val.value == expected_phase, (
+                f"{workflow_name} should map to {expected_phase}"
+            )
 
     def test_routed_action_creation(self):
         """Verify RoutedAction objects can be created"""
