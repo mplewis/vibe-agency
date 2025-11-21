@@ -217,3 +217,90 @@ class ToolRegistry:
     def has_governance(self) -> bool:
         """Return True if governance checker is configured."""
         return self._invariant_checker is not None
+
+    def get_tool_descriptions(self) -> list[dict[str, Any]]:
+        """
+        Get descriptions of all registered tools for LLM context.
+
+        This method collects descriptions from all registered tools that
+        implement get_description(). Tools without this method are skipped.
+
+        Returns:
+            List of tool description dicts
+
+        Example:
+            >>> registry.register("write_file", WriteFileTool())
+            >>> descriptions = registry.get_tool_descriptions()
+            >>> print(descriptions[0]["name"])
+            'write_file'
+            >>> print(descriptions[0]["description"])
+            'Write content to a file...'
+        """
+        descriptions = []
+
+        for name, tool in self._tools.items():
+            # Check if tool has get_description method
+            if hasattr(tool, "get_description") and callable(tool.get_description):
+                desc = tool.get_description()
+                descriptions.append(desc)
+            else:
+                # Fallback: Basic description without parameters
+                descriptions.append(
+                    {
+                        "name": name,
+                        "description": f"Tool: {name} (no description available)",
+                        "parameters": {},
+                    }
+                )
+
+        return descriptions
+
+    def format_tools_for_llm(self) -> str:
+        """
+        Format tool descriptions as text for LLM system prompt.
+
+        Returns:
+            Formatted string describing available tools
+
+        Example:
+            >>> registry.register("write_file", WriteFileTool())
+            >>> prompt = registry.format_tools_for_llm()
+            >>> print(prompt)
+            Available Tools:
+            1. write_file: Write content to a file...
+               Parameters: path (string, required), content (string, required)
+        """
+        descriptions = self.get_tool_descriptions()
+
+        if not descriptions:
+            return "No tools available."
+
+        lines = ["Available Tools:"]
+
+        for idx, tool_desc in enumerate(descriptions, 1):
+            name = tool_desc.get("name", "unknown")
+            desc = tool_desc.get("description", "No description")
+            params = tool_desc.get("parameters", {})
+
+            lines.append(f"\n{idx}. {name}: {desc}")
+
+            if params:
+                param_strs = []
+                for param_name, param_info in params.items():
+                    param_type = param_info.get("type", "any")
+                    required = param_info.get("required", False)
+                    req_str = "required" if required else "optional"
+                    param_desc = param_info.get("description", "")
+
+                    param_strs.append(
+                        f"{param_name} ({param_type}, {req_str}): {param_desc}"
+                    )
+
+                lines.append("   Parameters: " + ", ".join(param_strs))
+
+        lines.append(
+            "\nTo use a tool, respond with JSON: "
+            '{"tool": "tool_name", "parameters": {"param": "value"}}'
+        )
+
+        return "\n".join(lines)

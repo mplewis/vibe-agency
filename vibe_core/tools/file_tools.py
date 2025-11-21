@@ -40,6 +40,26 @@ class ReadFileTool:
         {"content": "...", "path": "README.md", "size": 1234}
     """
 
+    @staticmethod
+    def get_description() -> dict[str, Any]:
+        """
+        Get tool description for LLM context.
+
+        Returns:
+            dict with tool name, description, and parameter schema
+        """
+        return {
+            "name": "read_file",
+            "description": "Read the contents of a file from the filesystem",
+            "parameters": {
+                "path": {
+                    "type": "string",
+                    "description": "Path to the file to read",
+                    "required": True,
+                }
+            },
+        }
+
     def execute(self, path: str, **kwargs) -> dict[str, Any]:
         """
         Read contents of a file.
@@ -121,6 +141,31 @@ class WriteFileTool:
         >>> print(result)
         {"path": "/path/to/test.txt", "bytes_written": 13}
     """
+
+    @staticmethod
+    def get_description() -> dict[str, Any]:
+        """
+        Get tool description for LLM context.
+
+        Returns:
+            dict with tool name, description, and parameter schema
+        """
+        return {
+            "name": "write_file",
+            "description": "Write content to a file. Creates parent directories if needed.",
+            "parameters": {
+                "path": {
+                    "type": "string",
+                    "description": "Path to the file to write",
+                    "required": True,
+                },
+                "content": {
+                    "type": "string",
+                    "description": "Content to write to the file",
+                    "required": True,
+                },
+            },
+        }
 
     def execute(self, path: str, content: str, **kwargs) -> dict[str, Any]:
         """
