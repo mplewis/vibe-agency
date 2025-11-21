@@ -1,0 +1,400 @@
+{
+  "roadmap_version": "2.6.0-hybrid-integration",
+  "roadmap_name": "Hybrid Agent Integration (Kernel + Specialists)",
+  "created_at": "2025-11-21",
+  "strategy": "Unite Kernel architecture (ARCH-021 to ARCH-025) with Specialist architecture (ARCH-005+)",
+  "context": "Post-Phase 2.5. We have TWO parallel architectures that don't communicate: (1) Kernel with SimpleLLMAgent (can think, cannot act), (2) Specialists with BaseSpecialist (can act, not in Kernel). Goal: Create unified dispatch system where BOTH LLM-Agents and Script-Agents implement VibeAgent protocol and are orchestrated by Kernel.",
+  "phases": [
+    {
+      "phase_id": "PHASE_0",
+      "phase_name": "Bridge the Gap (Critical Integration)",
+      "objective": "Make Specialists work with Kernel dispatch, give SimpleLLMAgent tool-use capability",
+      "estimated_sessions": 2,
+      "status": "pending",
+      "tasks": [
+        {
+          "task_id": "ARCH-026",
+          "name": "SpecialistAgent Adapter (Wrap BaseSpecialist → VibeAgent)",
+          "description": "Create adapter that wraps BaseSpecialist to implement VibeAgent protocol, enabling Kernel dispatch",
+          "acceptance_criteria": [
+            "vibe_core/agents/specialist_agent.py created",
+            "SpecialistAgent implements VibeAgent protocol (agent_id property + process(task) method)",
+            "Converts Task payload → MissionContext (for specialist execution)",
+            "Converts SpecialistResult → Task result (for kernel recording)",
+            "Validates preconditions before specialist execution",
+            "Calls lifecycle hooks: on_start(), on_complete(), on_error()",
+            "All 5 specialists wrapped: PlanningAgent, CodingAgent, TestingAgent, DeploymentAgent, MaintenanceAgent"
+          ],
+          "estimated_time_mins": 150,
+          "priority": "P0",
+          "dependencies": [],
+          "deliverables": [
+            "vibe_core/agents/specialist_agent.py",
+            "tests/agents/test_specialist_agent.py"
+          ],
+          "verification": [
+            "Test: Wrap PlanningSpecialist, register with Kernel",
+            "Test: Submit task → Kernel.tick() → SpecialistAgent → PlanningSpecialist",
+            "Test: Ledger records execution (task input, specialist result, timestamps)",
+            "Test: Error handling (precondition failure, specialist exception)",
+            "All tests pass: uv run pytest tests/agents/test_specialist_agent.py -v"
+          ]
+        },
+        {
+          "task_id": "ARCH-027",
+          "name": "Tool Protocol for SimpleLLMAgent (Give LLM 'Hands')",
+          "description": "Add structured tool-use capability to SimpleLLMAgent (NO dirty hacks, clean protocol)",
+          "acceptance_criteria": [
+            "vibe_core/tools/tool_protocol.py created with ToolCall protocol",
+            "vibe_core/tools/tool_registry.py created with ToolRegistry class",
+            "vibe_core/tools/file_tools.py created with WriteFileTool, ReadFileTool",
+            "SimpleLLMAgent updated: accepts tool_registry in __init__",
+            "SimpleLLMAgent system prompt includes available tools",
+            "SimpleLLMAgent detects tool calls in LLM response (JSON format: {\"tool\": \"name\", \"parameters\": {...}})",
+            "SimpleLLMAgent executes tool calls and returns results",
+            "Tool execution recorded in task result (tool_result field)"
+          ],
+          "estimated_time_mins": 240,
+          "priority": "P0",
+          "dependencies": [
+            "ARCH-026"
+          ],
+          "deliverables": [
+            "vibe_core/tools/__init__.py",
+            "vibe_core/tools/tool_protocol.py",
+            "vibe_core/tools/tool_registry.py",
+            "vibe_core/tools/file_tools.py",
+            "Updated: vibe_core/agents/llm_agent.py",
+            "tests/agents/test_llm_agent_tools.py"
+          ],
+          "verification": [
+            "Test: Register WriteFileTool with ToolRegistry",
+            "Test: SimpleLLMAgent calls tool via JSON response",
+            "Test: Tool execution result returned in task result",
+            "Test: Error handling for unknown tool / invalid parameters",
+            "Test: Ledger records tool calls in task execution",
+            "Integration test: Kernel → SimpleLLMAgent → WriteFileTool → File created on disk",
+            "All tests pass: uv run pytest tests/agents/test_llm_agent_tools.py -v"
+          ]
+        },
+        {
+          "task_id": "ARCH-027B",
+          "name": "Hybrid Integration Test (End-to-End)",
+          "description": "Prove both agent types (LLM-Agent + Script-Agent) work together via Kernel",
+          "acceptance_criteria": [
+            "Test scenario 1: STEWARD submits planning task → Kernel → SpecialistAgent(PlanningSpecialist) → Completes",
+            "Test scenario 2: STEWARD submits LLM task → Kernel → SimpleLLMAgent → Calls WriteFileTool → File created",
+            "Test scenario 3: Mixed workload (3 specialist tasks + 2 LLM tasks) → All dispatched correctly",
+            "Test scenario 4: Ledger audit trail complete (all tasks recorded with timestamps, results, errors)",
+            "Performance: Total execution time within 15% of non-Kernel baseline"
+          ],
+          "estimated_time_mins": 120,
+          "priority": "P0",
+          "dependencies": [
+            "ARCH-027"
+          ],
+          "deliverables": [
+            "tests/e2e/test_hybrid_agent_integration.py",
+            "docs/verification/HYBRID_INTEGRATION_REPORT.md"
+          ],
+          "verification": [
+            "All integration tests pass: uv run pytest tests/e2e/test_hybrid_agent_integration.py -v",
+            "Ledger query returns all executed tasks: SELECT * FROM executions ORDER BY timestamp",
+            "Both agent types visible in Kernel status: kernel.get_status()[\"registered_agents\"]"
+          ]
+        }
+      ]
+    },
+    {
+      "phase_id": "PHASE_1",
+      "phase_name": "Enhanced Scheduling (Multi-Agent Coordination)",
+      "objective": "Upgrade from FIFO to intelligent scheduling with priority queues and resource limits",
+      "estimated_sessions": 1,
+      "status": "pending",
+      "tasks": [
+        {
+          "task_id": "ARCH-028",
+          "name": "Advanced Scheduler with Priority Queues",
+          "description": "Replace FIFO scheduler with priority-aware, resource-limited scheduler",
+          "acceptance_criteria": [
+            "vibe_core/scheduling/advanced_scheduler.py created",
+            "TaskPriority enum: HIGH, NORMAL, LOW",
+            "AdvancedScheduler maintains 3 priority queues",
+            "next_task() returns highest priority task first",
+            "Resource limit: max_concurrent parameter (default 3)",
+            "Prevents resource exhaustion: blocks new tasks if max_concurrent reached",
+            "complete_task() frees resources for next dispatch",
+            "Backward compatible: Can replace VibeScheduler in Kernel without breaking tests"
+          ],
+          "estimated_time_mins": 180,
+          "priority": "P1",
+          "dependencies": [
+            "ARCH-027B"
+          ],
+          "deliverables": [
+            "vibe_core/scheduling/advanced_scheduler.py",
+            "tests/scheduling/test_advanced_scheduler.py"
+          ],
+          "verification": [
+            "Test: Submit 5 tasks (2 HIGH, 2 NORMAL, 1 LOW) → HIGH tasks execute first",
+            "Test: max_concurrent=2 → Only 2 tasks running simultaneously",
+            "Test: complete_task() → Frees slot for next task",
+            "Test: Kernel integration (replace VibeScheduler with AdvancedScheduler)",
+            "All tests pass: uv run pytest tests/scheduling/test_advanced_scheduler.py -v"
+          ]
+        }
+      ]
+    },
+    {
+      "phase_id": "PHASE_2",
+      "phase_name": "Governance (Soul Rules + Conflict Resolution)",
+      "objective": "Enforce Soul invariants and implement Body > Soul > Mind precedence",
+      "estimated_sessions": 1,
+      "status": "pending",
+      "tasks": [
+        {
+          "task_id": "ARCH-029",
+          "name": "Invariant Checker (Soul Rules Enforcement)",
+          "description": "Runtime enforcement of Soul rules (never/always constraints)",
+          "acceptance_criteria": [
+            "vibe_core/governance/invariants.py created",
+            "InvariantChecker loads config/soul.yaml with rules",
+            "check(action) validates against 'never' rules (blocks violating actions)",
+            "check(action) validates against 'always' rules (enforces required constraints)",
+            "Returns (allowed: bool, reason: str | None)",
+            "Integration with Kernel: check() called before agent dispatch",
+            "Example soul.yaml created with sample rules (e.g., never deploy without tests)"
+          ],
+          "estimated_time_mins": 120,
+          "priority": "P2",
+          "dependencies": [
+            "ARCH-028"
+          ],
+          "deliverables": [
+            "vibe_core/governance/__init__.py",
+            "vibe_core/governance/invariants.py",
+            "config/soul.yaml",
+            "tests/governance/test_invariant_checker.py"
+          ],
+          "verification": [
+            "Test: Load soul.yaml with 'never' rule → Action violating rule is blocked",
+            "Test: Load soul.yaml with 'always' rule → Action missing constraint is blocked",
+            "Test: Valid action passes all checks",
+            "Test: Kernel integration (invariant check before dispatch)",
+            "All tests pass: uv run pytest tests/governance/test_invariant_checker.py -v"
+          ]
+        },
+        {
+          "task_id": "ARCH-030",
+          "name": "Conflict Resolver (Precedence: Body > Soul > Mind)",
+          "description": "Resolve conflicts between competing rules using precedence hierarchy",
+          "acceptance_criteria": [
+            "vibe_core/governance/resolver.py created",
+            "RuleType enum: SAFETY (Body), MISSION (Soul), OPTIMIZATION (Mind)",
+            "ConflictResolver.resolve(conflicts) returns winning rule",
+            "Precedence enforced: SAFETY > MISSION > OPTIMIZATION",
+            "Logs conflict resolution (which rule won, which were rejected)",
+            "Integration with Kernel: resolve() called when multiple rules conflict"
+          ],
+          "estimated_time_mins": 90,
+          "priority": "P2",
+          "dependencies": [
+            "ARCH-029"
+          ],
+          "deliverables": [
+            "vibe_core/governance/resolver.py",
+            "tests/governance/test_conflict_resolver.py"
+          ],
+          "verification": [
+            "Test: SAFETY rule conflicts with MISSION rule → SAFETY wins",
+            "Test: MISSION rule conflicts with OPTIMIZATION rule → MISSION wins",
+            "Test: 3-way conflict (all types) → SAFETY wins",
+            "Test: Logging includes rejected rules",
+            "All tests pass: uv run pytest tests/governance/test_conflict_resolver.py -v"
+          ]
+        }
+      ]
+    },
+    {
+      "phase_id": "PHASE_3",
+      "phase_name": "Documentation & Completion",
+      "objective": "Document hybrid architecture, update CLAUDE.md, create completion report",
+      "estimated_sessions": 1,
+      "status": "pending",
+      "tasks": [
+        {
+          "task_id": "ARCH-031",
+          "name": "Update Architecture Documentation",
+          "description": "Document hybrid agent pattern, integration architecture, tool protocol",
+          "acceptance_criteria": [
+            "docs/architecture/ARCHITECTURE_CURRENT_STATE.md updated with hybrid pattern",
+            "New section: 'Hybrid Agent Pattern' explaining LLM-Agents + Script-Agents",
+            "New section: 'Kernel Integration' showing dispatch flow",
+            "New section: 'Tool Protocol' documenting tool-use capability",
+            "ARCHITECTURE_MAP.md updated with ARCH-026 to ARCH-031",
+            "Updated flow diagrams showing: STEWARD → Kernel → Agent (both types) → Ledger"
+          ],
+          "estimated_time_mins": 120,
+          "priority": "P1",
+          "dependencies": [
+            "ARCH-030"
+          ],
+          "deliverables": [
+            "Updated: docs/architecture/ARCHITECTURE_CURRENT_STATE.md",
+            "Updated: docs/architecture/ARCHITECTURE_MAP.md",
+            "docs/architecture/HYBRID_AGENT_PATTERN.md (new)"
+          ],
+          "verification": [
+            "Documentation includes code examples for both agent types",
+            "Flow diagrams render correctly in markdown viewers",
+            "All ARCH-026 to ARCH-031 listed in ARCHITECTURE_MAP.md"
+          ]
+        },
+        {
+          "task_id": "ARCH-032",
+          "name": "Update CLAUDE.md to Phase 2.6",
+          "description": "Switch active roadmap to phase_2_6, update status section",
+          "acceptance_criteria": [
+            "CLAUDE.md 'ACTIVE ROADMAP' section points to phase_2_6_hybrid_integration.json",
+            "Current status shows Phase 2.6 progress (0/10 → X/10 tasks complete)",
+            "Next task points to current ARCH-0XX via ./bin/next-task.py",
+            "Operational status table updated with new Kernel + Specialist integration",
+            "Phase 2.5 moved to 'Previous Phases' section (archived as complete)"
+          ],
+          "estimated_time_mins": 30,
+          "priority": "P0",
+          "dependencies": [
+            "ARCH-031"
+          ],
+          "deliverables": [
+            "Updated: CLAUDE.md"
+          ],
+          "verification": [
+            "./bin/next-task.py shows correct current task from phase_2_6",
+            "CLAUDE.md correctly references phase_2_6_hybrid_integration.json"
+          ]
+        },
+        {
+          "task_id": "ARCH-033",
+          "name": "Create Phase 2.6 Completion Report",
+          "description": "Document hybrid integration implementation, metrics, before/after comparison",
+          "acceptance_criteria": [
+            "docs/PHASE_2_6_COMPLETION_REPORT.md created",
+            "Before/after comparison: parallel architectures → unified dispatch",
+            "Metrics: SimpleLLMAgent tool-use capability added, Specialists Kernel-integrated",
+            "Integration test results: all hybrid scenarios passing",
+            "Ledger audit trail examples: showing both agent types",
+            "Next steps: Phase 3.0 (product features using hybrid agents)"
+          ],
+          "estimated_time_mins": 90,
+          "priority": "P1",
+          "dependencies": [
+            "ARCH-032"
+          ],
+          "deliverables": [
+            "docs/PHASE_2_6_COMPLETION_REPORT.md"
+          ],
+          "verification": [
+            "Report includes specific examples (file paths, test outputs)",
+            "Before/after metrics quantified (# of agent types, integration status)",
+            "Handoff section prepared for Phase 3.0 team"
+          ]
+        }
+      ]
+    }
+  ],
+  "execution_strategy": {
+    "mode": "steward_sessions",
+    "description": "STEWARD executes tasks sequentially, strict dependency enforcement",
+    "workflow": [
+      "1. STEWARD boots, reads phase_2_6_hybrid_integration.json",
+      "2. Identifies first pending task with satisfied dependencies",
+      "3. Executes task following acceptance criteria",
+      "4. Runs verification tests (uv run pytest ...)",
+      "5. Marks task complete if all tests pass",
+      "6. Commits deliverables (git commit -m 'feat: ARCH-0XX ...')",
+      "7. Updates progress_tracking in this JSON",
+      "8. Continues to next task or ends session"
+    ],
+    "safety_rails": [
+      "Dependency enforcement: ARCH-N blocked until ARCH-(N-1) complete",
+      "Test-first: All code changes must have passing tests (80% coverage minimum)",
+      "Clean architecture: NO dirty hacks (exec(), string parsing) - proper protocols only",
+      "Incremental commits: One commit per ARCH task (rollback-friendly)",
+      "Backward compatibility: Existing tests must still pass after integration"
+    ]
+  },
+  "progress_tracking": {
+    "current_phase": "PHASE_0",
+    "current_task": "ARCH-026",
+    "completed_tasks": [],
+    "blocked_tasks": [],
+    "estimated_total_time_mins": 1170,
+    "estimated_total_sessions": 5,
+    "last_updated": "2025-11-21T16:05:00.000000Z"
+  },
+  "metrics": {
+    "before": {
+      "architecture_status": "Two parallel systems (Kernel + Specialists) with NO integration",
+      "llm_agent_capability": "SimpleLLMAgent can only chat (no tool-use)",
+      "specialist_dispatch": "Direct STEWARD → Specialist (bypasses Kernel, no Ledger audit)",
+      "kernel_usage": "Only used for SimpleLLMAgent (underutilized)",
+      "agent_types": "2 (but incompatible interfaces)"
+    },
+    "after_target": {
+      "architecture_status": "Unified hybrid system (Kernel dispatches both agent types)",
+      "llm_agent_capability": "SimpleLLMAgent has tool-use (WriteFile, ReadFile, extensible)",
+      "specialist_dispatch": "STEWARD → Kernel → SpecialistAgent → BaseSpecialist (full audit trail)",
+      "kernel_usage": "Central dispatch for ALL agents (LLM + Script)",
+      "agent_types": "2 (unified under VibeAgent protocol)"
+    },
+    "key_benefits": [
+      "Unified dispatch: All agents orchestrated by Kernel (FIFO/Priority scheduling)",
+      "Full observability: Ledger records ALL agent executions (LLM + Specialists)",
+      "Tool capability: LLM agents can perform actions (not just chat)",
+      "Clean architecture: No dirty hacks, proper protocols (ToolCall, VibeAgent)",
+      "Extensibility: Easy to add new agent types (just implement VibeAgent)",
+      "Resource management: Scheduler can limit concurrent agents (prevents overload)"
+    ]
+  },
+  "strategic_alignment": {
+    "addresses_handover_concerns": {
+      "architectural_theater": "✅ Resolved (building on EXISTING kernel, not new abstractions)",
+      "llm_agent_no_hands": "✅ Resolved (ARCH-027: Tool Protocol)",
+      "specialists_not_integrated": "✅ Resolved (ARCH-026: SpecialistAgent adapter)",
+      "no_dirty_hacks": "✅ Confirmed (clean protocols, no exec() or string parsing)"
+    },
+    "gemini_recommendations": {
+      "prove_kernel_to_llm_to_ledger": "✅ Addressed (SimpleLLMAgent already works, now adding tools)",
+      "generic_vibe_agent": "✅ Addressed (VibeAgent protocol as universal interface)"
+    },
+    "opus_critique_addressed": {
+      "brain_in_jar": "✅ Fixed (SimpleLLMAgent gets hands via Tool Protocol)",
+      "architecture_spiral": "✅ Avoided (using existing Kernel, not building new layers)"
+    }
+  },
+  "hybrid_concept": {
+    "description": "The GENIUS of this design: Agent is an INTERFACE (VibeAgent), not a single type",
+    "agent_types": {
+      "type_1_llm_agents": {
+        "description": "Intelligent, non-deterministic agents powered by LLM",
+        "example": "SimpleLLMAgent",
+        "use_cases": ["Code review", "Architecture advice", "Refactoring suggestions", "Natural language processing"],
+        "characteristics": ["Thinks via LLM", "Makes decisions", "Calls tools for actions"]
+      },
+      "type_2_script_agents": {
+        "description": "Rule-based, deterministic agents executing playbook workflows",
+        "example": "SpecialistAgent (wraps PlanningSpecialist, CodingSpecialist, etc.)",
+        "use_cases": ["SDLC workflows", "Deployment pipelines", "Test automation", "Maintenance tasks"],
+        "characteristics": ["Follows playbooks", "Executes workflows", "Deterministic logic"]
+      }
+    },
+    "unification": "Both types implement VibeAgent protocol → Both dispatched by Kernel → Both recorded in Ledger"
+  },
+  "rollback_strategy": {
+    "phase_0_rollback": "Remove SpecialistAgent adapter + Tool Protocol, revert SimpleLLMAgent to chat-only",
+    "phase_1_rollback": "Revert Kernel to basic FIFO scheduler (remove AdvancedScheduler)",
+    "phase_2_rollback": "Remove InvariantChecker + ConflictResolver (governance disabled)",
+    "git_strategy": "Each ARCH task in separate commit, use git revert ARCH-0XX to rollback"
+  }
+}
