@@ -1,0 +1,592 @@
+# STEWARD Protocol Specification (DRAFT)
+> **"Docker for AI Agents" + "LinkedIn for Agents"**
+>
+> Universal Standard for Agent Identity, Discovery, Verification & Delegation
+
+**Version:** 0.1.0-draft
+**Status:** 🚧 DRAFT - Design Phase
+**Authors:** vibe-agency core team
+**Date:** 2025-11-21
+
+---
+
+## 🎯 VISION
+
+**Problem:** AI Agents can't discover, verify, or delegate to each other systematically.
+
+**Solution:** STEWARD Protocol - A universal standard for agent interoperability, like:
+- 🐳 **Docker**: Standardized runtime, manifests, registries
+- 💼 **LinkedIn**: Professional profiles, skill verification, reputation
+- 🌐 **HTTP**: Universal protocol for communication
+
+---
+
+## 📋 CORE REQUIREMENTS
+
+### What a Real STANDARD Needs:
+
+1. **Agent Manifest Format** (like Dockerfile)
+   - Machine-readable identity
+   - Capability declarations
+   - Versioning & compatibility
+   - Cryptographic signing
+
+2. **Discovery Protocol** (like Docker Hub search)
+   - Find agents by capability
+   - Filter by trust score
+   - Version compatibility checking
+   - Geographic/network proximity
+
+3. **Verification Protocol** (like SSL/TLS certificates)
+   - Cryptographic identity proof
+   - Capability attestation
+   - Reputation/trust scores
+   - Revocation mechanism
+
+4. **Delegation Protocol** (like REST API)
+   - Task submission format
+   - Progress monitoring
+   - Result validation
+   - Error handling
+
+5. **Registry/Index** (like npm registry, Docker Hub)
+   - Central or federated agent directory
+   - Version history
+   - Usage statistics
+   - Trust scores
+
+6. **CLI Tools** (like docker CLI, gh CLI)
+   - `steward init` - Initialize agent
+   - `steward verify` - Verify identity
+   - `steward delegate` - Submit tasks
+   - `steward discover` - Find agents
+
+---
+
+## 🏗️ ARCHITECTURE LAYERS
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ Layer 5: Agent Applications                                 │
+│  (STEWARD, other AI agents consuming the protocol)          │
+└─────────────────────────────────────────────────────────────┘
+                          ↓
+┌─────────────────────────────────────────────────────────────┐
+│ Layer 4: STEWARD CLI & SDKs                                 │
+│  (steward CLI, Python SDK, JS SDK, etc.)                    │
+└─────────────────────────────────────────────────────────────┘
+                          ↓
+┌─────────────────────────────────────────────────────────────┐
+│ Layer 3: STEWARD Protocol APIs                              │
+│  ├─ Discovery API (find agents)                             │
+│  ├─ Verification API (verify identity)                      │
+│  ├─ Delegation API (submit tasks)                           │
+│  └─ Monitoring API (track progress)                         │
+└─────────────────────────────────────────────────────────────┘
+                          ↓
+┌─────────────────────────────────────────────────────────────┐
+│ Layer 2: STEWARD Registry                                   │
+│  ├─ Agent Index (searchable directory)                      │
+│  ├─ Reputation System (trust scores)                        │
+│  ├─ Version Store (capability history)                      │
+│  └─ Audit Logs (delegation trail)                           │
+└─────────────────────────────────────────────────────────────┘
+                          ↓
+┌─────────────────────────────────────────────────────────────┐
+│ Layer 1: Agent Manifest Format                              │
+│  (steward.json - machine-readable agent identity)           │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 📦 LAYER 1: AGENT MANIFEST FORMAT
+
+### File: `steward.json`
+
+**Like:** `package.json` (npm), `Dockerfile`, `docker-compose.yml`
+
+```json
+{
+  "steward_version": "1.0.0",
+  "agent": {
+    "id": "vibe-agency-orchestrator",
+    "name": "STEWARD",
+    "version": "4.0.0",
+    "class": "orchestration_operator",
+    "specialization": "sdlc_management",
+    "status": "active",
+    "fingerprint": "sha256:abc123...",
+    "issued_by": "vibe-agency",
+    "issued_date": "2025-11-21T00:00:00Z"
+  },
+
+  "credentials": {
+    "mandate": [
+      {
+        "capability": "orchestrate_sdlc",
+        "scope": ["planning", "coding", "testing", "deployment", "maintenance"],
+        "attestation": "sha256:def456..."
+      }
+    ],
+    "constraints": [
+      {
+        "forbidden": "bypass_tests",
+        "reason": "Test-first discipline mandatory"
+      }
+    ],
+    "prime_directive": "Trust tests over claims, verify over assume"
+  },
+
+  "capabilities": {
+    "interfaces": [
+      {
+        "type": "cli",
+        "protocol": "bash",
+        "endpoint": "./bin/vibe --json",
+        "health_check": "./bin/vibe status --json"
+      },
+      {
+        "type": "api",
+        "protocol": "http",
+        "endpoint": "http://localhost:8080/api/v1",
+        "health_check": "http://localhost:8080/health"
+      }
+    ],
+
+    "operations": [
+      {
+        "name": "orchestrate_sdlc",
+        "input_schema": {
+          "$ref": "#/schemas/MissionContext"
+        },
+        "output_schema": {
+          "$ref": "#/schemas/SpecialistResult"
+        },
+        "latency_ms": 300000,
+        "idempotent": true,
+        "versioned": true
+      }
+    ],
+
+    "quality_metrics": {
+      "accuracy": 0.96,
+      "test_coverage": 0.80,
+      "uptime": 1.00,
+      "latency_p99_ms": 5000
+    }
+  },
+
+  "runtime": {
+    "introspection_endpoint": "./bin/vibe introspect --json",
+    "state_query": "./bin/vibe ledger-query --json",
+    "logs": "./logs/steward.log"
+  },
+
+  "governance": {
+    "principal": "vibe-agency-core-team",
+    "contact": "https://github.com/kimeisele/vibe-agency",
+    "audit_trail": "vibe_core/ledger.db",
+    "transparency": "public"
+  }
+}
+```
+
+**Key Improvements over static STEWARD.md:**
+1. ✅ **Machine-readable** (JSON, not Markdown prose)
+2. ✅ **Versioned** (semver for agent evolution)
+3. ✅ **Introspectable** (runtime status endpoint)
+4. ✅ **Schema-validated** (input/output contracts)
+5. ✅ **Health-checkable** (liveness probes)
+
+---
+
+## 🔍 LAYER 2: STEWARD REGISTRY
+
+### Like: Docker Hub, npm registry, PyPI
+
+**Components:**
+
+1. **Agent Index** (search & discovery)
+   ```bash
+   steward search --capability "sdlc_orchestration"
+   steward search --specialization "healthcare_compliance"
+   steward search --trust-score ">0.9"
+   ```
+
+2. **Version Store** (capability history)
+   ```bash
+   steward versions vibe-agency-orchestrator
+   # Output:
+   # 4.0.0 (latest) - Added hybrid agent pattern
+   # 3.9.0 - Kernel/Agency split
+   # 3.8.0 - RouterBridge integration
+   ```
+
+3. **Reputation System** (trust scores)
+   ```json
+   {
+     "agent_id": "vibe-agency-orchestrator",
+     "trust_score": 0.96,
+     "factors": {
+       "test_coverage": 0.96,
+       "uptime": 1.00,
+       "successful_delegations": 1247,
+       "endorsements": 42
+     }
+   }
+   ```
+
+4. **Audit Logs** (delegation trail)
+   ```bash
+   steward audit vibe-agency-orchestrator --last-30-days
+   # Output: All delegations, results, errors
+   ```
+
+**Registry Implementation Options:**
+
+### Option A: Centralized Registry (like npm)
+- ✅ Simple, fast lookup
+- ❌ Single point of failure
+- ❌ Centralized trust
+
+### Option B: Federated Registry (like email, Mastodon)
+- ✅ No single point of failure
+- ✅ Decentralized trust
+- ❌ Complex discovery
+- ❌ Consistency challenges
+
+### Option C: Git-Based Registry (like Homebrew)
+- ✅ Version control built-in
+- ✅ Transparent history
+- ✅ No infrastructure needed
+- ❌ No real-time updates
+- ❌ Limited search
+
+**Recommendation:** Start with **Option C (Git-Based)**, evolve to **Option B (Federated)** when scale requires.
+
+---
+
+## 🔐 LAYER 3: VERIFICATION PROTOCOL
+
+### Problem: How do agents trust each other?
+
+**Like:** SSL/TLS certificates, PGP web of trust, OAuth
+
+### Solution: Cryptographic Identity + Capability Attestation
+
+1. **Agent Identity (Signing)**
+   ```bash
+   # Generate agent keypair
+   steward keygen --agent-id vibe-agency-orchestrator
+   # → steward_id_rsa (private key, NEVER share)
+   # → steward_id_rsa.pub (public key, publish)
+
+   # Sign manifest
+   steward sign steward.json --key steward_id_rsa
+   # → steward.json.sig (cryptographic signature)
+   ```
+
+2. **Verification (by requesting agent)**
+   ```bash
+   # Download manifest + signature
+   curl https://raw.githubusercontent.com/kimeisele/vibe-agency/main/steward.json
+   curl https://raw.githubusercontent.com/kimeisele/vibe-agency/main/steward.json.sig
+
+   # Verify signature
+   steward verify steward.json --signature steward.json.sig --pubkey steward_id_rsa.pub
+   # → ✅ VALID: Signature matches agent fingerprint
+   ```
+
+3. **Capability Attestation**
+   ```bash
+   # Attest capability (run test suite, generate proof)
+   steward attest --capability orchestrate_sdlc
+   # → Runs tests, generates attestation certificate
+   # → attestation_orchestrate_sdlc_2025-11-21.json
+
+   # Requesting agent verifies attestation
+   steward verify-attestation attestation_orchestrate_sdlc_2025-11-21.json
+   # → ✅ VALID: 369/383 tests passing (96%), verified by trusted CI
+   ```
+
+4. **Trust Chain**
+   ```
+   vibe-agency (root authority)
+     └─ STEWARD v4.0.0 (signed by vibe-agency)
+         ├─ Capability: orchestrate_sdlc (attested by CI/CD)
+         ├─ Test Suite: 369/383 passing (attested by pytest)
+         └─ Uptime: 100% (attested by monitoring)
+   ```
+
+---
+
+## 🤝 LAYER 4: DELEGATION PROTOCOL
+
+### Problem: How do agents delegate tasks to each other?
+
+**Like:** REST API, gRPC, GraphQL, JSON-RPC
+
+### Solution: Standardized Delegation API
+
+```bash
+# 1. Discovery
+steward discover --capability "restaurant_app_planning"
+# → Found: vibe-agency-orchestrator (trust_score: 0.96)
+
+# 2. Verification
+steward verify vibe-agency-orchestrator
+# → ✅ Identity verified, capabilities attested
+
+# 3. Delegation
+steward delegate vibe-agency-orchestrator \
+  --task orchestrate_sdlc \
+  --context '{
+    "domain": "restaurant",
+    "scale": "multi_location",
+    "integrations": ["pos_system", "delivery_apis"]
+  }' \
+  --quality '>0.8' \
+  --timeout 600s
+# → Task submitted: task-id-abc123
+
+# 4. Monitoring
+steward monitor task-id-abc123
+# → Status: RUNNING (phase: PLANNING, progress: 45%)
+
+# 5. Results
+steward result task-id-abc123
+# → ✅ SUCCESS: artifacts/architecture.md (validated, test_coverage: 0.96)
+```
+
+### Delegation Payload Format
+
+```json
+{
+  "protocol_version": "1.0.0",
+  "delegation": {
+    "task_id": "task-id-abc123",
+    "requesting_agent": {
+      "id": "external-planning-agent-1.0",
+      "fingerprint": "sha256:xyz789...",
+      "signature": "..."
+    },
+    "target_agent": {
+      "id": "vibe-agency-orchestrator-4.0",
+      "operation": "orchestrate_sdlc"
+    },
+    "payload": {
+      "domain": "restaurant",
+      "scale": "multi_location",
+      "integrations": ["pos_system", "delivery_apis"]
+    },
+    "constraints": {
+      "min_test_coverage": 0.8,
+      "max_latency_ms": 600000,
+      "required_quality": 0.9
+    },
+    "callback": {
+      "type": "webhook",
+      "url": "https://requesting-agent.example.com/callback",
+      "auth": "Bearer token123..."
+    }
+  }
+}
+```
+
+---
+
+## 🛠️ LAYER 5: STEWARD CLI
+
+### Commands
+
+```bash
+# ===== AGENT INITIALIZATION =====
+steward init                    # Initialize new agent (creates steward.json)
+steward keygen                  # Generate keypair for signing
+steward sign                    # Sign manifest with private key
+
+# ===== DISCOVERY =====
+steward search <query>          # Search agent registry
+steward discover --capability   # Find agents by capability
+steward info <agent-id>         # Show agent details
+
+# ===== VERIFICATION =====
+steward verify <agent-id>       # Verify agent identity
+steward verify-attestation      # Verify capability attestation
+steward trust <agent-id>        # Add agent to trusted list
+
+# ===== DELEGATION =====
+steward delegate <agent-id>     # Delegate task to agent
+steward monitor <task-id>       # Monitor task progress
+steward result <task-id>        # Get task results
+steward cancel <task-id>        # Cancel running task
+
+# ===== INTROSPECTION =====
+steward status                  # Show agent health
+steward introspect              # Show runtime state
+steward logs                    # Show agent logs
+steward audit                   # Show delegation history
+
+# ===== REGISTRY =====
+steward publish                 # Publish agent to registry
+steward versions <agent-id>     # Show version history
+steward pull <agent-id>         # Download agent manifest
+```
+
+---
+
+## 🔄 STALENESS PROBLEM: SOLUTIONS
+
+### Problem: Static STEWARD.md becomes outdated
+
+### Solution 1: Runtime Introspection API
+```bash
+# Instead of reading static steward.json, query live agent:
+steward introspect vibe-agency-orchestrator --endpoint ./bin/vibe
+# → Returns CURRENT state (tests passing, versions, capabilities)
+```
+
+### Solution 2: Versioned Manifests
+```bash
+# Multiple versions tracked in registry:
+steward versions vibe-agency-orchestrator
+# 4.0.0 (2025-11-21) - Current, verified 1h ago
+# 3.9.0 (2025-11-20) - Deprecated
+# 3.8.0 (2025-11-18) - Archived
+```
+
+### Solution 3: Health Checks + Attestation Expiry
+```json
+{
+  "capabilities": {
+    "orchestrate_sdlc": {
+      "attested_date": "2025-11-21T10:00:00Z",
+      "expires": "2025-11-22T10:00:00Z",
+      "health_check": "./bin/vibe status --json"
+    }
+  }
+}
+```
+
+**Requesting agents can:**
+1. Check if attestation expired
+2. Run health check to verify liveness
+3. Request fresh attestation if needed
+
+### Solution 4: Git-Based Continuous Verification
+```yaml
+# .github/workflows/steward-verify.yml
+name: STEWARD Verification
+on:
+  schedule:
+    - cron: '0 */6 * * *'  # Every 6 hours
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - run: ./bin/verify-claude-md.sh
+      - run: steward attest --all-capabilities
+      - run: git commit -m "Update attestations"
+      - run: git push
+```
+
+**Result:** steward.json is auto-updated every 6 hours with fresh attestations.
+
+---
+
+## 🌍 REGISTRY OPTIONS: COMPARISON
+
+| Feature | Git-Based | Centralized | Federated |
+|---------|-----------|-------------|-----------|
+| **Infrastructure** | None (use GitHub) | Requires servers | Requires coordination |
+| **Discovery** | Basic (git search) | Fast (DB index) | Complex (multi-registry) |
+| **Versioning** | Built-in (git) | Custom | Custom |
+| **Trust** | GitHub trust | Single authority | Web of trust |
+| **Offline** | ✅ Clone repo | ❌ Need internet | ⚠️ Partial |
+| **Censorship Resistance** | ⚠️ GitHub controls | ❌ Registry controls | ✅ Fully distributed |
+| **Speed** | Slow (clone repo) | Fast (API) | Medium (DNS-like) |
+
+**Phase 1 Recommendation:** Git-Based (MVP)
+**Phase 2 Recommendation:** Federated (scale + resilience)
+
+---
+
+## 📚 COMPARISON: STEWARD vs Existing Standards
+
+### vs Docker
+| Feature | Docker | STEWARD |
+|---------|--------|---------|
+| **Purpose** | Container runtime | Agent coordination |
+| **Manifest** | Dockerfile | steward.json |
+| **Registry** | Docker Hub | STEWARD Registry |
+| **Discovery** | `docker search` | `steward discover` |
+| **Execution** | `docker run` | `steward delegate` |
+| **Trust** | Image signing | Agent signing + attestation |
+
+### vs OpenAPI/Swagger
+| Feature | OpenAPI | STEWARD |
+|---------|---------|---------|
+| **Purpose** | API documentation | Agent capability declaration |
+| **Format** | YAML/JSON | steward.json |
+| **Discovery** | SwaggerHub | STEWARD Registry |
+| **Verification** | Schema validation | Cryptographic signing + tests |
+| **Delegation** | HTTP calls | `steward delegate` |
+
+### vs LinkedIn
+| Feature | LinkedIn | STEWARD |
+|---------|----------|---------|
+| **Purpose** | Professional networking | Agent networking |
+| **Profile** | Resume/CV | steward.json |
+| **Skills** | Self-declared + endorsed | Cryptographically attested |
+| **Discovery** | Search + filters | `steward discover` |
+| **Trust** | Endorsements + recommendations | Test pass rate + attestations |
+| **Reputation** | Profile views + connections | Trust score + delegation history |
+
+---
+
+## 🎯 IMPLEMENTATION ROADMAP
+
+### Phase 1: MVP (4 weeks)
+- [ ] **Week 1**: Define `steward.json` schema (JSON Schema spec)
+- [ ] **Week 2**: Build `steward` CLI (basic commands: init, verify, delegate)
+- [ ] **Week 3**: Git-based registry (GitHub as index)
+- [ ] **Week 4**: Cryptographic signing + verification
+
+### Phase 2: Protocol Extensions (8 weeks)
+- [ ] Health checks + introspection API
+- [ ] Attestation expiry + refresh
+- [ ] Reputation system (trust scores)
+- [ ] Monitoring + audit logs
+
+### Phase 3: Federated Registry (12 weeks)
+- [ ] Federated discovery protocol
+- [ ] Cross-registry search
+- [ ] Reputation aggregation
+- [ ] Web of trust implementation
+
+---
+
+## 💡 NEXT STEPS
+
+1. **Validate Design** with community feedback
+2. **Write JSON Schema** for `steward.json`
+3. **Build Proof-of-Concept CLI** (`steward` command)
+4. **Implement Git-Based Registry** (MVP)
+5. **Publish STEWARD Protocol RFC** for wider adoption
+
+---
+
+## 🤝 CONTRIBUTING
+
+This is a **DRAFT** specification. Feedback welcome:
+- GitHub Issues: `kimeisele/vibe-agency`
+- Discussion: `docs/drafts/steward/` directory
+
+---
+
+**Remember:** This is "Docker for AI Agents" - standardized identity, discovery, verification, and delegation for the AI Agent Economy.
+
+**Status:** 🚧 DRAFT - Seeking feedback
+**Next Milestone:** JSON Schema + MVP CLI
