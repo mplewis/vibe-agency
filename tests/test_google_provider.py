@@ -32,7 +32,7 @@ class TestGoogleProviderInitialization:
 
         provider = GoogleProvider(api_key="valid-key")
         assert provider.api_key == "valid-key"
-        mock_genai.configure.assert_called_with(api_key="valid-key")
+        mock_genai.configure.assert_called_with(api_key="valid-key", transport="rest")
 
     def test_initialization_with_none_api_key_raises_error(self):
         """Should raise error when initialized with None API key"""
