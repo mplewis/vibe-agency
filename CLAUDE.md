@@ -4,24 +4,45 @@
 
 ---
 
-## 🚀 ACTIVE ROADMAP: PHASE 2.5 - FOUNDATION SCALABILITY
+## 🚀 ACTIVE ROADMAP: PHASE 2.6 - HYBRID AGENT INTEGRATION
 
-**Current Roadmap:** `docs/roadmap/phase_2_5_foundation.json`
-**Status:** 0/13 Tasks Complete (0%)
-**Objective:** Architect for scale - SQLite persistence + Hierarchical Agent Pattern (HAP)
+**Current Roadmap:** `docs/roadmap/phase_2_6_hybrid_integration.json`
+**Status:** 0/10 Tasks Complete (0%)
+**Objective:** Unite Kernel (ARCH-021 to ARCH-025) with Specialists (ARCH-005+)
 
-**Next Task:** ARCH-001 (Design SQLite schema)
+**Next Task:** ARCH-026 (SpecialistAgent Adapter)
 **Run:** `./bin/next-task.py` to see current task
 
 **Strategic Goals:**
-1. **Persistence Layer** - SQLite for queryable mission state, tool audit trails
-2. **HAP Architecture** - Specialist agents per SDLC phase (vs monolithic orchestrator)
-3. **Capability Security** - Playbook-driven tool access control
+1. **Integration Layer** - Make Specialists work with Kernel dispatch (SpecialistAgent adapter)
+2. **Tool Protocol** - Give SimpleLLMAgent "hands" (WriteFile, ReadFile, extensible)
+3. **Hybrid Pattern** - LLM-Agents + Script-Agents unified under VibeAgent protocol
 
-**Why Before Features?**
-Foundation must scale before adding product features. Current monolithic orchestrator + volatile JSON state won't support autonomous agents.
+**The Problem:**
+Two parallel architectures with NO integration:
+- **Universe A:** Kernel → SimpleLLMAgent (can think, cannot act)
+- **Universe B:** STEWARD → Specialists (can act, not in Kernel)
 
-**See:** `docs/roadmap/README.md` for full plan
+**The Solution:**
+HYBRID AGENT PATTERN - Both types implement VibeAgent protocol, both dispatched by Kernel, both recorded in Ledger.
+
+**See:** `docs/architecture/ROADMAP_HYBRID_INTEGRATION.md` for detailed plan
+
+---
+
+## 🔄 PHASE 2.5 STATUS (In Progress)
+
+**Roadmap:** `docs/roadmap/phase_2_5_foundation.json`
+**Status:** 9/13 Tasks Complete (69%)
+**Current Task:** ARCH-010 (Playbook-driven tool capability declaration)
+
+**Key Achievements:**
+- ✅ ARCH-001 to ARCH-009 complete (SQLite persistence + HAP pattern proven)
+- ✅ BaseSpecialist interface implemented
+- ✅ All 5 specialists extracted (Planning, Coding, Testing, Deployment, Maintenance)
+- ✅ Orchestrator refactored to pure routing logic
+
+**Remaining:** ARCH-010 to ARCH-013 (capability security + documentation)
 
 ---
 
