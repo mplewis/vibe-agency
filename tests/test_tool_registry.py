@@ -8,20 +8,42 @@ This module tests the tool registry system including:
 - Error handling
 """
 
+from typing import Any
+
 from vibe_core.governance import InvariantChecker
 from vibe_core.tools import ReadFileTool, ToolRegistry, WriteFileTool
+from vibe_core.tools.tool_protocol import Tool, ToolCall, ToolResult
 
 
-class MockTool:
-    """Mock tool for testing."""
+class MockTool(Tool):
+    """Mock tool for testing that implements Tool protocol."""
 
-    def __init__(self, return_value="mock result"):
+    def __init__(self, tool_name: str = "mock_tool", return_value: Any = "mock result"):
+        self._name = tool_name
         self.return_value = return_value
         self.called_with = None
 
-    def execute(self, **kwargs):
-        self.called_with = kwargs
-        return self.return_value
+    @property
+    def name(self) -> str:
+        return self._name
+
+    @property
+    def description(self) -> str:
+        return f"Mock tool for testing ({self._name})"
+
+    @property
+    def parameters_schema(self) -> dict[str, Any]:
+        return {}  # Accept any parameters for testing
+
+    def validate(self, parameters: dict[str, Any]) -> None:
+        # Accept all parameters for testing
+        pass
+
+    def execute(self, parameters: dict[str, Any]) -> ToolResult:
+        self.called_with = parameters
+        if isinstance(self.return_value, Exception):
+            return ToolResult(success=False, error=str(self.return_value))
+        return ToolResult(success=True, output=self.return_value)
 
 
 class TestToolRegistryBasics:
@@ -31,8 +53,7 @@ class TestToolRegistryBasics:
         """Test that registry can be created without governance checker."""
         registry = ToolRegistry(invariant_checker=None)
         assert registry is not None
-        assert not registry.has_governance
-        assert registry.tool_count == 0
+        assert len(registry) == 0
 
     def test_initialize_with_governance(self):
         """Test that registry can be created with governance checker."""
@@ -40,32 +61,31 @@ class TestToolRegistryBasics:
         registry = ToolRegistry(invariant_checker=checker)
 
         assert registry is not None
-        assert registry.has_governance
-        assert registry.tool_count == 0
+        assert len(registry) == 0
 
     def test_register_tool(self):
         """Test registering a tool."""
         registry = ToolRegistry()
         tool = MockTool()
 
-        registry.register("mock_tool", tool)
+        registry.register(tool)
 
-        assert registry.has_tool("mock_tool")
-        assert registry.tool_count == 1
+        assert registry.has("mock_tool")
+        assert len(registry) == 1
         assert "mock_tool" in registry.list_tools()
 
     def test_register_multiple_tools(self):
         """Test registering multiple tools."""
         registry = ToolRegistry()
 
-        registry.register("tool1", MockTool("result1"))
-        registry.register("tool2", MockTool("result2"))
-        registry.register("tool3", MockTool("result3"))
+        registry.register(MockTool("tool1", "result1"))
+        registry.register(MockTool("tool2", "result2"))
+        registry.register(MockTool("tool3", "result3"))
 
-        assert registry.tool_count == 3
-        assert registry.has_tool("tool1")
-        assert registry.has_tool("tool2")
-        assert registry.has_tool("tool3")
+        assert len(registry) == 3
+        assert registry.has("tool1")
+        assert registry.has("tool2")
+        assert registry.has("tool3")
 
 
 class TestToolExecution:
@@ -76,36 +96,54 @@ class TestToolExecution:
         registry = ToolRegistry()
         tool = MockTool(return_value="success!")
 
-        registry.register("test_tool", tool)
-        result = registry.execute("test_tool", param1="value1", param2="value2")
+        registry.register(tool)
+        call = ToolCall(tool_name="mock_tool", parameters={"param1": "value1", "param2": "value2"})
+        result = registry.execute(call)
 
-        assert result["success"] is True
-        assert result["result"] == "success!"
+        assert result.success is True
+        assert result.output == "success!"
         assert tool.called_with == {"param1": "value1", "param2": "value2"}
 
     def test_execute_nonexistent_tool(self):
         """Test executing a tool that doesn't exist."""
         registry = ToolRegistry()
 
-        result = registry.execute("nonexistent_tool", param="value")
+        call = ToolCall(tool_name="nonexistent_tool", parameters={"param": "value"})
+        result = registry.execute(call)
 
-        assert result["success"] is False
-        assert "not found" in result["error"].lower()
+        assert result.success is False
+        assert "not found" in result.error.lower()
 
     def test_execute_tool_with_exception(self):
         """Test handling tool execution exceptions."""
 
-        class FailingTool:
-            def execute(self, **kwargs):
+        class FailingTool(Tool):
+            @property
+            def name(self) -> str:
+                return "failing_tool"
+
+            @property
+            def description(self) -> str:
+                return "A tool that always fails"
+
+            @property
+            def parameters_schema(self) -> dict[str, Any]:
+                return {}
+
+            def validate(self, parameters: dict[str, Any]) -> None:
+                pass
+
+            def execute(self, parameters: dict[str, Any]) -> ToolResult:
                 raise RuntimeError("Tool failed!")
 
         registry = ToolRegistry()
-        registry.register("failing_tool", FailingTool())
+        registry.register(FailingTool())
 
-        result = registry.execute("failing_tool", param="value")
+        call = ToolCall(tool_name="failing_tool", parameters={"param": "value"})
+        result = registry.execute(call)
 
-        assert result["success"] is False
-        assert "Tool failed!" in result["error"]
+        assert result.success is False
+        assert "Tool failed!" in result.error
 
 
 class TestGovernanceIntegration:
@@ -115,66 +153,81 @@ class TestGovernanceIntegration:
         """Test that governance blocks dangerous file paths."""
         checker = InvariantChecker("tests/fixtures/test_soul.yaml")
         registry = ToolRegistry(invariant_checker=checker)
-        registry.register("write_file", MockTool())
+        registry.register(MockTool("write_file"))
 
         # Try to write to .git (should be blocked by Soul)
-        result = registry.execute("write_file", path=".git/config", content="bad")
+        call = ToolCall(
+            tool_name="write_file", parameters={"path": ".git/config", "content": "bad"}
+        )
+        result = registry.execute(call)
 
-        assert result["success"] is False
-        assert result.get("blocked") is True
-        assert "Governance Violation" in result["error"]
+        assert result.success is False
+        assert result.metadata is not None
+        assert result.metadata.get("blocked_by_soul") is True
+        assert "Governance Violation" in result.error
 
     def test_governance_allows_safe_paths(self):
         """Test that governance allows safe file paths."""
         checker = InvariantChecker("tests/fixtures/test_soul.yaml")
         registry = ToolRegistry(invariant_checker=checker)
-        tool = MockTool(return_value="file written")
-        registry.register("write_file", tool)
+        tool = MockTool("write_file", return_value="file written")
+        registry.register(tool)
 
         # Try to write to safe location
-        result = registry.execute("write_file", path="docs/test.md", content="ok")
+        call = ToolCall(
+            tool_name="write_file", parameters={"path": "docs/test.md", "content": "ok"}
+        )
+        result = registry.execute(call)
 
-        assert result["success"] is True
-        assert result["result"] == "file written"
+        assert result.success is True
+        assert result.output == "file written"
 
     def test_governance_blocks_kernel_modification(self):
         """Test that governance blocks kernel.py modification."""
         checker = InvariantChecker("tests/fixtures/test_soul.yaml")
         registry = ToolRegistry(invariant_checker=checker)
-        registry.register("write_file", MockTool())
+        registry.register(MockTool("write_file"))
 
         # Try to modify kernel.py (exact path match)
-        result = registry.execute(
-            "write_file", path="vibe_core/kernel.py", content="hacked"
+        call = ToolCall(
+            tool_name="write_file",
+            parameters={"path": "vibe_core/kernel.py", "content": "hacked"},
         )
+        result = registry.execute(call)
 
-        assert result["success"] is False
-        assert result.get("blocked") is True
-        assert "Governance Violation" in result["error"]
+        assert result.success is False
+        assert result.metadata is not None
+        assert result.metadata.get("blocked_by_soul") is True
+        assert "Governance Violation" in result.error
 
     def test_governance_blocks_directory_traversal(self):
         """Test that governance blocks directory traversal."""
         checker = InvariantChecker("tests/fixtures/test_soul.yaml")
         registry = ToolRegistry(invariant_checker=checker)
-        registry.register("read_file", MockTool())
+        registry.register(MockTool("read_file"))
 
         # Try to escape sandbox
-        result = registry.execute("read_file", path="../../../etc/passwd")
+        call = ToolCall(tool_name="read_file", parameters={"path": "../../../etc/passwd"})
+        result = registry.execute(call)
 
-        assert result["success"] is False
-        assert result.get("blocked") is True
+        assert result.success is False
+        assert result.metadata is not None
+        assert result.metadata.get("blocked_by_soul") is True
 
     def test_no_governance_allows_everything(self):
         """Test that without governance, all operations are allowed."""
         registry = ToolRegistry(invariant_checker=None)
-        tool = MockTool(return_value="executed")
-        registry.register("write_file", tool)
+        tool = MockTool("write_file", return_value="executed")
+        registry.register(tool)
 
         # Try dangerous path (should work without governance)
-        result = registry.execute("write_file", path=".git/config", content="test")
+        call = ToolCall(
+            tool_name="write_file", parameters={"path": ".git/config", "content": "test"}
+        )
+        result = registry.execute(call)
 
-        assert result["success"] is True
-        assert result["result"] == "executed"
+        assert result.success is True
+        assert result.output == "executed"
 
 
 class TestFileTools:
@@ -183,53 +236,60 @@ class TestFileTools:
     def test_write_and_read_file(self, tmp_path):
         """Test writing and reading a file."""
         registry = ToolRegistry()
-        registry.register("write_file", WriteFileTool())
-        registry.register("read_file", ReadFileTool())
+        registry.register(WriteFileTool())
+        registry.register(ReadFileTool())
 
         # Write file
         test_file = tmp_path / "test.txt"
         content = "Hello, World!"
 
-        write_result = registry.execute(
-            "write_file", path=str(test_file), content=content
+        write_call = ToolCall(
+            tool_name="write_file",
+            parameters={"path": str(test_file), "content": content},
         )
+        write_result = registry.execute(write_call)
 
-        assert write_result["success"] is True
-        assert write_result["result"]["bytes_written"] == len(content)
+        assert write_result.success is True
+        assert write_result.metadata["size_bytes"] == len(content)
 
         # Read file
-        read_result = registry.execute("read_file", path=str(test_file))
+        read_call = ToolCall(tool_name="read_file", parameters={"path": str(test_file)})
+        read_result = registry.execute(read_call)
 
-        assert read_result["success"] is True
-        assert read_result["result"]["content"] == content
+        assert read_result.success is True
+        assert read_result.output == content
 
     def test_write_file_creates_directories(self, tmp_path):
         """Test that WriteFileTool creates parent directories."""
         registry = ToolRegistry()
-        registry.register("write_file", WriteFileTool())
+        registry.register(WriteFileTool())
 
         # Write to nested path that doesn't exist
         nested_file = tmp_path / "level1" / "level2" / "test.txt"
 
-        result = registry.execute(
-            "write_file",
-            path=str(nested_file),
-            content="nested",
-            create_dirs=True,
+        call = ToolCall(
+            tool_name="write_file",
+            parameters={
+                "path": str(nested_file),
+                "content": "nested",
+                "create_dirs": True,
+            },
         )
+        result = registry.execute(call)
 
-        assert result["success"] is True
+        assert result.success is True
         assert nested_file.exists()
 
     def test_read_nonexistent_file(self):
         """Test reading a file that doesn't exist."""
         registry = ToolRegistry()
-        registry.register("read_file", ReadFileTool())
+        registry.register(ReadFileTool())
 
-        result = registry.execute("read_file", path="/nonexistent/file.txt")
+        call = ToolCall(tool_name="read_file", parameters={"path": "/nonexistent/file.txt"})
+        result = registry.execute(call)
 
-        assert result["success"] is False
-        assert "error" in result
+        assert result.success is False
+        assert result.error is not None
 
 
 class TestListAndQuery:
@@ -238,8 +298,8 @@ class TestListAndQuery:
     def test_list_tools(self):
         """Test listing registered tools."""
         registry = ToolRegistry()
-        registry.register("tool1", MockTool())
-        registry.register("tool2", MockTool())
+        registry.register(MockTool("tool1"))
+        registry.register(MockTool("tool2"))
 
         tools = registry.list_tools()
 
@@ -250,19 +310,19 @@ class TestListAndQuery:
     def test_has_tool(self):
         """Test checking if tool exists."""
         registry = ToolRegistry()
-        registry.register("existing_tool", MockTool())
+        registry.register(MockTool("existing_tool"))
 
-        assert registry.has_tool("existing_tool")
-        assert not registry.has_tool("nonexistent_tool")
+        assert registry.has("existing_tool")
+        assert not registry.has("nonexistent_tool")
 
     def test_tool_count(self):
-        """Test tool count property."""
+        """Test tool count via len()."""
         registry = ToolRegistry()
 
-        assert registry.tool_count == 0
+        assert len(registry) == 0
 
-        registry.register("tool1", MockTool())
-        assert registry.tool_count == 1
+        registry.register(MockTool("tool1"))
+        assert len(registry) == 1
 
-        registry.register("tool2", MockTool())
-        assert registry.tool_count == 2
+        registry.register(MockTool("tool2"))
+        assert len(registry) == 2
