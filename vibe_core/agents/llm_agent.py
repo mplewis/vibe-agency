@@ -3,9 +3,13 @@ Simple LLM-based agent for vibe-agency OS.
 
 This module implements a generic agent that performs cognitive work
 via an LLM provider (ARCH-025).
+
+Updated in ARCH-027 to support tool-use capability.
 """
 
+import json
 import logging
+import re
 from typing import Any, Dict, List, Optional
 
 from vibe_core.agent_protocol import VibeAgent
@@ -56,7 +60,8 @@ class SimpleLLMAgent(VibeAgent):
         agent_id: str,
         provider: LLMProvider,
         system_prompt: Optional[str] = None,
-        model: Optional[str] = None
+        model: Optional[str] = None,
+        tool_registry: Optional["ToolRegistry"] = None,  # noqa: F821
     ):
         """
         Initialize the LLM agent.
@@ -66,24 +71,31 @@ class SimpleLLMAgent(VibeAgent):
             provider: LLMProvider instance to use for cognitive work
             system_prompt: System prompt to use (overrides provider default)
             model: Model identifier to pass to provider (e.g., "gpt-4")
+            tool_registry: Optional ToolRegistry for tool-use capability
 
         Example:
             >>> from tests.mocks.llm import MockLLMProvider
+            >>> from vibe_core.tools import ToolRegistry, ReadFileTool
             >>> provider = MockLLMProvider()
+            >>> registry = ToolRegistry()
+            >>> registry.register(ReadFileTool())
             >>> agent = SimpleLLMAgent(
             ...     agent_id="my-agent",
             ...     provider=provider,
-            ...     system_prompt="Be concise."
+            ...     system_prompt="Be concise.",
+            ...     tool_registry=registry
             ... )
         """
         self._agent_id = agent_id
         self.provider = provider
         self._system_prompt = system_prompt or provider.system_prompt
         self.model = model
+        self.tool_registry = tool_registry
 
         logger.info(
             f"AGENT: Initialized SimpleLLMAgent '{agent_id}' "
-            f"(provider={provider.__class__.__name__}, model={model})"
+            f"(provider={provider.__class__.__name__}, model={model}, "
+            f"tools={'enabled' if tool_registry else 'disabled'})"
         )
 
     @property
@@ -164,12 +176,21 @@ class SimpleLLMAgent(VibeAgent):
             )
             logger.debug(f"AGENT: LLM response: {response}")
 
+            # Check if response contains tool call
+            tool_result = None
+            if self.tool_registry:
+                tool_call_data = self._extract_tool_call(response)
+                if tool_call_data:
+                    logger.info(f"AGENT: {self.agent_id} detected tool call in response")
+                    tool_result = self._execute_tool_call(tool_call_data)
+
             return {
                 "response": response,
                 "model_used": model_to_use or "default",
                 "provider": self.provider.__class__.__name__,
                 "success": True,
-                "error": None
+                "error": None,
+                "tool_call": tool_result,  # None if no tool call
             }
 
         except Exception as e:
@@ -217,6 +238,12 @@ class SimpleLLMAgent(VibeAgent):
 
         # Add system message
         system_content = self._system_prompt
+
+        # Add tool descriptions if tool registry available
+        if self.tool_registry and len(self.tool_registry) > 0:
+            tool_prompt = self.tool_registry.to_llm_prompt()
+            system_content = f"{system_content}\n\n{tool_prompt}"
+
         if context:
             # Include context in system message
             context_str = "\n".join(f"{k}: {v}" for k, v in context.items())
@@ -234,6 +261,99 @@ class SimpleLLMAgent(VibeAgent):
         })
 
         return messages
+
+    def _extract_tool_call(self, response: str) -> Optional[Dict[str, Any]]:
+        """
+        Extract tool call from LLM response.
+
+        Looks for JSON object with format: {"tool": "name", "parameters": {...}}
+
+        Args:
+            response: LLM response text
+
+        Returns:
+            dict with tool call data, or None if no tool call found
+
+        Example:
+            >>> response = '{"tool": "read_file", "parameters": {"path": "/tmp/test.txt"}}'
+            >>> call = agent._extract_tool_call(response)
+            >>> print(call["tool"])  # "read_file"
+        """
+        # Try to parse entire response as JSON first
+        try:
+            data = json.loads(response.strip())
+            if isinstance(data, dict) and "tool" in data and "parameters" in data:
+                return data
+        except json.JSONDecodeError:
+            pass
+
+        # Fallback: Try to find JSON object with balanced braces
+        brace_depth = 0
+        json_start = -1
+
+        for i, char in enumerate(response):
+            if char == "{":
+                if brace_depth == 0:
+                    json_start = i
+                brace_depth += 1
+            elif char == "}":
+                brace_depth -= 1
+                if brace_depth == 0 and json_start >= 0:
+                    # Found complete JSON object
+                    json_str = response[json_start : i + 1]
+                    try:
+                        data = json.loads(json_str)
+                        if isinstance(data, dict) and "tool" in data and "parameters" in data:
+                            return data
+                    except json.JSONDecodeError:
+                        pass
+                    json_start = -1
+
+        return None
+
+    def _execute_tool_call(self, tool_call_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Execute a tool call via the tool registry.
+
+        Args:
+            tool_call_data: {"tool": "name", "parameters": {...}}
+
+        Returns:
+            dict with tool execution result
+
+        Example:
+            >>> call_data = {"tool": "read_file", "parameters": {"path": "/tmp/test.txt"}}
+            >>> result = agent._execute_tool_call(call_data)
+            >>> print(result["success"])  # True
+        """
+        # Import here to avoid circular dependency
+        from vibe_core.tools.tool_protocol import ToolCall
+
+        tool_name = tool_call_data["tool"]
+        parameters = tool_call_data["parameters"]
+
+        logger.info(f"AGENT: {self.agent_id} executing tool call: {tool_name}")
+
+        # Create ToolCall object
+        tool_call = ToolCall(tool_name=tool_name, parameters=parameters)
+
+        # Execute via registry
+        result = self.tool_registry.execute(tool_call)
+
+        logger.info(
+            f"AGENT: {self.agent_id} tool call completed "
+            f"(tool={tool_name}, success={result.success})"
+        )
+
+        # Convert ToolResult to dict
+        return {
+            "tool": tool_name,
+            "parameters": parameters,
+            "success": result.success,
+            "output": result.output,
+            "error": result.error,
+            "metadata": result.metadata,
+        }
 
     def update_system_prompt(self, new_prompt: str) -> None:
         """
