@@ -48,11 +48,11 @@ class VibeWrapper:
 
         # Route to command handler
         if parsed.command == "status":
-            return self.cmd_status()
+            return self.cmd_status(json_output=parsed.json)
         elif parsed.command == "run":
-            return self.cmd_run(parsed.thema)
+            return self.cmd_run(parsed.thema, json_output=parsed.json)
         elif parsed.command == "make":
-            return self.cmd_make(parsed.wish)
+            return self.cmd_make(parsed.wish, json_output=parsed.json)
         else:
             parser.print_help()
             return 1
@@ -66,6 +66,7 @@ class VibeWrapper:
             epilog="""
 Examples:
   vibe status                              # Check system health
+  vibe status --json                       # AI-parseable JSON output (GAD-000 compliant)
   vibe run planning                        # Interactive cartridge picker
   vibe make "Add dark mode to dashboard"   # Execute feature-implement cartridge
             """,
@@ -76,9 +77,14 @@ Examples:
         )
 
         # status command
-        subparsers.add_parser(
+        status_parser = subparsers.add_parser(
             "status",
             help="Show system health and loaded cartridges (Green Light 🟢)",
+        )
+        status_parser.add_argument(
+            "--json",
+            action="store_true",
+            help="Output in JSON format (AI-parseable, GAD-000 compliant)",
         )
 
         # run command
@@ -92,6 +98,11 @@ Examples:
             default=None,
             help="Optional: topic/theme to guide cartridge selection",
         )
+        run_parser.add_argument(
+            "--json",
+            action="store_true",
+            help="Output in JSON format (AI-parseable, GAD-000 compliant)",
+        )
 
         # make command
         make_parser = subparsers.add_parser(
@@ -102,18 +113,55 @@ Examples:
             nargs="+",
             help="Your feature request (will be passed to feature-implement)",
         )
+        make_parser.add_argument(
+            "--json",
+            action="store_true",
+            help="Output in JSON format (AI-parseable, GAD-000 compliant)",
+        )
 
         return parser
 
-    def cmd_status(self) -> int:
+    def cmd_status(self, json_output: bool = False) -> int:
         """
         Status command: Show system health and loaded cartridges.
 
-        Output:
+        Args:
+            json_output: If True, output JSON (GAD-000 compliant)
+
+        Output (human-friendly):
           ✅ System Health (Green Light indicators)
           📦 Loaded Cartridges (Available playbooks)
           ⚙️  Next Steps
+
+        Output (JSON):
+          Structured data for AI consumption
         """
+        # Gather data
+        health_status = self._check_system_health()
+        cartridges = self._list_cartridges()
+
+        # JSON output mode (GAD-000 compliant)
+        if json_output:
+            output = {
+                "status": "healthy" if all(s for s, _ in health_status.values()) else "degraded",
+                "timestamp": datetime.now().isoformat(),
+                "health": {
+                    name: {"status": status, "message": message}
+                    for name, (status, message) in health_status.items()
+                },
+                "cartridges": [
+                    {"name": name, "description": desc}
+                    for name, desc in cartridges
+                ],
+                "next_actions": [
+                    {"command": "vibe run [Thema]", "purpose": "Start dialog with STEWARD to pick cartridge"},
+                    {"command": "vibe make \"[Your Wish]\"", "purpose": "Execute feature-implement cartridge"}
+                ]
+            }
+            print(json.dumps(output, indent=2))
+            return 0
+
+        # Human-friendly output mode
         print("\n" + "=" * 70)
         print("🟢 VIBE AGENCY - SYSTEM STATUS")
         print("=" * 70)
@@ -122,7 +170,6 @@ Examples:
         print("\n✅ SYSTEM HEALTH")
         print("-" * 70)
 
-        health_status = self._check_system_health()
         for check_name, (status, message) in health_status.items():
             icon = "✅" if status else "❌"
             print(f"  {icon} {check_name}: {message}")
@@ -130,7 +177,6 @@ Examples:
         # List available cartridges
         print("\n📦 LOADED CARTRIDGES")
         print("-" * 70)
-        cartridges = self._list_cartridges()
         if cartridges:
             for name, desc in cartridges:
                 print(f"  🎯 {name:<20} - {desc}")
@@ -147,12 +193,24 @@ Examples:
         print("\n" + "=" * 70 + "\n")
         return 0
 
-    def cmd_run(self, thema: Optional[str]) -> int:
+    def cmd_run(self, thema: Optional[str], json_output: bool = False) -> int:
         """
         Run command: Start interactive dialog with STEWARD.
 
+        Args:
+            thema: Optional theme to guide cartridge selection
+            json_output: If True, output JSON (GAD-000 compliant)
+
         This delegates to vibe-cli boot mode with optional theme guidance.
         """
+        # Note: Interactive mode is inherently human-facing
+        # JSON mode not applicable for interactive selection
+        if json_output:
+            print(json.dumps({
+                "error": "Interactive mode does not support JSON output",
+                "suggestion": "Use 'vibe make' with --json for programmatic execution"
+            }))
+            return 1
         print("\n" + "=" * 70)
         print("🚀 VIBE AGENCY - CARTRIDGE LAUNCHER")
         print("=" * 70)
@@ -194,21 +252,37 @@ Examples:
             print("\n❌ Invalid input or cancelled")
             return 1
 
-    def cmd_make(self, wish: List[str]) -> int:
+    def cmd_make(self, wish: List[str], json_output: bool = False) -> int:
         """
         Make command: Magic button for feature-implement cartridge.
+
+        Args:
+            wish: User's feature request (list of words)
+            json_output: If True, output JSON (GAD-000 compliant)
 
         This is the simplest path: user has an idea, we make it happen.
         """
         wish_text = " ".join(wish)
 
-        print("\n" + "=" * 70)
-        print("🪄 VIBE AGENCY - MAGIC BUTTON")
-        print("=" * 70)
-        print(f"\n📝 Your Wish: {wish_text}\n")
+        if json_output:
+            # JSON mode: output execution plan
+            output = {
+                "command": "make",
+                "wish": wish_text,
+                "cartridge": "feature-implement",
+                "status": "executing",
+                "timestamp": datetime.now().isoformat()
+            }
+            print(json.dumps(output, indent=2))
+        else:
+            # Human-friendly mode
+            print("\n" + "=" * 70)
+            print("🪄 VIBE AGENCY - MAGIC BUTTON")
+            print("=" * 70)
+            print(f"\n📝 Your Wish: {wish_text}\n")
 
-        print("Loading Cartridge: feature-implement...")
-        print("-" * 70)
+            print("Loading Cartridge: feature-implement...")
+            print("-" * 70)
 
         # Execute feature-implement cartridge with the wish as context
         return self._execute_cartridge_with_context("feature-implement", wish_text)
