@@ -23,10 +23,10 @@ from unittest.mock import MagicMock
 # Adjust path to find modules
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from vibe_core.specialists.base_specialist import MissionContext
 from apps.agency.specialists.coding import CodingSpecialist
-from vibe_core.store.sqlite_store import SQLiteStore
 from vibe_core.runtime.tool_safety_guard import ToolSafetyGuard
+from vibe_core.specialists.base_specialist import MissionContext
+from vibe_core.store.sqlite_store import SQLiteStore
 
 
 def create_test_environment() -> tuple[Path, SQLiteStore, ToolSafetyGuard]:
@@ -84,7 +84,8 @@ def create_qa_failure_report(test_dir: Path, failures: int = 5, passed: int = 10
 def create_dummy_source_file(test_dir: Path, filename: str = "calculator.py") -> Path:
     """Create a dummy source file to be patched"""
     src_file = test_dir / "src" / filename
-    src_file.write_text("""
+    src_file.write_text(
+        """
 def add(a, b):
     '''Add two numbers'''
     return a + b
@@ -102,7 +103,8 @@ def divide(a, b):
     if b == 0:
         raise ValueError("Division by zero")
     return a / b
-""")
+"""
+    )
     print(f"  ✅ Created dummy source file at {src_file}")
     return src_file
 
@@ -143,6 +145,7 @@ def test_greenfield_mode(test_dir: Path, store: SQLiteStore, guard: ToolSafetyGu
     except Exception as e:
         print(f"  ❌ FAILED: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -186,13 +189,15 @@ def test_repair_mode(test_dir: Path, store: SQLiteStore, guard: ToolSafetyGuard)
             print(f"  ❌ FAILED: Expected status='failure', got {qa_feedback.get('status')}")
             return False
 
-        print(f"  ✅ QA report loaded: {qa_feedback.get('test_execution', {}).get('failed')} failures")
+        print(
+            f"  ✅ QA report loaded: {qa_feedback.get('test_execution', {}).get('failed')} failures"
+        )
 
         # Run repair mode
         result = specialist._run_repair_mode(context, qa_feedback)
 
         if not result.success:
-            print(f"  ❌ FAILED: Repair mode returned success=False")
+            print("  ❌ FAILED: Repair mode returned success=False")
             return False
 
         if result.next_phase != "TESTING":
@@ -212,7 +217,7 @@ def test_repair_mode(test_dir: Path, store: SQLiteStore, guard: ToolSafetyGuard)
 
         if repair_decision:
             patched_files = repair_decision.get("patched_files", [])
-            print(f"  ✅ Repair mode activated")
+            print("  ✅ Repair mode activated")
             print(f"  ✅ Applied patches to {len(patched_files)} files")
 
             # Verify that source file was modified
@@ -220,10 +225,10 @@ def test_repair_mode(test_dir: Path, store: SQLiteStore, guard: ToolSafetyGuard)
             if src_file.exists():
                 content = src_file.read_text()
                 if "ARCH-009 Repair patch applied" in content:
-                    print(f"  ✅ Verified: Source file was patched with marker")
+                    print("  ✅ Verified: Source file was patched with marker")
                     return True
                 else:
-                    print(f"  ❌ FAILED: Source file not patched correctly")
+                    print("  ❌ FAILED: Source file not patched correctly")
                     return False
 
         print("  ❌ FAILED: Repair decision not found in results")
@@ -232,6 +237,7 @@ def test_repair_mode(test_dir: Path, store: SQLiteStore, guard: ToolSafetyGuard)
     except Exception as e:
         print(f"  ❌ FAILED: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -278,9 +284,9 @@ def test_failure_analysis(test_dir: Path, store: SQLiteStore, guard: ToolSafetyG
         # Verify error log available
         error_log = qa_report.get("test_output_snippet", "")
         if "AssertionError" in error_log:
-            print(f"  ✅ Error logs accessible for analysis")
+            print("  ✅ Error logs accessible for analysis")
         else:
-            print(f"  ⚠️  WARNING: Error log snippet not as expected")
+            print("  ⚠️  WARNING: Error log snippet not as expected")
 
         # Verify failure analysis can extract failure list
         failed_tests = qa_report.get("failed_tests", [])
@@ -288,13 +294,14 @@ def test_failure_analysis(test_dir: Path, store: SQLiteStore, guard: ToolSafetyG
             print(f"  ✅ Failed test list extracted: {len(failed_tests)} tests")
             print(f"     Example: {failed_tests[0]}")
         else:
-            print(f"  ⚠️  WARNING: Failed test list not populated")
+            print("  ⚠️  WARNING: Failed test list not populated")
 
         return True
 
     except Exception as e:
         print(f"  ❌ FAILED: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -350,6 +357,7 @@ def main():
 
         # Cleanup
         import shutil
+
         shutil.rmtree(test_dir, ignore_errors=True)
         return 0
     else:

@@ -21,7 +21,6 @@ Implementation: Phase 4 - Full test execution with pytest
 See: docs/architecture/SPECIALIST_AGENT_CONTRACT.md for implementation guide
 """
 
-import json
 import logging
 import re
 import subprocess
@@ -207,7 +206,9 @@ class TestingSpecialist(BaseSpecialist):
         tests_passed = test_results.get("passed", 0) > 0 and test_results.get("failed", 0) == 0
         total_tests = test_results.get("total", 0)
 
-        logger.info(f"📊 Test results: {test_results['passed']} passed, {test_results['failed']} failed")
+        logger.info(
+            f"📊 Test results: {test_results['passed']} passed, {test_results['failed']} failed"
+        )
 
         # Log test execution decision
         self._log_decision(

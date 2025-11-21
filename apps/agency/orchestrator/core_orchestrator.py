@@ -1766,7 +1766,7 @@ class CoreOrchestrator:
             if manifest.current_phase == ProjectPhase.TESTING:
                 logger.warning("🔄 REPAIR LOOP TRIGGERED: Returning to CODING phase for bug fixes")
                 logger.info(
-                    f"   CodingSpecialist will use qa_report.json to identify and fix failures"
+                    "   CodingSpecialist will use qa_report.json to identify and fix failures"
                 )
 
                 # Transition back to CODING
@@ -1787,9 +1787,7 @@ class CoreOrchestrator:
 
         # Phase succeeded - handle next phase transition
         if result is not None and result.next_phase:
-            logger.info(
-                f"✅ {manifest.current_phase.value} succeeded → {result.next_phase}"
-            )
+            logger.info(f"✅ {manifest.current_phase.value} succeeded → {result.next_phase}")
 
             # Apply result to manifest (transitions to next phase)
             # Note: The adapter already handles this, but being explicit here
@@ -1840,7 +1838,10 @@ class CoreOrchestrator:
         # Execute phases until PRODUCTION
         while manifest.current_phase != ProjectPhase.PRODUCTION:
             # Detect repair loop (same phase executed consecutively)
-            if last_phase == manifest.current_phase and manifest.current_phase == ProjectPhase.CODING:
+            if (
+                last_phase == manifest.current_phase
+                and manifest.current_phase == ProjectPhase.CODING
+            ):
                 repair_attempts += 1
                 logger.warning(
                     f"⚠️  Repair attempt {repair_attempts}/{max_repair_attempts} for {manifest.current_phase.value}"

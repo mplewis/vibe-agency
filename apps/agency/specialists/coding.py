@@ -639,7 +639,7 @@ class CodingSpecialist(BaseSpecialist):
         for patched_file in patched_files:
             self._log_decision(
                 decision_type="CODE_PATCH_APPLIED",
-                rationale=f"Applied repair patch to address test failures",
+                rationale="Applied repair patch to address test failures",
                 data={
                     "file_path": patched_file,
                     "operation": "patch",

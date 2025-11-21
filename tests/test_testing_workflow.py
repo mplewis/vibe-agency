@@ -14,7 +14,7 @@ import json
 import shutil
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -64,9 +64,7 @@ class TestTestingWorkflow:
         tests_dir = project_dir / "tests"
         tests_dir.mkdir(parents=True, exist_ok=True)
         (tests_dir / "__init__.py").touch()  # Create empty __init__.py
-        (tests_dir / "test_example.py").write_text(
-            "def test_placeholder():\n    assert True\n"
-        )
+        (tests_dir / "test_example.py").write_text("def test_placeholder():\n    assert True\n")
 
         # Create project manifest
         manifest = {
@@ -133,7 +131,9 @@ class TestTestingWorkflow:
             mock_result.returncode = 0
             mock_result.stdout = "tests/test_example.py::test_feature PASSED\n"
             mock_result.stdout += "tests/test_example.py::test_edge_case PASSED\n"
-            mock_result.stdout += "======================== 2 passed in 0.12s ========================\n"
+            mock_result.stdout += (
+                "======================== 2 passed in 0.12s ========================\n"
+            )
             mock_result.stderr = ""
             return mock_result
 
@@ -224,7 +224,6 @@ class TestTestingWorkflow:
         print("\n" + "=" * 60)
         print("✅ TESTING Phase E2E Test (Passing) PASSED")
         print("=" * 60 + "\n")
-
 
     def test_missing_code_gen_spec(self, temp_workspace):
         """Test that missing code_gen_spec.json raises clear error"""

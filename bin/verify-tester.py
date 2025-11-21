@@ -11,7 +11,6 @@ This script verifies that the TestingSpecialist can:
 Run this after implementing TestingSpecialist to verify functionality.
 """
 
-import json
 import logging
 import sys
 from pathlib import Path
@@ -27,10 +26,9 @@ logger = logging.getLogger(__name__)
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from vibe_core.store.sqlite_store import SQLiteStore
-from vibe_core.runtime.tool_safety_guard import ToolSafetyGuard
-from vibe_core.specialists import MissionContext
 from apps.agency.specialists.testing import TestingSpecialist
+from vibe_core.runtime.tool_safety_guard import ToolSafetyGuard
+from vibe_core.store.sqlite_store import SQLiteStore
 
 
 def main():
