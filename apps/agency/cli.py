@@ -48,7 +48,7 @@ from vibe_core.agents.llm_agent import SimpleLLMAgent
 from vibe_core.governance import InvariantChecker
 from vibe_core.kernel import VibeKernel
 from vibe_core.llm.google_adapter import GoogleProvider  # Real AI brain
-from vibe_core.llm import HumanProvider  # Human-in-the-loop fallback (ARCH-033B)
+from vibe_core.llm import StewardProvider  # Claude Code integration fallback (ARCH-033C)
 from vibe_core.runtime.providers.base import ProviderNotAvailableError
 from vibe_core.scheduling import Task
 from vibe_core.tools import ReadFileTool, ToolRegistry, WriteFileTool
@@ -139,7 +139,8 @@ Otherwise, respond with natural language to the user.
 """
 
     # Step 4.5: Choose Provider (Real AI or Mock for testing)
-    # ARCH-033B: Robust fallback chain: Google → Human (if TTY) → Mock (if CI)
+    # ARCH-033C: Robust fallback chain: Google → Steward (if TTY) → Mock (if CI)
+    # The STEWARD is Claude Code (the AI environment managing this sandbox)
     api_key = os.getenv("GOOGLE_API_KEY")
 
     if api_key:
@@ -156,9 +157,10 @@ Otherwise, respond with natural language to the user.
 
             # Fallback chain based on environment
             if sys.stdin.isatty():
-                # Interactive terminal → Human becomes the provider (GAD-000)
-                logger.info("🧑 Falling back to HumanProvider (interactive terminal detected)")
-                provider = HumanProvider()
+                # Interactive terminal → STEWARD becomes the provider (GAD-000 Level 100)
+                logger.info("🤖 Delegating cognitive load to STEWARD (Claude Code environment)")
+                logger.info("   The AI environment will provide completions via structured prompts")
+                provider = StewardProvider()
             else:
                 # Non-interactive (CI/CD) → Mock provider
                 logger.warning("⚠️  Non-interactive environment, falling back to MockProvider")
