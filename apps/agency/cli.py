@@ -48,6 +48,7 @@ from vibe_core.agents.llm_agent import SimpleLLMAgent
 from vibe_core.governance import InvariantChecker
 from vibe_core.kernel import VibeKernel
 from vibe_core.llm.google_adapter import GoogleProvider  # Real AI brain
+from vibe_core.llm import HumanProvider  # Human-in-the-loop fallback (ARCH-033B)
 from vibe_core.runtime.providers.base import ProviderNotAvailableError
 from vibe_core.scheduling import Task
 from vibe_core.tools import ReadFileTool, ToolRegistry, WriteFileTool
@@ -138,6 +139,7 @@ Otherwise, respond with natural language to the user.
 """
 
     # Step 4.5: Choose Provider (Real AI or Mock for testing)
+    # ARCH-033B: Robust fallback chain: Google → Human (if TTY) → Mock (if CI)
     api_key = os.getenv("GOOGLE_API_KEY")
 
     if api_key:
@@ -148,13 +150,22 @@ Otherwise, respond with natural language to the user.
                 model="gemini-2.5-flash",
             )
             logger.info("🧠 CONNECTED TO GOOGLE GEMINI (gemini-2.5-flash)")
-        except ProviderNotAvailableError as e:
-            logger.warning(f"⚠️  Google provider unavailable: {e}")
-            logger.warning("⚠️  Falling back to MockProvider")
-            provider = MockLLMProvider(
-                mock_response="I am a mock operator (no API key available).",
-                system_prompt_text=system_prompt,
-            )
+        except Exception as e:
+            # Catch ALL exceptions (ProviderNotAvailableError, ConnectionError, 403, etc.)
+            logger.warning(f"⚠️  Google provider failed: {type(e).__name__}: {e}")
+
+            # Fallback chain based on environment
+            if sys.stdin.isatty():
+                # Interactive terminal → Human becomes the provider (GAD-000)
+                logger.info("🧑 Falling back to HumanProvider (interactive terminal detected)")
+                provider = HumanProvider()
+            else:
+                # Non-interactive (CI/CD) → Mock provider
+                logger.warning("⚠️  Non-interactive environment, falling back to MockProvider")
+                provider = MockLLMProvider(
+                    mock_response="I am a mock operator (Google provider unavailable).",
+                    system_prompt_text=system_prompt,
+                )
     else:
         # MOCK BRAIN: For testing without API keys
         logger.info("ℹ️  No GOOGLE_API_KEY found, using MockProvider")
