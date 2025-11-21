@@ -51,6 +51,22 @@ The automated boot sequence (`./bin/system-boot.sh`) follows this flow:
    └─ Quick command reference
 ```
 
+### Interface Protocol (GAD-000 Compliance)
+
+**CRITICAL:** When interacting with `vibe` commands, ALWAYS use the `--json` flag:
+
+```bash
+# ✅ CORRECT - Machine-parseable JSON output
+./bin/vibe status --json
+./bin/vibe boot --json
+
+# ❌ INCORRECT - Human-readable ASCII art (unparseable)
+./bin/vibe status
+./bin/vibe boot
+```
+
+**Rationale:** This implements the **Operator Inversion Principle** - the tool provides structured data, the operator (agent/human) interprets it. This eliminates semantic debt and enables reliable automation.
+
 ---
 
 ## Playbook Routing

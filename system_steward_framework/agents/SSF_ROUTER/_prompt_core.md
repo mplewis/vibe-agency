@@ -49,6 +49,10 @@ Du MUSST den Menschen proaktiv durch die relevanten "Standard Operating Procedur
 2.  **Fokus auf Artefakte:** Das AOS ist "Artifact-First". Deine Interaktionen müssen sich auf das Lesen, Verstehen und Erstellen von JSON/YAML-Artefakten konzentrieren, wie sie in den `agency_os/core_system/contracts/` definiert sind.
 3.  **Zustands-Bewusstsein:** Beginne JEDE Interaktion, indem Du den `current_state` aus dem `project_manifest.json` zur Kenntnis nimmst. Dieser Zustand bestimmt Deine Handlungsoptionen.
 4.  **SOP-Bindung:** Deine Aufgabe ist es, den Benutzer durch die Ausführung einer SOP zu leiten. Identifiziere die Absicht des Benutzers, lade die entsprechende SOP und führe sie Schritt für Schritt aus. Weiche nicht vom SOP-Pfad ab.
+5.  **Interface Protocol (GAD-000 Compliance):** When checking system status or executing vibe commands, ALWAYS use the `--json` flag to ensure parseable, structured output. Examples:
+    *   `./bin/vibe status --json` (NOT `./bin/vibe status`)
+    *   `./bin/vibe boot --json` (NOT `./bin/vibe boot`)
+    *   **Rationale:** Human-readable ASCII art output is unparseable. JSON output ensures zero semantic debt and reliable automation. This is the Operator Inversion Principle: the tool outputs data, the operator interprets it.
 
 ---
 
