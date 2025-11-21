@@ -155,8 +155,7 @@ class DeploymentSpecialist(BaseSpecialist):
             qa_status = qa_report.get("status", "UNKNOWN")
             if qa_status not in ("PASSED", "APPROVED"):
                 logger.error(
-                    f"❌ BLOCKING: QA status is '{qa_status}', "
-                    f"expected 'PASSED' or 'APPROVED'"
+                    f"❌ BLOCKING: QA status is '{qa_status}', " f"expected 'PASSED' or 'APPROVED'"
                 )
                 return False
             logger.info(f"✅ qa_report.json loaded successfully (status: {qa_status})")
@@ -167,9 +166,7 @@ class DeploymentSpecialist(BaseSpecialist):
         # Check 4: Phase is DEPLOYMENT
         mission = self.get_mission_data()
         if mission["phase"] != "DEPLOYMENT":
-            logger.error(
-                f"❌ BLOCKING: current phase is {mission['phase']}, expected DEPLOYMENT"
-            )
+            logger.error(f"❌ BLOCKING: current phase is {mission['phase']}, expected DEPLOYMENT")
             return False
 
         logger.info("✅ ALL DEPLOYMENT preconditions met (STRICT validation passed)")
@@ -226,9 +223,7 @@ class DeploymentSpecialist(BaseSpecialist):
                 context.mission_uuid, "project_manifest.json"
             )
             if not project_manifest:
-                logger.error(
-                    "❌ VALIDATION FAILED: project_manifest.json could not be loaded"
-                )
+                logger.error("❌ VALIDATION FAILED: project_manifest.json could not be loaded")
                 self._log_decision(
                     decision_type="VALIDATION_FAILED",
                     rationale="project_manifest.json missing or invalid",
@@ -246,9 +241,7 @@ class DeploymentSpecialist(BaseSpecialist):
                 rationale=f"project_manifest.json error: {str(e)[:200]}",
                 data={"reason": "manifest_error", "error": str(e)[:200]},
             )
-            return SpecialistResult(
-                success=False, error=f"Validation failed: {str(e)[:200]}"
-            )
+            return SpecialistResult(success=False, error=f"Validation failed: {str(e)[:200]}")
 
         # Load and validate qa_report.json
         try:
@@ -287,9 +280,7 @@ class DeploymentSpecialist(BaseSpecialist):
                 rationale=f"qa_report.json error: {str(e)[:200]}",
                 data={"reason": "qa_report_error", "error": str(e)[:200]},
             )
-            return SpecialistResult(
-                success=False, error=f"Validation failed: {str(e)[:200]}"
-            )
+            return SpecialistResult(success=False, error=f"Validation failed: {str(e)[:200]}")
 
         logger.info("✅ Phase 1/3: ALL STRICT VALIDATION CHECKS PASSED")
         self._log_decision(
@@ -320,7 +311,7 @@ class DeploymentSpecialist(BaseSpecialist):
                 dest_path = dist_dir / "code_gen_spec.json"
                 shutil.copy2(code_gen_spec_path, dest_path)
                 deployed_files.append("code_gen_spec.json")
-                logger.info(f"✅ Deployed: code_gen_spec.json")
+                logger.info("✅ Deployed: code_gen_spec.json")
 
             # Copy qa_report.json (for compliance audit)
             qa_report_path = context.project_root / "qa_report.json"
@@ -328,7 +319,7 @@ class DeploymentSpecialist(BaseSpecialist):
                 dest_path = dist_dir / "qa_report.json"
                 shutil.copy2(qa_report_path, dest_path)
                 deployed_files.append("qa_report.json")
-                logger.info(f"✅ Deployed: qa_report.json")
+                logger.info("✅ Deployed: qa_report.json")
 
             # Copy project_manifest.json (for production tracking)
             manifest_path = context.project_root / "project_manifest.json"
@@ -336,7 +327,7 @@ class DeploymentSpecialist(BaseSpecialist):
                 dest_path = dist_dir / "project_manifest.json"
                 shutil.copy2(manifest_path, dest_path)
                 deployed_files.append("project_manifest.json")
-                logger.info(f"✅ Deployed: project_manifest.json")
+                logger.info("✅ Deployed: project_manifest.json")
 
             logger.info(f"✅ Phase 2/3: Deployed {len(deployed_files)} artifact files")
             self._log_decision(
@@ -360,9 +351,7 @@ class DeploymentSpecialist(BaseSpecialist):
                 rationale=f"Artifact deployment failed: {str(e)[:200]}",
                 data={"reason": "deployment_error", "error": str(e)[:200]},
             )
-            return SpecialistResult(
-                success=False, error=f"Deployment failed: {str(e)[:200]}"
-            )
+            return SpecialistResult(success=False, error=f"Deployment failed: {str(e)[:200]}")
 
         # =====================================================================
         # Phase 3: Completion & Logging

@@ -16,7 +16,7 @@ import json
 import shutil
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -276,9 +276,9 @@ class TestDeploymentWorkflow:
 
                     # Validate deployment success
                     assert deploy_receipt["status"] == "SUCCESS", "Deployment should succeed"
-                    assert deploy_receipt["artifact_version_deployed"] == "v1.2.3", (
-                        "Should have correct version"
-                    )
+                    assert (
+                        deploy_receipt["artifact_version_deployed"] == "v1.2.3"
+                    ), "Should have correct version"
                     print(
                         f"   ✓ Deployment validated (status={deploy_receipt['status']}, version={deploy_receipt['artifact_version_deployed']})"
                     )
@@ -317,7 +317,6 @@ class TestDeploymentWorkflow:
             json.dump(manifest_data, f, indent=2)
 
         # Copy to workspaces for orchestrator
-        import shutil
 
         dest_workspaces = PROJECT_ROOT / "workspaces"
         dest_project = dest_workspaces / "test_deployment_001"
@@ -368,7 +367,6 @@ class TestDeploymentWorkflow:
             json.dump(qa_report, f, indent=2)
 
         # Copy to workspaces for orchestrator
-        import shutil
 
         dest_workspaces = PROJECT_ROOT / "workspaces"
         dest_project = dest_workspaces / "test_deployment_001"
@@ -430,7 +428,6 @@ class TestDeploymentWorkflow:
             return {"status": "success"}
 
         # Copy to workspaces for orchestrator
-        import shutil
 
         dest_workspaces = PROJECT_ROOT / "workspaces"
         dest_project = dest_workspaces / "test_deployment_001"
@@ -511,7 +508,6 @@ class TestDeploymentWorkflow:
             return {"status": "success"}
 
         # Copy to workspaces for orchestrator
-        import shutil
 
         dest_workspaces = PROJECT_ROOT / "workspaces"
         dest_project = dest_workspaces / "test_deployment_001"
