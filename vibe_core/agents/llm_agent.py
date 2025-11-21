@@ -9,7 +9,7 @@ Updated in ARCH-027 to support tool-use capability.
 
 import json
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 from vibe_core.agent_protocol import VibeAgent
 from vibe_core.llm import LLMError, LLMProvider
@@ -58,8 +58,8 @@ class SimpleLLMAgent(VibeAgent):
         self,
         agent_id: str,
         provider: LLMProvider,
-        system_prompt: Optional[str] = None,
-        model: Optional[str] = None,
+        system_prompt: str | None = None,
+        model: str | None = None,
         tool_registry: Optional["ToolRegistry"] = None,  # noqa: F821
     ):
         """
@@ -102,7 +102,7 @@ class SimpleLLMAgent(VibeAgent):
         """Return the agent's unique identifier."""
         return self._agent_id
 
-    def process(self, task: Task) -> Dict[str, Any]:
+    def process(self, task: Task) -> dict[str, Any]:
         """
         Process a task by sending it to the LLM provider.
 
@@ -194,14 +194,14 @@ class SimpleLLMAgent(VibeAgent):
 
             # Re-raise as LLMError for proper error handling
             raise LLMError(
-                message=f"LLM call failed: {str(e)}",
+                message=f"LLM call failed: {e!s}",
                 provider=self.provider.__class__.__name__,
                 original_error=e,
             )
 
     def _build_messages(
-        self, user_message: str, context: Optional[Dict] = None
-    ) -> List[Dict[str, str]]:
+        self, user_message: str, context: dict | None = None
+    ) -> list[dict[str, str]]:
         """
         Build the message list for the LLM provider.
 
@@ -239,7 +239,7 @@ class SimpleLLMAgent(VibeAgent):
 
         return messages
 
-    def _extract_tool_call(self, response: str) -> Optional[Dict[str, Any]]:
+    def _extract_tool_call(self, response: str) -> dict[str, Any] | None:
         """
         Extract tool call from LLM response.
 
@@ -288,7 +288,7 @@ class SimpleLLMAgent(VibeAgent):
 
         return None
 
-    def _execute_tool_call(self, tool_call_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _execute_tool_call(self, tool_call_data: dict[str, Any]) -> dict[str, Any]:
         """
         Execute a tool call via the tool registry.
 

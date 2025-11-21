@@ -6,7 +6,7 @@ Integrates Soul Governance (ARCH-029) for security by design.
 """
 
 import logging
-from typing import Dict, List, Optional
+from typing import Optional
 
 from vibe_core.tools.tool_protocol import Tool, ToolCall, ToolResult
 
@@ -59,7 +59,7 @@ class ToolRegistry:
             >>> # Without governance (testing only)
             >>> registry = ToolRegistry()
         """
-        self.tools: Dict[str, Tool] = {}
+        self.tools: dict[str, Tool] = {}
         self._invariant_checker = invariant_checker
 
         if invariant_checker:
@@ -99,7 +99,7 @@ class ToolRegistry:
         self.tools[tool_name] = tool
         logger.info(f"ToolRegistry: Registered tool '{tool_name}'")
 
-    def get(self, tool_name: str) -> Optional[Tool]:
+    def get(self, tool_name: str) -> Tool | None:
         """
         Get a tool by name.
 
@@ -132,7 +132,7 @@ class ToolRegistry:
         """
         return tool_name in self.tools
 
-    def list_tools(self) -> List[str]:
+    def list_tools(self) -> list[str]:
         """
         Get list of all registered tool names.
 
@@ -185,7 +185,7 @@ class ToolRegistry:
 
         # Step 2: 🛡️ Soul Governance Check (ARCH-029)
         if self._invariant_checker:
-            soul_check: "SoulResult" = self._invariant_checker.check_tool_call(  # type: ignore
+            soul_check: SoulResult = self._invariant_checker.check_tool_call(  # type: ignore
                 tool_name, tool_call.parameters
             )
             if not soul_check.allowed:
@@ -200,7 +200,7 @@ class ToolRegistry:
         try:
             tool.validate(tool_call.parameters)
         except (ValueError, TypeError) as e:
-            error_msg = f"Parameter validation failed: {str(e)}"
+            error_msg = f"Parameter validation failed: {e!s}"
             logger.error(f"ToolRegistry: {error_msg} (tool={tool_name})")
             return ToolResult(success=False, error=error_msg)
 
@@ -211,7 +211,7 @@ class ToolRegistry:
             return result
         except Exception as e:
             # Fallback error handling (tools should catch their own exceptions)
-            error_msg = f"Tool execution failed: {type(e).__name__}: {str(e)}"
+            error_msg = f"Tool execution failed: {type(e).__name__}: {e!s}"
             logger.error(f"ToolRegistry: {error_msg} (tool={tool_name})", exc_info=True)
             return ToolResult(success=False, error=error_msg)
 
@@ -249,7 +249,7 @@ class ToolRegistry:
 
         return "\n".join(lines)
 
-    def get_tool_descriptions(self) -> List[Dict]:
+    def get_tool_descriptions(self) -> list[dict]:
         """
         Get structured tool descriptions.
 

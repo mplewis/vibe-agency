@@ -23,8 +23,6 @@ Test Philosophy:
 import tempfile
 from pathlib import Path
 
-import pytest
-
 from vibe_core.governance import InvariantChecker
 from vibe_core.tools import ReadFileTool, ToolRegistry, WriteFileTool
 
@@ -48,9 +46,7 @@ class TestDevilCannotBreakSecurity:
         registry.register("write_file", WriteFileTool())
 
         # Devil attempt: Modify .git/config
-        result = registry.execute(
-            "write_file", path=".git/config", content="[malicious config]"
-        )
+        result = registry.execute("write_file", path=".git/config", content="[malicious config]")
 
         # Assert: Operation blocked
         assert result["success"] is False, "Should block .git access"
@@ -227,7 +223,7 @@ class TestAngelCanDoLegitimateWork:
         result = registry.execute(
             "write_file",
             path=str(test_file),
-            content='def test_example():\n    assert True',
+            content="def test_example():\n    assert True",
         )
 
         # Assert: Operation allowed
@@ -288,9 +284,7 @@ class TestGovernanceErrorReporting:
         # - That it's a governance violation
         # - Why it was blocked (rule information)
         assert "Governance Violation" in error_msg or "blocked" in error_msg.lower()
-        assert (
-            ".git" in error_msg or "forbidden" in error_msg.lower()
-        )  # Mentions the issue
+        assert ".git" in error_msg or "forbidden" in error_msg.lower()  # Mentions the issue
 
     def test_blocked_flag_is_set(self):
         """Test that governance blocks set the 'blocked' flag."""
@@ -318,9 +312,7 @@ class TestNoGovernanceBypass:
         registry_no_gov.register("write_file", WriteFileTool())
 
         # This would succeed (demonstrates importance of governance)
-        with tempfile.NamedTemporaryFile(
-            mode="w", delete=False, suffix=".test_git_config"
-        ) as tmp:
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".test_git_config") as tmp:
             tmp_path = tmp.name
 
         result = registry_no_gov.execute(

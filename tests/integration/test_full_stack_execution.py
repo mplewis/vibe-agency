@@ -75,8 +75,8 @@ class TestTheMiracle:
         # Soul governance
         checker = InvariantChecker("config/soul.yaml")
         registry = ToolRegistry(invariant_checker=checker)
-        registry.register("write_file", WriteFileTool())
-        registry.register("read_file", ReadFileTool())
+        registry.register(WriteFileTool())
+        registry.register(ReadFileTool())
 
         # Mock LLM that returns a tool call to write a safe file
         tool_call_json = json.dumps(
@@ -129,13 +129,13 @@ class TestTheMiracle:
         # 4. Ledger shows tool was called successfully
         result = ledger_record["output_result"]
         assert result["success"] is True, "Agent should report success"
-        assert result["tool_called"] is True, "Tool should have been called"
-        assert result["tool_result"]["success"] is True, "Tool should have succeeded"
+        assert result["tool_call"] is not None, "Tool should have been called"
+        assert result["tool_call"]["success"] is True, "Tool should have succeeded"
 
         # 5. Ledger records the file path
-        tool_result = result["tool_result"]["result"]
-        assert "path" in tool_result
-        assert "bytes_written" in tool_result
+        tool_metadata = result["tool_call"]["metadata"]
+        assert "path" in tool_metadata
+        assert "size_bytes" in tool_metadata
 
         # Cleanup
         success_file.unlink(missing_ok=True)
@@ -175,7 +175,7 @@ class TestTheShield:
         # Soul governance
         checker = InvariantChecker("config/soul.yaml")
         registry = ToolRegistry(invariant_checker=checker)
-        registry.register("write_file", WriteFileTool())
+        registry.register(WriteFileTool())
 
         # Mock LLM that returns a tool call to write a DANGEROUS file
         tool_call_json = json.dumps(
@@ -224,12 +224,14 @@ class TestTheShield:
         # 3. Agent response shows tool was called
         result = ledger_record["output_result"]
         assert result["success"] is True, "Agent should complete successfully"
-        assert result["tool_called"] is True, "Tool call should have been attempted"
+        assert result["tool_call"] is not None, "Tool call should have been attempted"
 
         # 4. Tool result shows BLOCKED
-        tool_result = result["tool_result"]
+        tool_result = result["tool_call"]
         assert tool_result["success"] is False, "Tool should NOT succeed"
-        assert tool_result.get("blocked") is True, "Tool should be BLOCKED by governance"
+        assert (
+            tool_result.get("metadata", {}).get("blocked_by_soul") is True
+        ), "Tool should be BLOCKED by governance"
 
         # 5. Error message mentions governance violation
         assert "error" in tool_result
@@ -264,7 +266,7 @@ class TestFullStackObservability:
 
         checker = InvariantChecker("config/soul.yaml")
         registry = ToolRegistry(invariant_checker=checker)
-        registry.register("write_file", WriteFileTool())
+        registry.register(WriteFileTool())
 
         # Agent 1: Successful operation
         success_tool_call = json.dumps(
@@ -318,12 +320,12 @@ class TestFullStackObservability:
 
         # Find the success record
         success_record = kernel.ledger.get_task(success_task_id)
-        assert success_record["output_result"]["tool_result"]["success"] is True
+        assert success_record["output_result"]["tool_call"]["success"] is True
 
         # Find the blocked record
         blocked_record = kernel.ledger.get_task(blocked_task_id)
-        assert blocked_record["output_result"]["tool_result"]["success"] is False
-        assert blocked_record["output_result"]["tool_result"]["blocked"] is True
+        assert blocked_record["output_result"]["tool_call"]["success"] is False
+        assert blocked_record["output_result"]["tool_call"]["metadata"]["blocked_by_soul"] is True
 
         # Cleanup
         Path("tests/.temp_observability_success.txt").unlink(missing_ok=True)
@@ -349,7 +351,7 @@ class TestFullStackRobustness:
 
         checker = InvariantChecker("config/soul.yaml")
         registry = ToolRegistry(invariant_checker=checker)
-        registry.register("write_file", WriteFileTool())
+        registry.register(WriteFileTool())
 
         # Create mock provider (we'll update responses dynamically)
         llm_provider = MockLLMProvider(mock_response="placeholder")
@@ -388,11 +390,11 @@ class TestFullStackRobustness:
         for record in history:
             assert record["status"] == "COMPLETED", "Agent should survive all attempts"
             assert (
-                record["output_result"]["tool_result"]["blocked"] is True
+                record["output_result"]["tool_call"]["metadata"]["blocked_by_soul"] is True
             ), "All should be blocked"
-            assert record["output_result"]["tool_result"]["success"] is False, "All should fail"
+            assert record["output_result"]["tool_call"]["success"] is False, "All should fail"
             assert (
-                "Governance Violation" in record["output_result"]["tool_result"]["error"]
+                "Governance Violation" in record["output_result"]["tool_call"]["error"]
             ), "Should mention governance"
 
         print("✅ ROBUSTNESS: Agent survives multiple blocked operations!")
@@ -416,8 +418,8 @@ class TestFullStackToolSuccess:
 
         checker = InvariantChecker("config/soul.yaml")
         registry = ToolRegistry(invariant_checker=checker)
-        registry.register("write_file", WriteFileTool())
-        registry.register("read_file", ReadFileTool())
+        registry.register(WriteFileTool())
+        registry.register(ReadFileTool())
 
         # Agent for writing
         write_call = json.dumps(
@@ -457,13 +459,13 @@ class TestFullStackToolSuccess:
 
         # Assertions
         write_record = kernel.ledger.get_task(write_task_id)
-        assert write_record["output_result"]["tool_result"]["success"] is True
+        assert write_record["output_result"]["tool_call"]["success"] is True
 
         read_record = kernel.ledger.get_task(read_task_id)
-        assert read_record["output_result"]["tool_result"]["success"] is True
+        assert read_record["output_result"]["tool_call"]["success"] is True
 
         # Check read content matches write content
-        read_content = read_record["output_result"]["tool_result"]["result"]["content"]
+        read_content = read_record["output_result"]["tool_call"]["output"]
         assert "Hello from the full stack!" in read_content
 
         # Cleanup
