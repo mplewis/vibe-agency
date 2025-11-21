@@ -48,7 +48,8 @@ class GoogleProvider(LLMProvider):
 
     # Pricing table (USD per million tokens, ≤128K context)
     PRICING = {
-        # Gemini 2.5 (latest - experimental, free during preview)
+        # Gemini 2.5 (latest, free during preview)
+        "gemini-2.5-flash": {"input": 0.0, "output": 0.0},
         "gemini-2.5-flash-exp": {"input": 0.0, "output": 0.0},
         # Gemini 2.0 (experimental, free during preview)
         "gemini-2.0-flash-exp": {"input": 0.0, "output": 0.0},
@@ -96,7 +97,7 @@ class GoogleProvider(LLMProvider):
     def invoke(
         self,
         prompt: str,
-        model: str = "gemini-2.5-flash-exp",
+        model: str = "gemini-2.5-flash",
         max_tokens: int = 4096,
         temperature: float = 1.0,
         max_retries: int = 3,
@@ -107,7 +108,7 @@ class GoogleProvider(LLMProvider):
 
         Args:
             prompt: Input prompt
-            model: Gemini model identifier (default: gemini-2.5-flash-exp)
+            model: Gemini model identifier (default: gemini-2.5-flash)
             max_tokens: Maximum output tokens
             temperature: Sampling temperature
             max_retries: Maximum retry attempts
@@ -233,7 +234,7 @@ class GoogleProvider(LLMProvider):
             logger.warning(
                 f"Unknown Google Gemini model pricing: {model}, using 2.5 Flash defaults"
             )
-            pricing = self.PRICING["gemini-2.5-flash-exp"]
+            pricing = self.PRICING["gemini-2.5-flash"]
         else:
             pricing = self.PRICING[model]
 
