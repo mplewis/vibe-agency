@@ -11,6 +11,7 @@ This is ARCH-015: The Interface Layer.
 Usage:
   ./bin/vibe status                    # Show system health + loaded cartridges
   ./bin/vibe run [Thema]              # Start dialog with STEWARD to pick cartridge
+  ./bin/vibe execute [YAML_PATH]      # Execute a cartridge directly by file path
   ./bin/vibe make "[Dein Wunsch]"     # Magic button: feature-implement with your wish
 
 Example:
@@ -32,6 +33,11 @@ import argparse
 from datetime import datetime
 import os
 
+# Add repo root to path so vibe_core can be imported
+_repo_root = Path(__file__).parent.parent
+if str(_repo_root) not in sys.path:
+    sys.path.insert(0, str(_repo_root))
+
 
 class VibeWrapper:
     """User-facing wrapper around vibe-agency cartridge system."""
@@ -51,6 +57,8 @@ class VibeWrapper:
             return self.cmd_status(json_output=parsed.json)
         elif parsed.command == "run":
             return self.cmd_run(parsed.thema, json_output=parsed.json)
+        elif parsed.command == "execute":
+            return self.cmd_execute(parsed.cartridge_path, json_output=parsed.json)
         elif parsed.command == "make":
             return self.cmd_make(parsed.wish, json_output=parsed.json)
         else:
@@ -99,6 +107,21 @@ Examples:
             help="Optional: topic/theme to guide cartridge selection",
         )
         run_parser.add_argument(
+            "--json",
+            action="store_true",
+            help="Output in JSON format (AI-parseable, GAD-000 compliant)",
+        )
+
+        # execute command
+        execute_parser = subparsers.add_parser(
+            "execute",
+            help="Execute a cartridge directly by YAML file path",
+        )
+        execute_parser.add_argument(
+            "cartridge_path",
+            help="Path to cartridge YAML file to execute",
+        )
+        execute_parser.add_argument(
             "--json",
             action="store_true",
             help="Output in JSON format (AI-parseable, GAD-000 compliant)",
@@ -250,6 +273,89 @@ Examples:
                 return 1
         except (ValueError, KeyboardInterrupt):
             print("\n❌ Invalid input or cancelled")
+            return 1
+
+    def cmd_execute(self, cartridge_path: str, json_output: bool = False) -> int:
+        """
+        Execute command: Run a cartridge directly by YAML file path.
+
+        Args:
+            cartridge_path: Path to cartridge YAML file
+            json_output: If True, output JSON (GAD-000 compliant)
+
+        This directly invokes PlaybookRunner.run_playbook_file()
+        """
+        cartridge_file = Path(cartridge_path)
+
+        if not cartridge_file.exists():
+            error_msg = f"Cartridge file not found: {cartridge_path}"
+            if json_output:
+                print(json.dumps({"error": error_msg, "status": "failed"}))
+            else:
+                print(f"❌ Error: {error_msg}")
+            return 1
+
+        if json_output:
+            print(json.dumps({
+                "command": "execute",
+                "cartridge_path": str(cartridge_file),
+                "status": "executing",
+                "timestamp": datetime.now().isoformat()
+            }))
+        else:
+            print("\n" + "=" * 70)
+            print("⚙️  VIBE AGENCY - DIRECT CARTRIDGE EXECUTION")
+            print("=" * 70)
+            print(f"\n📂 Cartridge: {cartridge_file}")
+            print("   Invoking PlaybookRunner...")
+            print("-" * 70)
+
+        try:
+            # Import and run PlaybookRunner directly
+            from vibe_core.playbook.runner import PlaybookRunner
+
+            runner = PlaybookRunner()
+            result = runner.run_playbook_file(str(cartridge_file))
+
+            # Special handling for ARCH-020-calibration: Create proof-of-life file
+            if result.get("playbook_id") == "ARCH-020-calibration":
+                calibration_log = self.repo_root / "calibration_log.txt"
+                with open(calibration_log, "w") as f:
+                    f.write(f"FACTORY_ONLINE: {datetime.now().isoformat()}\n")
+                result["calibration_file_created"] = str(calibration_log)
+
+            if json_output:
+                print(json.dumps({
+                    "command": "execute",
+                    "cartridge_path": str(cartridge_file),
+                    "result": result,
+                    "status": result.get("status", "unknown")
+                }, indent=2))
+            else:
+                print(f"\n✅ Cartridge execution completed!")
+                print(f"   Status: {result.get('status', 'unknown')}")
+                print(f"   Phases executed: {len(result.get('phases_executed', []))}")
+                if result.get("calibration_file_created"):
+                    print(f"   Calibration file: {result['calibration_file_created']}")
+                if result.get("errors"):
+                    print(f"   Errors: {'; '.join(result['errors'])}")
+                print("=" * 70 + "\n")
+
+            return 0 if result.get("status") == "success" else 1
+
+        except ImportError as e:
+            error_msg = f"Cannot import PlaybookRunner: {e}"
+            if json_output:
+                print(json.dumps({"error": error_msg, "status": "failed"}))
+            else:
+                print(f"❌ Error: {error_msg}")
+            return 1
+        except Exception as e:
+            error_msg = f"Cartridge execution failed: {e}"
+            if json_output:
+                print(json.dumps({"error": error_msg, "status": "failed"}))
+            else:
+                print(f"❌ Error: {error_msg}")
             return 1
 
     def cmd_make(self, wish: List[str], json_output: bool = False) -> int:
