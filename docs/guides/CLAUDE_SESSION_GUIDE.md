@@ -620,6 +620,70 @@ session_state["scope"] = {
 
 ---
 
+## 🔌 Interface Protocol: Operator Inversion Principle (GAD-000)
+
+**CRITICAL:** When interacting with the `vibe` CLI tool, you MUST use the `--json` flag for machine-parseable output.
+
+### The Principle
+
+**Traditional Approach (❌ WRONG):**
+```
+Tool → Human-readable output (ASCII art, colors) → AI tries to parse → Semantic debt
+```
+
+**Operator Inversion (✅ CORRECT):**
+```
+Tool → Structured data (JSON) → Operator interprets → Zero semantic debt
+```
+
+### Implementation
+
+**Always use `--json` flag:**
+
+```bash
+# ✅ CORRECT - Machine-parseable
+./bin/vibe status --json
+./bin/vibe boot --json
+
+# ❌ INCORRECT - Human-readable (unparseable ASCII art)
+./bin/vibe status
+./bin/vibe boot
+```
+
+### Why This Matters
+
+1. **Eliminates Parsing Errors** - No regex on ASCII art, no brittle string matching
+2. **Enables Automation** - Reliable programmatic access to system state
+3. **Zero Semantic Debt** - Clear contract between tool and operator
+4. **Scalable** - Works for both human and AI operators
+
+### Example Usage in Python
+
+```python
+import json
+import subprocess
+
+# Execute with --json flag
+result = subprocess.run(
+    ["./bin/vibe", "status", "--json"],
+    capture_output=True,
+    text=True
+)
+
+# Parse structured output
+status = json.loads(result.stdout)
+health = status.get("health", "unknown")
+print(f"System health: {health}")
+```
+
+### Related Architecture
+
+- **GAD-000:** Operator Inversion Principle (docs/architecture/gad/GAD-000.md)
+- **ARCH-016:** Codify GAD-000 in documentation
+- **ARCH-017:** Enforce JSON output in vibe CLI (v1.5)
+
+---
+
 ## 🎯 Best Practices
 
 ### DO:
@@ -630,6 +694,7 @@ session_state["scope"] = {
 ✅ **Collect variables** across conversation
 ✅ **Negotiate scope** when needed
 ✅ **Iterate** if user wants changes
+✅ **ALWAYS use `--json` flag** when calling vibe CLI
 
 ### DON'T:
 ❌ **Don't execute once and finish**
@@ -637,6 +702,7 @@ session_state["scope"] = {
 ❌ **Don't skip validation phases**
 ❌ **Don't output before negotiation complete**
 ❌ **Don't forget to save state between phases**
+❌ **Don't parse ASCII art output** from vibe CLI
 
 ---
 
