@@ -2,15 +2,34 @@
 Unit tests for the vibe-agency kernel (ARCH-022).
 
 Tests the Kernel Loop implementation and task execution.
+Updated for ARCH-023 to include agent registration.
 """
 
 import logging
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
 
+from vibe_core.agent_protocol import VibeAgent
 from vibe_core.kernel import KernelStatus, VibeKernel
 from vibe_core.scheduling import Task
+
+
+class DummyAgent(VibeAgent):
+    """Simple test agent that tracks processed tasks."""
+
+    def __init__(self, agent_id: str):
+        self._agent_id = agent_id
+        self.processed_tasks = []
+
+    @property
+    def agent_id(self) -> str:
+        return self._agent_id
+
+    def process(self, task: Task) -> Any:
+        self.processed_tasks.append(task)
+        return {"status": "processed", "task_id": task.id}
 
 
 class TestKernelBootCycle:
@@ -87,6 +106,8 @@ class TestKernelExecutionCycle:
     def test_tick_processes_task_when_running(self, caplog):
         """Test that tick() processes a task and returns True (busy)."""
         kernel = VibeKernel()
+        agent = DummyAgent(agent_id="agent-1")
+        kernel.register_agent(agent)
         kernel.boot()
 
         # Submit a task
@@ -98,13 +119,19 @@ class TestKernelExecutionCycle:
             result = kernel.tick()
 
         assert result is True
-        assert "KERNEL EXEC: Processing Task" in caplog.text
+        assert "KERNEL EXEC: Dispatching Task" in caplog.text
         assert task.id in caplog.text
         assert "agent-1" in caplog.text
 
     def test_tick_processes_multiple_tasks_in_order(self, caplog):
         """Test that tick() processes tasks in FIFO order."""
         kernel = VibeKernel()
+        agent1 = DummyAgent(agent_id="agent-1")
+        agent2 = DummyAgent(agent_id="agent-2")
+        agent3 = DummyAgent(agent_id="agent-3")
+        kernel.register_agent(agent1)
+        kernel.register_agent(agent2)
+        kernel.register_agent(agent3)
         kernel.boot()
 
         # Submit three tasks
@@ -179,6 +206,8 @@ class TestKernelIdleCycle:
     def test_tick_returns_false_after_draining_queue(self):
         """Test that tick() returns False after all tasks are processed."""
         kernel = VibeKernel()
+        agent = DummyAgent(agent_id="agent-1")
+        kernel.register_agent(agent)
         kernel.boot()
 
         # Submit one task
@@ -252,6 +281,12 @@ class TestKernelStatus:
         assert status["kernel_status"] == "STOPPED"
         assert status["pending_tasks"] == 0
 
+        # Register agents
+        agent1 = DummyAgent(agent_id="agent-1")
+        agent2 = DummyAgent(agent_id="agent-2")
+        kernel.register_agent(agent1)
+        kernel.register_agent(agent2)
+
         # After boot
         kernel.boot()
         status = kernel.get_status()
@@ -284,6 +319,14 @@ class TestKernelIntegration:
     def test_full_kernel_lifecycle(self, caplog):
         """Test a complete kernel lifecycle from boot to shutdown."""
         kernel = VibeKernel()
+
+        # 0. Register agents
+        planning_agent = DummyAgent(agent_id="agent-planning")
+        coding_agent = DummyAgent(agent_id="agent-coding")
+        testing_agent = DummyAgent(agent_id="agent-testing")
+        kernel.register_agent(planning_agent)
+        kernel.register_agent(coding_agent)
+        kernel.register_agent(testing_agent)
 
         # 1. Boot
         kernel.boot()
@@ -321,6 +364,12 @@ class TestKernelIntegration:
     def test_kernel_can_resume_after_shutdown(self):
         """Test that kernel can process tasks after shutdown and reboot."""
         kernel = VibeKernel()
+
+        # Register agents
+        agent1 = DummyAgent(agent_id="agent-1")
+        agent2 = DummyAgent(agent_id="agent-2")
+        kernel.register_agent(agent1)
+        kernel.register_agent(agent2)
 
         # First cycle
         kernel.boot()
