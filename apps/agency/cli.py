@@ -145,9 +145,9 @@ Otherwise, respond with natural language to the user.
         try:
             provider = GoogleProvider(
                 api_key=api_key,
-                model="gemini-2.5-flash-exp",
+                model="gemini-2.5-flash",
             )
-            logger.info("🧠 CONNECTED TO GOOGLE GEMINI (gemini-2.5-flash-exp)")
+            logger.info("🧠 CONNECTED TO GOOGLE GEMINI (gemini-2.5-flash)")
         except ProviderNotAvailableError as e:
             logger.warning(f"⚠️  Google provider unavailable: {e}")
             logger.warning("⚠️  Falling back to MockProvider")
