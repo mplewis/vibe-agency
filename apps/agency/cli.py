@@ -54,7 +54,7 @@ from vibe_core.llm import StewardProvider  # Claude Code integration fallback (A
 from vibe_core.runtime.providers.base import ProviderNotAvailableError
 from vibe_core.runtime.tool_safety_guard import ToolSafetyGuard
 from vibe_core.scheduling import Task
-from vibe_core.tools import ReadFileTool, ToolRegistry, WriteFileTool
+from vibe_core.tools import DelegateTool, ReadFileTool, ToolRegistry, WriteFileTool
 
 # Import Specialists (ARCH-036: Crew Assembly)
 from apps.agency.specialists import (
@@ -111,24 +111,33 @@ def boot_kernel():
         logger.warning(f"⚠️  Soul Governance unavailable ({e}), continuing without governance")
         soul = None
 
-    # Step 3: Register Tools (ARCH-027)
+    # Step 3: Register Basic Tools (ARCH-027)
+    # Note: DelegateTool requires kernel reference, so it's registered later (Step 6.5)
     registry = ToolRegistry(invariant_checker=soul)
     registry.register(WriteFileTool())
     registry.register(ReadFileTool())
-    logger.info(f"🔧 Tool Registry initialized ({len(registry)} tools)")
+    logger.info(f"🔧 Tool Registry initialized ({len(registry)} basic tools)")
 
     # Step 4: Create Operator Agent (GAD-000 Operator Pattern)
     #
     # The agent IS the operator. It has full access to the system via tools.
     # The system prompt defines its mission and constraints.
     #
-    system_prompt = """You are the VIBE OPERATOR.
+    # ARCH-037: Operator is the COMMANDER. It delegates to specialists.
+    #
+    system_prompt = """You are the VIBE OPERATOR - The Mission Commander.
 
-You have access to file system tools and are responsible for executing user missions autonomously.
+You have access to file system tools AND a crew of domain specialists.
 
 Your capabilities:
 - read_file: Read content from files
 - write_file: Create or modify files
+- delegate_task: Assign work to specialist agents
+
+Your crew (specialists):
+- specialist-planning: Expert in project planning, architecture design, requirements analysis
+- specialist-coding: Expert in code generation, implementation, testing
+- specialist-testing: Expert in QA, test automation, quality gates
 
 Your constraints:
 - NEVER modify core system files (vibe_core/kernel.py, etc.)
@@ -136,16 +145,27 @@ Your constraints:
 - ALWAYS respect Soul Governance rules
 - ALWAYS be transparent about what you're doing
 
-Your mission:
-- Execute user requests safely and efficiently
-- Use tools when appropriate
-- Explain your actions clearly
-- Complete tasks autonomously when possible
+Your mission strategy:
+- DELEGATE complex work to specialists (don't try to be expert at everything)
+- For planning tasks → use specialist-planning
+- For coding tasks → use specialist-coding
+- For testing tasks → use specialist-testing
+- Use file tools for simple read/write operations
+- Coordinate specialists to complete multi-phase missions
 
-When you use a tool, respond with valid JSON:
-{"tool": "tool_name", "parameters": {...}}
+How to delegate:
+{"tool": "delegate_task", "parameters": {
+    "agent_id": "specialist-planning",
+    "payload": {
+        "mission_id": 1,
+        "mission_uuid": "abc-123",
+        "phase": "PLANNING",
+        "project_root": "/path/to/project",
+        "metadata": {}
+    }
+}}
 
-Otherwise, respond with natural language to the user.
+Execute user requests by coordinating your crew efficiently.
 """
 
     # Step 4.5: Choose Provider (Real AI or Mock for testing)
@@ -239,6 +259,22 @@ Otherwise, respond with natural language to the user.
     )
     kernel.register_agent(testing_factory)
     logger.info("🧪 Registered specialist: Testing")
+
+    # Step 6.5: Register DelegateTool (ARCH-037: The Intercom)
+    #
+    # Late binding: DelegateTool needs kernel reference for task submission.
+    # We register it AFTER kernel boot to break circular dependency.
+    #
+    # Circular dependency:
+    #   - Kernel needs Agent (for dispatch)
+    #   - Agent needs ToolRegistry (for capabilities)
+    #   - DelegateTool needs Kernel (for submit)
+    #
+    # Solution: Boot kernel → Register basic tools → Register DelegateTool late
+    #
+    delegate_tool = DelegateTool(kernel)
+    registry.register(delegate_tool)
+    logger.info("📞 Registered DelegateTool (Operator can now delegate to specialists)")
 
     logger.info("✅ BOOT COMPLETE - VIBE AGENCY OS ONLINE")
     logger.info(f"   - Agents: {len(kernel.agent_registry)}")
