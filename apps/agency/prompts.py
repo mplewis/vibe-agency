@@ -39,6 +39,7 @@ def compose_steward_prompt(include_reasoning: bool = True) -> str:
     context = context_engine.resolve([
         "inbox_count",
         "agenda_summary",
+        "agenda_tasks",
         "git_sync_status",
         "current_branch",
         "system_time",
@@ -47,6 +48,7 @@ def compose_steward_prompt(include_reasoning: bool = True) -> str:
     # Parse data
     inbox_count = int(context.get("inbox_count", "0"))
     agenda_summary = json.loads(context.get("agenda_summary", '{"total": 0}'))
+    agenda_tasks = context.get("agenda_tasks", "[No tasks]")
     git_sync = context.get("git_sync_status", "UNKNOWN")
     branch = context.get("current_branch", "unknown")
     timestamp = context.get("system_time", "unknown")
@@ -61,7 +63,7 @@ def compose_steward_prompt(include_reasoning: bool = True) -> str:
             f"These are HIGH PRIORITY user intents that must be addressed first."
         )
 
-    # Agenda status
+    # Agenda status (ARCH-061: Focus Filter - top 5 only)
     agenda_total = agenda_summary.get("total", 0)
     if agenda_total > 0:
         high_count = agenda_summary.get("HIGH", 0)
@@ -78,7 +80,8 @@ def compose_steward_prompt(include_reasoning: bool = True) -> str:
 
         context_blocks.append(
             f"📋 **AGENDA STATUS:** {agenda_total} pending task(s) in backlog "
-            f"({', '.join(priority_breakdown)}). Use list_tasks tool to review."
+            f"({', '.join(priority_breakdown)}).\n\n"
+            f"**FOCUSED VIEW (Top Priority):**\n{agenda_tasks}"
         )
 
     # Git sync status
@@ -99,7 +102,7 @@ def compose_steward_prompt(include_reasoning: bool = True) -> str:
     if context_blocks:
         priority_context = "\n\n## 🚨 HIGH PRIORITY CONTEXT\n\n" + "\n\n".join(context_blocks)
 
-    # Reasoning loop section (ARCH-060 Phase 4)
+    # Reasoning loop section (ARCH-060 Phase 4 + ARCH-061: GIGO Defense)
     reasoning_section = ""
     if include_reasoning:
         reasoning_section = """
@@ -109,14 +112,16 @@ def compose_steward_prompt(include_reasoning: bool = True) -> str:
 Before executing ANY tool, you MUST emit a reasoning block:
 
 <thought>
-1. What does the user really want? (Intent analysis)
-2. Do I have all the information needed? (Context check)
-3. Is this action safe? (Risk assessment)
-4. What are the consequences? (Impact prediction)
-5. Is there a better approach? (Optimization)
+1. INPUT VALIDITY: Does the user's request align with my capabilities and current project context? If not, clarify first.
+2. What does the user really want? (Intent analysis)
+3. Do I have all the information needed? (Context check)
+4. Is this action safe? (Risk assessment)
+5. What are the consequences? (Impact prediction)
+6. Is there a better approach? (Optimization)
 </thought>
 
 This ensures deliberate, thoughtful action rather than reactive tool use.
+CRITICAL: If input validation fails (step 1), STOP and ask for clarification instead of proceeding.
 """
 
     # Base system prompt (identity + capabilities)
