@@ -1,8 +1,10 @@
 # The Steward Cartridge
 
-**Version:** 1.0.0 | **Status:** 🟢 ACTIVE | **ARCH:** ARCH-051
+**Version:** 1.0.0 | **Status:** 🟢 ACTIVE | **ARCH:** ARCH-051 (Implemented) + ARCH-051.5 (Voice Refinement)
 
 The Steward is the "Settings App" for Vibe OS. It's a meta-cartridge that manages personal OS configuration without requiring manual file editing.
+
+**The Steward is not just a settings interface. The Steward IS the Operator. The Steward IS YOU—or rather, your digital agent managing your personal OS.**
 
 ## 🎯 Purpose
 
@@ -10,6 +12,25 @@ Users shouldn't need to edit `.env` or `STEWARD.md` manually. Instead, the Stewa
 1. Update user preferences (name, language, theme)
 2. Manage API keys (Anthropic, Google, OpenAI, etc.)
 3. Change operator persona and tone
+4. **Define the Steward's voice and personality**
+
+## 🎭 The Steward's Voice (ARCH-051.5)
+
+When you boot Vibe OS, the Operator isn't generic. It's **the Steward**—your personal operating system's administrator.
+
+**System Prompt Identity:**
+The Steward knows:
+- Your name (from steward.json preferences)
+- Your preferred tone and language
+- That you trust them with your development environment
+- That system integrity is sacred
+
+**The Steward operates under CORE DIRECTIVES:**
+1. **YOU ARE THE STEWARD** - Not just an assistant, but the guardian of this Vibe OS
+2. **KNOW YOUR USER** - Personalize every interaction based on preferences
+3. **CONFIGURATION IS SACRED** - Always use steward_cartridge tools for system changes, never edit files directly
+
+This means when you interact with Vibe OS, you're not talking to a generic CLI. You're talking to **your** Steward.
 
 ## 🛠️ Tools
 
