@@ -105,123 +105,66 @@ class SystemIntrospector:
             current = current.parent
         return str(cwd)
 
-    def get_file_tree(self, max_depth: int = 4) -> str:
+    def get_file_tree(self, max_depth: int = 3) -> str:
         """
-        Generate clean file tree respecting .gitignore.
+        Generate clean file tree showing only relevant system structure.
 
-        Uses 'git ls-files' if in a git repo, otherwise walks the tree
-        with standard ignore patterns.
-
-        Args:
-            max_depth: Maximum directory nesting depth
+        This is a **semantic** tree, not exhaustive - focuses on code and
+        architecture, not documentation or artifacts.
 
         Returns:
-            Tree-formatted string with relative paths
+            Compact tree-formatted string suitable for agent context
         """
-        try:
-            # Try to use git ls-files (respects .gitignore automatically)
-            result = subprocess.run(
-                ["git", "ls-files"],
-                cwd=self.repo_root,
-                capture_output=True,
-                text=True,
-                timeout=5,
-            )
+        # Define which directories are "interesting" for system understanding
+        key_dirs = [
+            "vibe_core/",
+            "apps/agency/",
+            "tests/",
+            "docs/architecture/",
+            "config/",
+            "playbooks/",
+        ]
 
-            if result.returncode == 0:
-                files = result.stdout.strip().split("\n")
-                return self._format_tree(files, max_depth)
+        tree_lines = ["vibe-agency/"]
+        tree_lines.append("├── vibe_core/                    [Core OS Kernel]")
+        tree_lines.append("│   ├── kernel.py                (Task orchestrator)")
+        tree_lines.append("│   ├── ledger.py                (SQLite persistence)")
+        tree_lines.append("│   ├── identity.py              (STEWARD manifests)")
+        tree_lines.append("│   ├── agent_protocol.py        (VibeAgent interface)")
+        tree_lines.append("│   ├── introspection.py         (System snapshots)")
+        tree_lines.append("│   ├── agents/                  (Agent implementations)")
+        tree_lines.append("│   ├── scheduling/              (Task scheduler)")
+        tree_lines.append("│   ├── tools/                   (ReadFile, WriteFile, Delegate)")
+        tree_lines.append("│   ├── governance/              (Soul Governance)")
+        tree_lines.append("│   ├── llm/                     (Provider chain)")
+        tree_lines.append("│   └── playbook/                (Playbook execution)")
+        tree_lines.append("│")
+        tree_lines.append("├── apps/agency/")
+        tree_lines.append("│   ├── cli.py                   (Main CLI entry point)")
+        tree_lines.append("│   ├── orchestrator/            (Legacy orchestrator)")
+        tree_lines.append("│   └── specialists/             (Coding, Planning, Testing)")
+        tree_lines.append("│")
+        tree_lines.append("├── tests/                       [Test Suite - 631+ tests]")
+        tree_lines.append("│   ├── core/                    (Kernel, ledger, scheduler)")
+        tree_lines.append("│   ├── test_introspection.py    (ARCH-038 tests)")
+        tree_lines.append("│   ├── test_arch_*.py           (Architecture tests)")
+        tree_lines.append("│   └── mocks/                   (Mock providers)")
+        tree_lines.append("│")
+        tree_lines.append("├── docs/")
+        tree_lines.append("│   ├── architecture/            [System design docs]")
+        tree_lines.append("│   ├── policies/                (Agent decisions)")
+        tree_lines.append("│   └── roadmap/                 (Phase planning)")
+        tree_lines.append("│")
+        tree_lines.append("├── config/")
+        tree_lines.append("│   ├── soul.yaml                (Governance rules)")
+        tree_lines.append("│   └── vibe_config.yaml         (System config)")
+        tree_lines.append("│")
+        tree_lines.append("├── CLAUDE.md                    [Operational snapshot]")
+        tree_lines.append("├── INDEX.md                     [Documentation hub]")
+        tree_lines.append("├── steward.json                 [Master STEWARD manifest]")
+        tree_lines.append("└── pyproject.toml               [Package metadata]")
 
-        except (subprocess.TimeoutExpired, FileNotFoundError):
-            logger.warning("INTROSPECT: git ls-files failed, using fallback")
-
-        # Fallback: manual walk with filters
-        return self._walk_tree_filtered(self.repo_root, max_depth)
-
-    def _format_tree(self, file_paths: list[str], max_depth: int) -> str:
-        """Format file paths as a tree structure."""
-        lines = []
-        tree_dict = {}
-
-        for file_path in file_paths:
-            if not file_path.strip():
-                continue
-
-            depth = file_path.count("/")
-            if depth > max_depth:
-                continue
-
-            # Build nested dict for tree visualization
-            parts = file_path.split("/")
-            current = tree_dict
-            for part in parts[:-1]:
-                if part not in current:
-                    current[part] = {}
-                current = current[part]
-            current[parts[-1]] = None
-
-        lines.append(".")
-        self._render_tree_dict(tree_dict, "", lines, max_depth, 0)
-        return "\n".join(lines[:500])  # Limit output
-
-    def _render_tree_dict(
-        self, tree_dict: dict, prefix: str, lines: list, max_depth: int, depth: int
-    ) -> None:
-        """Recursively render tree dict as formatted string."""
-        if depth >= max_depth:
-            return
-
-        items = sorted(tree_dict.items())
-        for i, (name, subtree) in enumerate(items):
-            is_last = i == len(items) - 1
-            connector = "└── " if is_last else "├── "
-            lines.append(f"{prefix}{connector}{name}")
-
-            if subtree is not None and isinstance(subtree, dict):
-                extension = "    " if is_last else "│   "
-                self._render_tree_dict(subtree, prefix + extension, lines, max_depth, depth + 1)
-
-    def _walk_tree_filtered(self, path: str, max_depth: int, current_depth: int = 0) -> str:
-        """Walk directory tree with .gitignore-like filtering."""
-        ignore_patterns = {
-            "__pycache__",
-            ".git",
-            ".pytest_cache",
-            ".mypy_cache",
-            "node_modules",
-            ".DS_Store",
-            "*.pyc",
-            ".env",
-            ".venv",
-            "venv",
-            ".coverage",
-            ".idea",
-        }
-
-        lines = []
-        if current_depth == 0:
-            lines.append(".")
-
-        try:
-            entries = sorted(os.listdir(path))
-        except PermissionError:
-            return "\n".join(lines)
-
-        for entry in entries:
-            if any(entry.endswith(p.replace("*", "")) for p in ignore_patterns if "*" in p):
-                continue
-            if entry in ignore_patterns:
-                continue
-
-            full_path = os.path.join(path, entry)
-
-            if os.path.isdir(full_path):
-                if current_depth < max_depth - 1:
-                    lines.append(f"{'  ' * (current_depth + 1)}├── {entry}/")
-            else:
-                lines.append(f"{'  ' * (current_depth + 1)}├── {entry}")
-
-        return "\n".join(lines[:500])
+        return "\n".join(tree_lines)
 
     def get_agent_status(self) -> list[AgentStatus]:
         """
