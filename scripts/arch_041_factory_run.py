@@ -29,11 +29,11 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from dotenv import load_dotenv
+from dotenv import load_dotenv  # noqa: E402
 
-from vibe_core.kernel import VibeKernel
-from vibe_core.ledger import VibeLedger
-from vibe_core.scheduling import Task
+from vibe_core.kernel import VibeKernel  # noqa: E402
+from vibe_core.ledger import VibeLedger  # noqa: E402
+from vibe_core.scheduling import Task  # noqa: E402
 
 
 async def factory_run():

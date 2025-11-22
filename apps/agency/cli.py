@@ -42,28 +42,33 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from dotenv import load_dotenv
+from dotenv import load_dotenv  # noqa: E402
 
 # Import Specialists (ARCH-036: Crew Assembly)
-from apps.agency.specialists import (
+from apps.agency.specialists import (  # noqa: E402
     CodingSpecialist,
     PlanningSpecialist,
     TestingSpecialist,
 )
-from vibe_core.agents.llm_agent import SimpleLLMAgent
-from vibe_core.agents.specialist_factory import SpecialistFactoryAgent
-from vibe_core.governance import InvariantChecker
-from vibe_core.introspection import SystemIntrospector
-from vibe_core.kernel import VibeKernel
-from vibe_core.llm import StewardProvider  # Claude Code integration fallback (ARCH-033C)
-from vibe_core.llm.google_adapter import GoogleProvider  # Real AI brain
-from vibe_core.llm.smart_local_provider import (
+from vibe_core.agents.llm_agent import SimpleLLMAgent  # noqa: E402
+from vibe_core.agents.specialist_factory import SpecialistFactoryAgent  # noqa: E402
+from vibe_core.governance import InvariantChecker  # noqa: E402
+from vibe_core.introspection import SystemIntrospector  # noqa: E402
+from vibe_core.kernel import VibeKernel  # noqa: E402
+from vibe_core.llm import StewardProvider  # noqa: E402
+from vibe_core.llm.google_adapter import GoogleProvider  # noqa: E402
+from vibe_core.llm.smart_local_provider import (  # noqa: E402
     SmartLocalProvider,  # Offline orchestration (ARCH-041)
 )
-from vibe_core.runtime.tool_safety_guard import ToolSafetyGuard
-from vibe_core.scheduling import Task
-from vibe_core.tools import DelegateTool, ReadFileTool, ToolRegistry, WriteFileTool
-from vibe_core.tools.inspect_result import InspectResultTool
+from vibe_core.runtime.tool_safety_guard import ToolSafetyGuard  # noqa: E402
+from vibe_core.scheduling import Task  # noqa: E402
+from vibe_core.tools import (  # noqa: E402
+    DelegateTool,
+    ReadFileTool,
+    ToolRegistry,
+    WriteFileTool,
+)
+from vibe_core.tools.inspect_result import InspectResultTool  # noqa: E402
 
 # Setup logging
 logging.basicConfig(

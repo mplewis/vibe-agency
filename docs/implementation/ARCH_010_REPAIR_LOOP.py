@@ -382,22 +382,22 @@ def test_repair_loop():
     
     # Start with CODING
     result = orchestrator.execute_phase(manifest)
-    assert result[0] == True  # CODING succeeds
-    
+    assert result[0]  # CODING succeeds
+
     # Move to TESTING
     manifest["current_phase"] = "TESTING"
     result = orchestrator.execute_phase(manifest)
-    assert result[0] == False  # TESTING fails
+    assert not result[0]  # TESTING fails
     assert manifest["current_phase"] == "CODING"  # Back to CODING for repair!
-    
+
     # Run CODING again (repair mode)
     result = orchestrator.execute_phase(manifest)
-    assert result[0] == True  # CODING succeeds (fixed)
-    
+    assert result[0]  # CODING succeeds (fixed)
+
     # Run TESTING again
     manifest["current_phase"] = "TESTING"
     result = orchestrator.execute_phase(manifest)
-    assert result[0] == True  # TESTING now passes!
+    assert result[0]  # TESTING now passes!
     
     print("✅ REPAIR LOOP WORKS!")
     print(f"Final phase: {manifest['current_phase']}")
