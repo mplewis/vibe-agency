@@ -57,7 +57,7 @@ from vibe_core.agents.system_maintenance import SystemMaintenanceAgent  # noqa: 
 from vibe_core.governance import InvariantChecker  # noqa: E402
 from vibe_core.introspection import SystemIntrospector  # noqa: E402
 from vibe_core.kernel import VibeKernel  # noqa: E402
-from vibe_core.llm import StewardProvider  # noqa: E402
+from vibe_core.llm import ChainProvider, StewardProvider  # noqa: E402
 from vibe_core.llm.google_adapter import GoogleProvider  # noqa: E402
 from vibe_core.llm.smart_local_provider import (  # noqa: E402
     SmartLocalProvider,  # Offline orchestration (ARCH-041)
@@ -159,10 +159,15 @@ def boot_kernel():
     logger.info("🧠 Composing dynamic system prompt (ARCH-060: The Cortex)")
     system_prompt = compose_steward_prompt(include_reasoning=True)
 
-    # Step 4.5: Choose Provider (Real AI or Mock for testing)
-    # ARCH-033C: Robust fallback chain: Google → Steward (if TTY) → Mock (if CI)
+    # Step 4.5: Create Provider Chain (ARCH-067: Runtime Immortality)
+    # ARCH-033C: Robust fallback chain: Google → Steward → SmartLocal
     # ARCH-063: Use config-driven model selection
     # The STEWARD is Claude Code (the AI environment managing this sandbox)
+    #
+    # ARCH-067: NEW - Runtime Provider Cascade
+    # Instead of Boot-Time fallback, we now use ChainProvider for Runtime fallback.
+    # If Google fails at runtime (e.g., 403 quota), agent automatically switches
+    # to next provider WITHOUT user intervention. This is "Runtime Immortality".
     try:
         config = get_config()
         model_name = config.model.model_name  # From PhoenixConfig
@@ -171,29 +176,54 @@ def boot_kernel():
         model_name = os.getenv("VIBE_MODEL_NAME", "gemini-2.5-flash")
 
     api_key = os.getenv("GOOGLE_API_KEY")
+    providers_chain = []
 
+    # Try to add Google provider (primary)
     if api_key:
-        # REAL BRAIN: Google Gemini (configurable model)
         try:
-            provider = GoogleProvider(
+            google_provider = GoogleProvider(
                 api_key=api_key,
                 model=model_name,
             )
-            logger.info(f"🧠 CONNECTED TO GOOGLE GEMINI ({model_name})")
+            providers_chain.append(google_provider)
+            logger.info(f"🧠 Google Gemini added to provider chain ({model_name})")
         except Exception as e:
-            # Catch ALL exceptions (ProviderNotAvailableError, ConnectionError, 403, etc.)
-            logger.warning(f"⚠️  Google provider failed: {type(e).__name__}: {e}")
-
-            # Fallback chain based on environment
-            # Always try STEWARD first (Claude Code integration)
-            logger.info("🤖 Delegating cognitive load to STEWARD (Claude Code environment)")
-            logger.info("   The AI operator (Claude Code) will provide completions")
-            provider = StewardProvider()
+            logger.warning(f"⚠️  Google provider unavailable: {type(e).__name__}: {e}")
+            logger.info("   (Will use fallback providers at runtime)")
     else:
-        # OFFLINE ORCHESTRATION: For local Vibe Studio operation (ARCH-041)
-        # SmartLocalProvider enables full SDLC delegation without external APIs
-        logger.info("🏭 No GOOGLE_API_KEY found, using SmartLocalProvider (offline SDLC mode)")
-        provider = SmartLocalProvider()
+        logger.info("ℹ️  No GOOGLE_API_KEY found, Google will not be in provider chain")
+
+    # Always add Steward provider (fallback)
+    # STEWARD is Claude Code integration for IDE sandbox operations
+    try:
+        steward_provider = StewardProvider()
+        providers_chain.append(steward_provider)
+        logger.info("🤖 Steward provider added to chain (Claude Code environment)")
+    except Exception as e:
+        logger.warning(f"⚠️  Steward provider unavailable: {type(e).__name__}: {e}")
+
+    # Always add SmartLocal provider (final fallback)
+    # Works offline for local development and SDLC delegation (ARCH-041)
+    try:
+        local_provider = SmartLocalProvider()
+        providers_chain.append(local_provider)
+        logger.info("🏭 SmartLocal provider added to chain (offline SDLC mode)")
+    except Exception as e:
+        logger.warning(f"⚠️  SmartLocal provider unavailable: {type(e).__name__}: {e}")
+
+    # Verify we have at least one provider
+    if not providers_chain:
+        raise RuntimeError(
+            "CRITICAL: No LLM providers available. "
+            "Vibe OS requires at least one provider to boot. "
+            "Check your GOOGLE_API_KEY or SmartLocalProvider setup."
+        )
+
+    # Create ChainProvider with all available providers
+    # ARCH-067: This enables Runtime Immortality - automatic provider switching
+    provider = ChainProvider(providers=providers_chain)
+    logger.info(f"⛓️  Provider Chain initialized ({len(providers_chain)} provider(s))")
+    logger.info("   ARCH-067: Runtime Immortality enabled - auto-switching on failure")
 
     operator_agent = SimpleLLMAgent(
         agent_id="vibe-operator",
