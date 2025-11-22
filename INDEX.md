@@ -6,9 +6,10 @@
 
 ## 🎯 START HERE
 
-- **CLAUDE.md** — Operational snapshot (quick status, 110 lines)
-- **docs/architecture/ARCHITECTURE_CURRENT_STATE.md** — Current system design
-- **docs/architecture/** — Detailed architecture documentation
+- **[STEWARD.md](https://raw.githubusercontent.com/kimeisele/vibe-agency/main/STEWARD.md)** — 📌 **SINGLE SOURCE OF TRUTH** (Project in a Box)
+- **[CLAUDE.md](https://raw.githubusercontent.com/kimeisele/vibe-agency/main/CLAUDE.md)** — Minimal stub (redirects to STEWARD.md)
+- **[ARCHITECTURE_CURRENT_STATE.md](https://raw.githubusercontent.com/kimeisele/vibe-agency/main/docs/architecture/ARCHITECTURE_CURRENT_STATE.md)** — Current system design v4.0
+- **[Architecture Docs](https://github.com/kimeisele/vibe-agency/tree/main/docs/architecture)** — Detailed architecture documentation
 
 ---
 
@@ -27,32 +28,25 @@ make test            # Run test suite
 ## 🗂️ DOCUMENTATION STRUCTURE
 
 ### **Getting Started (Read First)**
-- `docs/GETTING_STARTED.md` — For new agents
-- `docs/TROUBLESHOOTING.md` — Something broken?
-- `docs/playbook/USER_PLAYBOOK.md` — Entry points by request type
-- `docs/STRATEGIC_PLAN_2025-11-18.md` — **NEW:** 4-week roadmap for core stability
+- **[STEWARD.md](https://raw.githubusercontent.com/kimeisele/vibe-agency/main/STEWARD.md)** — 📌 Start here (complete system reference)
+- [STRATEGIC_PLAN_2025-11-18.md](https://raw.githubusercontent.com/kimeisele/vibe-agency/main/docs/STRATEGIC_PLAN_2025-11-18.md) — 4-week roadmap for core stability
+- [CHANGELOG.md](https://raw.githubusercontent.com/kimeisele/vibe-agency/main/CHANGELOG.md) — Release history (v0.5.0 latest)
 
 ### **Policies & Standards**
-- `docs/policies/AGENT_DECISIONS.md` — Decision reference (15 questions)
-- `docs/policies/TEST_FIRST.md` — Test-first development policy
-- `docs/policies/DEVELOPMENT_STANDARDS.md` — Dev standards (test persistence checklist, what makes code "ready")
-- `docs/philosophy/ANTI_PATTERNS.md` — What NOT to do (10 documented mistakes)
+- [AGENT_DECISIONS.md](https://raw.githubusercontent.com/kimeisele/vibe-agency/main/docs/policies/AGENT_DECISIONS.md) — Decision reference (15 questions)
+- [GOVERNANCE_MODEL.md](https://raw.githubusercontent.com/kimeisele/vibe-agency/main/docs/GOVERNANCE_MODEL.md) — Governance & Soul rules
 
 ### **Architecture & Design**
-- `docs/architecture/ARCHITECTURE_CURRENT_STATE.md` — System design (current implementation)
-- `docs/architecture/` — All architecture documentation
-- `docs/architecture/GAD_IMPLEMENTATION_STATUS.md` — **NEW:** All 15 GADs status tracking
-- `docs/architecture/EXECUTION_MODE_STRATEGY.md` — How vibe-cli delegates to Claude Code
-- `docs/architecture/HIDDEN_DEPENDENCIES_AUDIT.md` — Dependency analysis
-- `docs/architecture/GAD-5XX/` — Improvement initiatives:
-  - `KNOWN_ISSUES_REGISTRY.md` — All documented blockers (none currently)
-  - `GAD-100_PHASE_COMPLETION.md` — Schema phases 1-2 status
-  - `GAD-502.md` — Haiku Hardening plan (700 lines, Phases 2-5 deferred)
+- [ARCHITECTURE_CURRENT_STATE.md](https://raw.githubusercontent.com/kimeisele/vibe-agency/main/docs/architecture/ARCHITECTURE_CURRENT_STATE.md) — System design v4.0
+- [GAD_IMPLEMENTATION_STATUS.md](https://raw.githubusercontent.com/kimeisele/vibe-agency/main/docs/architecture/GAD_IMPLEMENTATION_STATUS.md) — All GAD tracking
+- [GAD-000_OPERATOR_INVERSION.md](https://raw.githubusercontent.com/kimeisele/vibe-agency/main/docs/architecture/GAD-0XX/GAD-000_OPERATOR_INVERSION.md) — Foundation principle
+- [Architecture Docs](https://github.com/kimeisele/vibe-agency/tree/main/docs/architecture) — All architecture documentation
+- [Phase Roadmaps](https://github.com/kimeisele/vibe-agency/tree/main/docs/roadmap) — Phase 2.5, 2.6, 3.0
 
 ### **Systems & Components**
-- `vibe_core/` — Core runtime and agent implementation
-- `apps/agency/` — Agency orchestrator and specialized agents
-- `tests/` — All verification tests (335/349 passing, 97.1%)
+- [vibe_core/](https://github.com/kimeisele/vibe-agency/tree/main/vibe_core) — Core runtime and agent implementation
+- [apps/agency/](https://github.com/kimeisele/vibe-agency/tree/main/apps/agency) — Agency orchestrator and specialized agents
+- [tests/](https://github.com/kimeisele/vibe-agency/tree/main/tests) — All verification tests (626 collected)
 
 ### **Scripts & Tools**
 - `Makefile` — One-command operations (make verify, make status, etc)
@@ -66,35 +60,26 @@ make test            # Run test suite
 
 ## 🔍 BY USE CASE
 
-### "I'm a new agent"
-→ `docs/GETTING_STARTED.md`
+### "I'm a new agent" / "Where do I start?"
+→ **[STEWARD.md](https://raw.githubusercontent.com/kimeisele/vibe-agency/main/STEWARD.md)** — Complete system reference
 
 ### "What's the strategic direction?"
-→ `docs/STRATEGIC_PLAN_2025-11-18.md` (4-week roadmap)
+→ [STRATEGIC_PLAN_2025-11-18.md](https://raw.githubusercontent.com/kimeisele/vibe-agency/main/docs/STRATEGIC_PLAN_2025-11-18.md) — 4-week roadmap
 
 ### "Which GADs are implemented?"
-→ `docs/architecture/GAD_IMPLEMENTATION_STATUS.md` (15 GADs tracked)
-
-### "How do I know if code is ready to commit?"
-→ `docs/policies/DEVELOPMENT_STANDARDS.md` (persistence checklist: git? tests? linting? pre-push? docs?)
-
-### "What are the most common mistakes?"
-→ `docs/philosophy/ANTI_PATTERNS.md`
+→ [GAD_IMPLEMENTATION_STATUS.md](https://raw.githubusercontent.com/kimeisele/vibe-agency/main/docs/architecture/GAD_IMPLEMENTATION_STATUS.md) — All GAD tracking
 
 ### "I have a decision to make"
-→ `docs/policies/AGENT_DECISIONS.md` (15 scenarios)
-
-### "Tests are failing — now what?"
-→ `docs/TROUBLESHOOTING.md`
+→ [AGENT_DECISIONS.md](https://raw.githubusercontent.com/kimeisele/vibe-agency/main/docs/policies/AGENT_DECISIONS.md) — Decision framework
 
 ### "I want to understand the system design"
-→ `docs/architecture/ARCHITECTURE_CURRENT_STATE.md`
+→ [ARCHITECTURE_CURRENT_STATE.md](https://raw.githubusercontent.com/kimeisele/vibe-agency/main/docs/architecture/ARCHITECTURE_CURRENT_STATE.md) — System design v4.0
 
-### "Something's weird about vibe-cli"
-→ `docs/architecture/EXECUTION_MODE_STRATEGY.md`
+### "What's the system status?"
+→ Run: `./bin/vibe status` or `./bin/show-context.py`
 
-### "Are there any blockers?"
-→ `docs/architecture/GAD-5XX/KNOWN_ISSUES_REGISTRY.md` (currently: none)
+### "How do I get a system snapshot?"
+→ Run: `uv run apps/agency/cli.py --snapshot` (ARCH-038)
 
 ### "Can I run a fresh environment test?"
 → `./tests/test_cold_boot.sh`
