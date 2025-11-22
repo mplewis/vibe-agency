@@ -176,6 +176,52 @@ class VibeAgent(ABC):
         """
         pass
 
+    def get_manifest(self) -> dict:
+        """
+        Get the STEWARD protocol manifest for this agent (ARCH-026 Phase 3).
+
+        Returns a machine-readable description of the agent's identity,
+        capabilities, and constraints per the STEWARD Protocol specification.
+
+        This enables:
+        - Agent discovery (other agents can query "what can you do?")
+        - Capability verification (attest what the agent claims)
+        - Delegation (submit tasks knowing agent's contract)
+        - Registry integration (agent can self-describe for registration)
+
+        The manifest follows STEWARD_JSON_SCHEMA with:
+        - steward_version: Protocol version (1.0.0 for Level 1)
+        - agent: Identity (id, name, version, class, specialization, status)
+        - credentials: Mandate, constraints, prime_directive
+        - capabilities: Operations list (from agent.capabilities property)
+        - governance: Issuing org, transparency level
+
+        Returns:
+            dict: STEWARD-compliant manifest (steward.json format)
+
+        Example:
+            >>> agent = SimpleLLMAgent(agent_id="assistant", ...)
+            >>> manifest = agent.get_manifest()
+            >>> print(manifest["agent"]["id"])  # "assistant"
+            >>> print(manifest["agent"]["class"])  # "orchestration_operator"
+            >>> print(manifest["capabilities"]["operations"])  # List of operations
+
+        Notes:
+            - This is an optional method (default implementation available)
+            - Agents can override for custom manifest generation
+            - Manifests are generated on-demand (not cached)
+            - For delegation, verifiers should check manifest freshness
+
+        See Also:
+            - vibe_core.identity.ManifestGenerator: For generating manifests
+            - vibe_core.identity.AgentManifest: For manifest validation
+            - docs/protocols/steward/SPECIFICATION.md: STEWARD Protocol spec
+        """
+        # Lazy import to avoid circular dependency
+        from vibe_core.identity import generate_manifest_for_agent
+
+        return generate_manifest_for_agent(self).to_dict()
+
 
 class AgentNotFoundError(Exception):
     """

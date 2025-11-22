@@ -13,6 +13,7 @@ from enum import Enum
 from typing import Any
 
 from vibe_core.agent_protocol import AgentNotFoundError, VibeAgent
+from vibe_core.identity import AgentRegistry, generate_manifest_for_agent
 from vibe_core.ledger import VibeLedger
 from vibe_core.scheduling import Task, VibeScheduler
 
@@ -67,6 +68,7 @@ class VibeKernel:
         """
         self.scheduler = VibeScheduler()
         self.agent_registry: dict[str, VibeAgent] = {}
+        self.manifest_registry = AgentRegistry()  # STEWARD manifest registry (ARCH-026)
         self.ledger = VibeLedger(ledger_path)
         self.status = KernelStatus.STOPPED
         logger.debug("KERNEL: Initialized (status=STOPPED)")
@@ -78,13 +80,36 @@ class VibeKernel:
         This prepares the kernel for task processing. After boot(),
         the kernel is ready to accept tasks and process them via tick().
 
+        During boot:
+        1. Transition to RUNNING state
+        2. Generate STEWARD manifests for all registered agents (ARCH-026)
+        3. Populate the manifest registry
+        4. Log agent identity information
+
         Example:
             >>> kernel = VibeKernel()
             >>> kernel.boot()
             >>> print(kernel.status)  # KernelStatus.RUNNING
+            >>> manifest = kernel.manifest_registry.lookup("agent-id")
         """
         self.status = KernelStatus.RUNNING
         logger.info("KERNEL: ONLINE")
+
+        # Generate and register STEWARD manifests for all agents (ARCH-026)
+        logger.debug(f"KERNEL: Generating STEWARD manifests for {len(self.agent_registry)} agents")
+        for agent_id, agent in self.agent_registry.items():
+            try:
+                manifest = generate_manifest_for_agent(agent)
+                self.manifest_registry.register(manifest)
+                logger.info(
+                    f"KERNEL: Registered manifest for {agent_id} "
+                    f"(class={manifest.agent_class}, capabilities={manifest.capabilities})"
+                )
+            except Exception as e:
+                logger.error(
+                    f"KERNEL: Failed to generate manifest for {agent_id}: {e}",
+                    exc_info=True,
+                )
 
     def shutdown(self) -> None:
         """
@@ -297,3 +322,58 @@ class VibeKernel:
             "registered_agents": len(self.agent_registry),
             "agent_ids": list(self.agent_registry.keys()),
         }
+
+    def get_agent_manifest(self, agent_id: str) -> dict | None:
+        """
+        Get the STEWARD manifest for an agent (ARCH-026).
+
+        This returns the machine-readable manifest for the agent,
+        enabling other agents or external systems to query agent identity,
+        capabilities, and constraints.
+
+        Args:
+            agent_id: The agent's unique identifier
+
+        Returns:
+            dict: The STEWARD manifest (steward.json format), or None if not found
+
+        Example:
+            >>> kernel = VibeKernel()
+            >>> manifest = kernel.get_agent_manifest("specialist-planning")
+            >>> if manifest:
+            ...     print(manifest["agent"]["class"])  # "task_executor"
+            ...     print(manifest["capabilities"]["operations"])  # List of ops
+
+        Notes:
+            - Manifests are generated during kernel.boot()
+            - Returns None if agent is not registered
+            - Use agent.get_manifest() for direct agent queries
+        """
+        manifest = self.manifest_registry.lookup(agent_id)
+        return manifest.to_dict() if manifest else None
+
+    def find_agents_by_capability(self, capability: str) -> list[dict]:
+        """
+        Find all agents with a specific capability (ARCH-026).
+
+        This enables capability-based agent discovery: "find all agents
+        that can read files" or "find all agents that do planning".
+
+        Args:
+            capability: The capability name to search for
+
+        Returns:
+            list[dict]: STEWARD manifests for all agents with the capability
+
+        Example:
+            >>> kernel = VibeKernel()
+            >>> planning_agents = kernel.find_agents_by_capability("planning")
+            >>> print(f"Found {len(planning_agents)} planning agents")
+
+        Notes:
+            - Searches manifest capabilities
+            - Returns empty list if no matches found
+            - Useful for intelligent task routing
+        """
+        manifests = self.manifest_registry.find_by_capability(capability)
+        return [manifest.to_dict() for manifest in manifests]
