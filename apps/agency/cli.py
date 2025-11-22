@@ -79,6 +79,7 @@ from vibe_core.tools.search_file import SearchFileTool  # noqa: E402
 from vibe_core.config import get_config  # noqa: E402
 from vibe_core.runtime.oracle import KernelOracle  # noqa: E402
 from vibe_core.runtime.prompt_context import get_prompt_context  # noqa: E402
+from vibe_core.runtime.interface import InterfaceManager, InterfaceMode  # noqa: E402, ARCH-065
 
 # Setup logging
 logging.basicConfig(
@@ -337,34 +338,15 @@ def print_kernel_help(kernel: VibeKernel) -> None:
     print(oracle.get_help_text())
 
 
-async def run_interactive(kernel: VibeKernel):
+async def _run_interactive_repl(kernel: VibeKernel):
     """
-    Run in interactive mode (REPL).
+    Run the interactive REPL loop (user input → agent → result).
 
-    This mode is for development, debugging, and human-in-the-loop operation.
-    User types commands, agent responds, repeat.
-
-    Flow:
-        1. Print welcome message with HUD (ARCH-062)
-        2. Loop:
-            a. Prompt user for command
-            b. INTERCEPT HELP COMMANDS (ARCH-063: Kernel Oracle)
-            c. Submit to kernel
-            d. Execute until no pending tasks
-            e. Show result
-        3. Exit on 'exit' or Ctrl+C
+    This is the internal implementation of interactive mode.
+    Shows HUD, waits for user input, processes commands.
 
     Args:
         kernel: Booted VibeKernel instance
-
-    Example:
-        >>> kernel = boot_kernel()
-        >>> await run_interactive(kernel)
-        👤 MISSION/COMMAND: list files
-        [agent processes and responds]
-        👤 MISSION/COMMAND: help
-        [kernel help printed directly, no LLM call]
-        👤 MISSION/COMMAND: exit
     """
     # ARCH-062: Display HUD (Heads-Up Display)
     from vibe_core.runtime.hud import StatusBar, CapabilitiesMenu, HintSystem
@@ -459,6 +441,58 @@ async def run_interactive(kernel: VibeKernel):
         except Exception as e:
             logger.error(f"❌ Error: {e}", exc_info=True)
             print(f"   ↳ Error: {e}")
+
+
+async def run_interactive(kernel: VibeKernel):
+    """
+    Run in appropriate interface mode (ARCH-065: Polymorphic Interface).
+
+    This function detects the runtime environment and switches between modes:
+
+    INTERACTIVE: TTY detected (human at terminal)
+    - Shows HUD with status bar and capabilities
+    - Waits for user input in REPL loop
+    - For development, debugging, human-in-the-loop operation
+
+    HEADLESS: Pipe/CI detected (automated context)
+    - No HUD, no input waiting
+    - Outputs boot success message
+    - Exits cleanly so parent process (Claude) can continue
+    - For automation, CI/CD, Claude Code integration
+
+    STEWARD: Protocol-based operation (future)
+    - Reads from .steward/active_session.json
+    - Processes task queue autonomously
+
+    Design:
+    - Physics-based detection (not configuration)
+    - Solves boot hang issue: system auto-detects when to wait vs. exit
+    - Enables GAD-000 vision: seamless human/AI hybrid operation
+
+    Args:
+        kernel: Booted VibeKernel instance
+    """
+    # ARCH-065: Detect interface mode
+    mode = InterfaceManager.detect_mode()
+
+    if mode == InterfaceMode.INTERACTIVE:
+        # TTY detected: Show HUD and start REPL loop
+        logger.info("🎨 Interactive mode detected (TTY connected)")
+        await _run_interactive_repl(kernel)
+
+    elif mode == InterfaceMode.HEADLESS:
+        # Pipe/CI detected: Boot and exit cleanly
+        logger.info("🤖 Headless mode detected (piped input or CI)")
+        print("✅ Vibe OS: Headless mode detected. System is READY.")
+        print("ℹ️  Use CLI arguments to execute missions.")
+        logger.info("   [No input loop in headless mode - parent can continue]")
+        # Exit without waiting for input
+
+    elif mode == InterfaceMode.STEWARD:
+        # Steward protocol detected: Process autonomous queue
+        logger.info("🏛️  Steward mode detected (protocol-based operation)")
+        print("🏛️  Vibe OS: Steward mode detected. Processing queue...")
+        # TODO (GAD-000 Phase 2): Implement steward queue processing
 
 
 def display_status(kernel: VibeKernel, json_format: bool = False):
