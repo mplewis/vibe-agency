@@ -789,6 +789,244 @@ If the answer is no, the design violates GAD-000.
 
 ---
 
+## Practical Tooling: Enforcing GAD-000 Compliance
+
+This section provides copy-paste code and scripts for developers to enforce GAD-000 compliance in their projects.
+
+### Pre-Commit Hook: Validate Tool Output
+
+**File: `.git/hooks/pre-commit`**
+
+```bash
+#!/bin/bash
+# GAD-000 Compliance Check: Ensure tools output machine-readable formats
+
+set -e
+
+echo "🔍 GAD-000 Compliance Check"
+
+# Check for common violations
+violations=0
+
+# 1. Find tools without --help --json support
+echo "Checking for structured help output..."
+for tool in bin/vibe-*; do
+    if [ -x "$tool" ]; then
+        if ! "$tool" --help --json 2>/dev/null | jq . > /dev/null 2>&1; then
+            echo "⚠️  $tool: Missing --help --json support"
+            violations=$((violations + 1))
+        fi
+    fi
+done
+
+# 2. Find error messages without error codes
+echo "Checking for structured error handling..."
+if grep -r "raise Exception\|raise Error" src/ --include="*.py" 2>/dev/null | grep -v "ErrorCode\|ToolExecutionError"; then
+    echo "⚠️  Found unstructured error handling (missing error codes)"
+    violations=$((violations + 1))
+fi
+
+# 3. Find tools without status methods
+echo "Checking for observable state..."
+if grep -r "def get_status\|def status" src/ --include="*.py" 2>/dev/null | wc -l | grep -q "0"; then
+    echo "⚠️  No observable state methods found"
+    violations=$((violations + 1))
+fi
+
+if [ $violations -gt 0 ]; then
+    echo "❌ GAD-000 violations detected ($violations)"
+    exit 1
+else
+    echo "✅ GAD-000 compliance check passed"
+    exit 0
+fi
+```
+
+### CI/CD Check: GitHub Actions
+
+**File: `.github/workflows/gad-000-check.yml`**
+
+```yaml
+name: GAD-000 Compliance
+
+on: [pull_request]
+
+jobs:
+  gad-000-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Check Tool Discoverability
+        run: |
+          echo "Verifying all tools have --help --json output..."
+          for tool in bin/vibe-*; do
+              if [ -x "$tool" ]; then
+                  $tool --help --json | jq . > /dev/null || {
+                      echo "❌ $tool missing structured help"
+                      exit 1
+                  }
+              fi
+          done
+
+      - name: Check Error Parseability
+        run: |
+          echo "Verifying error handling includes error codes..."
+          ! grep -r "raise Exception" src/ --include="*.py" | grep -v "ErrorCode" || exit 1
+
+      - name: Check State Observability
+        run: |
+          echo "Verifying components expose state..."
+          grep -r "def.*status\|def.*state" src/ --include="*.py" || {
+              echo "⚠️  Warning: Limited state exposure found"
+          }
+```
+
+### Runtime Monitoring: Python Instrumentation
+
+**File: `vibe/monitoring/gad000_monitor.py`**
+
+```python
+import time
+import json
+from functools import wraps
+from typing import Callable, Dict, Any
+from vibe.monitoring.gad000_metrics import GAD000Metrics
+
+class GAD000Monitor:
+    """Decorator to monitor GAD-000 compliance at runtime"""
+
+    def __init__(self):
+        self.tools_metrics: Dict[str, GAD000Metrics] = {}
+
+    def monitor_tool(self, tool_name: str) -> Callable:
+        """Decorator: Monitor tool execution for GAD-000 compliance"""
+        if tool_name not in self.tools_metrics:
+            self.tools_metrics[tool_name] = GAD000Metrics(tool_name)
+
+        metrics = self.tools_metrics[tool_name]
+
+        def decorator(func: Callable) -> Callable:
+            @wraps(func)
+            def wrapper(*args, **kwargs) -> Any:
+                # Time execution
+                start_ms = int(time.time() * 1000)
+
+                try:
+                    # Execute tool
+                    result = func(*args, **kwargs)
+
+                    # Record success
+                    elapsed_ms = int(time.time() * 1000) - start_ms
+                    metrics.record_execution(success=True, time_ms=elapsed_ms)
+
+                    return result
+
+                except Exception as e:
+                    # Record failure with structured error
+                    elapsed_ms = int(time.time() * 1000) - start_ms
+                    error_code = getattr(e, "code", type(e).__name__)
+                    metrics.record_execution(success=False, time_ms=elapsed_ms, error_code=error_code)
+                    raise
+
+            return wrapper
+        return decorator
+
+    def get_compliance_report(self, tool_name: str) -> Dict:
+        """Get GAD-000 compliance metrics for a tool"""
+        if tool_name not in self.tools_metrics:
+            return {"error": "No metrics for tool"}
+
+        metrics = self.tools_metrics[tool_name]
+        aggregated = metrics.get_aggregated_metrics()
+
+        return {
+            "tool": tool_name,
+            "compliance": {
+                "discoverability": aggregated.get("discoverability_rate", 0) >= 0.95,
+                "parseability": aggregated.get("success_rate", 0) >= 0.90,
+                "idempotency": aggregated.get("self_correction_rate", 0) >= 0.70
+            },
+            "metrics": aggregated
+        }
+```
+
+### CLI Tool: Check Compliance
+
+**File: `bin/vibe gad000 check --tool <name>`**
+
+```bash
+#!/usr/bin/env python3
+"""Check GAD-000 compliance for a tool"""
+
+import sys
+import json
+import subprocess
+from pathlib import Path
+
+def check_tool_discoverability(tool_name: str) -> bool:
+    """Verify tool has --help --json"""
+    try:
+        result = subprocess.run(
+            [f"bin/{tool_name}", "--help", "--json"],
+            capture_output=True,
+            timeout=5
+        )
+        json.loads(result.stdout)
+        return True
+    except:
+        return False
+
+def check_error_parseability(tool_name: str) -> bool:
+    """Verify errors include error codes"""
+    tool_path = Path(f"bin/{tool_name}")
+    if tool_path.suffix == ".py":
+        content = tool_path.read_text()
+        has_error_codes = "ErrorCode" in content or "error_code" in content
+        return has_error_codes
+    return True  # Skip non-Python tools
+
+def check_state_observability(tool_name: str) -> bool:
+    """Verify tool exposes state"""
+    try:
+        result = subprocess.run(
+            [f"bin/{tool_name}", "status", "--json"],
+            capture_output=True,
+            timeout=5
+        )
+        json.loads(result.stdout)
+        return True
+    except:
+        return False
+
+def main():
+    tool_name = sys.argv[1] if len(sys.argv) > 1 else "vibe"
+
+    checks = {
+        "discoverability": check_tool_discoverability(tool_name),
+        "parseability": check_error_parseability(tool_name),
+        "observability": check_state_observability(tool_name),
+    }
+
+    passed = sum(checks.values())
+    total = len(checks)
+
+    print(json.dumps({
+        "tool": tool_name,
+        "checks": checks,
+        "passed": passed,
+        "total": total,
+        "compliant": passed >= 2  # At least 2 of 3
+    }, indent=2))
+
+    sys.exit(0 if passed >= 2 else 1)
+
+if __name__ == "__main__":
+    main()
+```
+
+---
+
 ## The Meta-Insight: Prompts ARE Infrastructure
 
 ### The Paradigm Shift
@@ -874,6 +1112,127 @@ Optimize: Performance, cost, reliability, AI OPERABILITY
 - **AI Self-Correction Rate:** Can AI recover from errors? (target: 80%+)
 - **Tool Composability Score:** Can AI chain operations? (target: 100%)
 
+### Metrics Schema & Instrumentation
+
+**JSON Schema for Monitoring Dashboard:**
+```json
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "timestamp": {"type": "string", "format": "date-time"},
+    "tool_name": {"type": "string"},
+    "ai_metrics": {
+      "type": "object",
+      "properties": {
+        "discovery_success": {"type": "boolean"},
+        "discovery_time_ms": {"type": "integer"},
+        "execution_success": {"type": "boolean"},
+        "execution_time_ms": {"type": "integer"},
+        "self_correction_attempts": {"type": "integer"},
+        "error_code": {"type": ["string", "null"]},
+        "composability_chain_length": {"type": "integer"}
+      }
+    },
+    "aggregated": {
+      "type": "object",
+      "properties": {
+        "discoverability_rate": {"type": "number", "minimum": 0, "maximum": 1},
+        "success_rate": {"type": "number", "minimum": 0, "maximum": 1},
+        "self_correction_rate": {"type": "number", "minimum": 0, "maximum": 1},
+        "composability_score": {"type": "number", "minimum": 0, "maximum": 1}
+      }
+    }
+  }
+}
+```
+
+**Python Instrumentation Class:**
+```python
+import json
+from datetime import datetime
+from typing import Dict, Optional
+
+class GAD000Metrics:
+    """Track AI operator compliance metrics"""
+
+    def __init__(self, tool_name: str):
+        self.tool_name = tool_name
+        self.metrics = []
+
+    def record_discovery(self, success: bool, time_ms: int):
+        """Record tool discovery attempt"""
+        self.metrics.append({
+            "timestamp": datetime.utcnow().isoformat(),
+            "event": "discovery",
+            "success": success,
+            "time_ms": time_ms
+        })
+
+    def record_execution(self, success: bool, time_ms: int, error_code: Optional[str] = None):
+        """Record tool execution attempt"""
+        self.metrics.append({
+            "timestamp": datetime.utcnow().isoformat(),
+            "event": "execution",
+            "success": success,
+            "time_ms": time_ms,
+            "error_code": error_code
+        })
+
+    def record_self_correction(self, attempt_num: int, strategy: str):
+        """Record AI self-correction attempt"""
+        self.metrics.append({
+            "timestamp": datetime.utcnow().isoformat(),
+            "event": "self_correction",
+            "attempt": attempt_num,
+            "strategy": strategy
+        })
+
+    def get_aggregated_metrics(self) -> Dict:
+        """Calculate aggregated success rates"""
+        if not self.metrics:
+            return {}
+
+        discoveries = [m for m in self.metrics if m["event"] == "discovery"]
+        executions = [m for m in self.metrics if m["event"] == "execution"]
+        corrections = [m for m in self.metrics if m["event"] == "self_correction"]
+
+        return {
+            "tool_name": self.tool_name,
+            "discoverability_rate": sum(1 for m in discoveries if m["success"]) / len(discoveries) if discoveries else 0,
+            "success_rate": sum(1 for m in executions if m["success"]) / len(executions) if executions else 0,
+            "self_correction_rate": len(corrections) / len(executions) if executions else 0,
+            "sample_count": len(self.metrics)
+        }
+
+    def export_json(self) -> str:
+        """Export metrics for dashboard ingestion"""
+        return json.dumps({
+            "tool": self.tool_name,
+            "metrics": self.metrics,
+            "aggregated": self.get_aggregated_metrics()
+        }, default=str)
+```
+
+**Alerting Rules (YAML):**
+```yaml
+alert_rules:
+  - name: "Low AI Discoverability"
+    condition: "discoverability_rate < 0.95"
+    severity: "warning"
+    action: "Review tool help output and schema"
+
+  - name: "High AI Failure Rate"
+    condition: "success_rate < 0.90"
+    severity: "critical"
+    action: "Investigate error codes and output parseability"
+
+  - name: "Degraded Self-Correction"
+    condition: "self_correction_rate < 0.70"
+    severity: "warning"
+    action: "Review tool idempotency and error recovery"
+```
+
 ---
 
 ### The Engineering Implications
@@ -957,3 +1316,4 @@ ai_interface:
 **Version History:**
 - **v1.0** (2025-11-21): Initial codification
 - **v1.5** (2025-11-21): Added meta-insights, failure modes, boundary conditions, EAD connection, Turing Test, and infrastructure paradigm
+- **v1.6** (2025-11-22): Enhanced metrics with JSON schema and instrumentation code; added Practical Tooling section with pre-commit hooks, CI/CD checks, runtime monitoring, and CLI compliance checker
