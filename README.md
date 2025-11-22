@@ -1,8 +1,33 @@
-# 🤖 VIBE AGENCY OS - Self-Constructing Software Factory
+# VIBE OS (v1.0.1-citizen)
+> **The Operating System for Sovereign AI Agents**
+> *Offline-First • Self-Healing • Dynamic Cortex • Kernel Oracle*
 
-> **Status:** 🟢 **OPERATIONAL** | **Version:** 0.5.0-beta (Citizen Edition)
+---
+
+### 🛑 Stop building Scripts. Start building an OS.
+
+Most agents are fragile Python scripts. If the API fails, they die. If the database locks, they crash. They have no memory, no identity, and no idea what they are doing.
+
+**Vibe OS is different.** It is built on OS principles:
+
+*   🔥 **Phoenix Kernel:** Survives database failures by auto-degrading to memory.
+*   🧠 **Dynamic Cortex:** Recompiles system prompts in real-time based on Git status, Inbox, and Agenda.
+*   👁️ **The Senses:** Agents can navigate the filesystem autonomously and securely.
+*   🛡️ **Kernel Oracle:** Deterministic help system (CLI & LLM share one truth).
+*   🏭 **Vibe Studio:** A complete software factory (Planner → Coder → Tester) in one cartridge.
+
+**Quick Start (3 Commands):**
+```bash
+git clone https://github.com/kimeisele/vibe-agency
+uv sync
+./bin/system-boot.sh
+```
+
+---
+
+> **Status:** 🟢 **OPERATIONAL** | **Version:** 1.0.1-citizen
 >
-> A self-managing AI agency system that builds itself. The system is now live with agents, runtime, knowledge retrieval, mission control, and quality assurance fully integrated.
+> A sovereign AI operating system that works 100% offline with complete SDLC capabilities.
 
 ## 🎉 v0.5.0-beta Architecture - READY FOR EXPERIMENTATION
 
