@@ -11,6 +11,9 @@ from typing import Any
 
 from vibe_core.scheduling import Task
 
+# Type hint for capabilities list
+Capabilities = list[str]
+
 
 @dataclass
 class AgentResponse:
@@ -110,6 +113,34 @@ class VibeAgent(ABC):
         Example:
             >>> agent = MyAgent()
             >>> print(agent.agent_id)  # "my-agent"
+        """
+        pass
+
+    @property
+    @abstractmethod
+    def capabilities(self) -> Capabilities:
+        """
+        Return the list of capabilities/tools this agent provides.
+
+        Capabilities describe what this agent can do. They can be:
+        - Tool names (for LLM agents with tools): ["read_file", "write_file"]
+        - Workflow phases (for Specialists): ["planning", "analysis"]
+        - Domain actions (for custom agents): ["translate", "analyze", "validate"]
+
+        This information can be used by the kernel or orchestrators to:
+        - Route tasks to agents with required capabilities
+        - Display agent capabilities to users
+        - Validate task-agent compatibility
+
+        Returns:
+            list[str]: List of capability names
+
+        Example:
+            >>> agent = ReadFileAgent()
+            >>> print(agent.capabilities)  # ["read_file", "parse_json"]
+
+            >>> specialist = PlanningSpecialist()
+            >>> print(specialist.capabilities)  # ["planning", "analysis"]
         """
         pass
 

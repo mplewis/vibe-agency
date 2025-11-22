@@ -111,6 +111,32 @@ class SpecialistAgent(VibeAgent):
         """
         return f"specialist-{self.specialist.role.lower()}"
 
+    @property
+    def capabilities(self) -> list[str]:
+        """
+        Return list of capabilities provided by this specialist.
+
+        Specialists describe what they do via their role and lifecycle:
+        - The role defines the primary capability (e.g., "planning", "coding")
+        - Additional capabilities can include workflow phases or domain actions
+
+        For now, capabilities are derived from the specialist's role.
+        Future: can be extended to include sub-capabilities from metadata.
+
+        Returns:
+            list[str]: List of capability names
+
+        Example:
+            >>> specialist = PlanningSpecialist(...)
+            >>> agent = SpecialistAgent(specialist)
+            >>> print(agent.capabilities)  # ["planning"]
+
+            >>> specialist = CodingSpecialist(...)
+            >>> agent = SpecialistAgent(specialist)
+            >>> print(agent.capabilities)  # ["coding"]
+        """
+        return [self.specialist.role.lower()]
+
     def process(self, task: Task) -> AgentResponse:
         """
         Process a task by executing the wrapped specialist.

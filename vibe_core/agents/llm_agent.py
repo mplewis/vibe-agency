@@ -102,6 +102,31 @@ class SimpleLLMAgent(VibeAgent):
         """Return the agent's unique identifier."""
         return self._agent_id
 
+    @property
+    def capabilities(self) -> list[str]:
+        """
+        Return list of tool names available to this agent.
+
+        If tool_registry is configured, returns the names of all registered tools.
+        Otherwise returns empty list (LLM can think but not act).
+
+        Returns:
+            list[str]: Names of available tools or empty list
+
+        Example:
+            >>> agent = SimpleLLMAgent(...)  # without tools
+            >>> print(agent.capabilities)  # []
+
+            >>> registry = ToolRegistry()
+            >>> registry.register(ReadFileTool())
+            >>> registry.register(WriteFileTool())
+            >>> agent = SimpleLLMAgent(..., tool_registry=registry)
+            >>> print(agent.capabilities)  # ["read_file", "write_file"]
+        """
+        if not self.tool_registry:
+            return []
+        return self.tool_registry.list_tools()  # Returns list of tool names
+
     def process(self, task: Task) -> AgentResponse:
         """
         Process a task by sending it to the LLM provider.
