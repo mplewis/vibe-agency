@@ -483,7 +483,9 @@ def display_status(kernel: VibeKernel, json_format: bool = False):
             "system": "vibe-agency",
             "version": "1.0",
             "kernel": {
-                "ledger_path": str(kernel.ledger.db_path) if hasattr(kernel.ledger, "db_path") else "unknown",
+                "ledger_path": str(kernel.ledger.db_path)
+                if hasattr(kernel.ledger, "db_path")
+                else "unknown",
                 "agents_count": len(agents),
             },
             "agents": agents,
@@ -501,7 +503,9 @@ def display_status(kernel: VibeKernel, json_format: bool = False):
         print("🤖 VIBE AGENCY OS - SYSTEM STATUS")
         print("=" * 70)
         print("\n📊 Kernel:")
-        print(f"   - Ledger: {kernel.ledger.db_path if hasattr(kernel.ledger, 'db_path') else 'unknown'}")
+        print(
+            f"   - Ledger: {kernel.ledger.db_path if hasattr(kernel.ledger, 'db_path') else 'unknown'}"
+        )
         print(f"   - Agents: {len(agents)}")
 
         print("\n🤖 Registered Agents:")
@@ -544,7 +548,11 @@ def display_snapshot(kernel: VibeKernel, json_format: bool = False, write_file: 
     # Optionally write to file
     if write_file:
         timestamp = introspector.snapshot_timestamp.replace(":", "-").split(".")[0]
-        filename = f"vibe-snapshot-{timestamp}.md" if not json_format else f"vibe-snapshot-{timestamp}.json"
+        filename = (
+            f"vibe-snapshot-{timestamp}.md"
+            if not json_format
+            else f"vibe-snapshot-{timestamp}.json"
+        )
         try:
             with open(filename, "w") as f:
                 f.write(output)

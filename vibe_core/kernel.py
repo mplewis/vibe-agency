@@ -107,10 +107,12 @@ class VibeKernel:
         for md_file in md_files:
             try:
                 content = md_file.read_text(encoding="utf-8")
-                self.inbox_messages.append({
-                    "filename": md_file.name,
-                    "content": content,
-                })
+                self.inbox_messages.append(
+                    {
+                        "filename": md_file.name,
+                        "content": content,
+                    }
+                )
                 logger.info(f"KERNEL: Loaded inbox message: {md_file.name}")
             except Exception as e:
                 logger.error(
@@ -243,8 +245,7 @@ class VibeKernel:
 
         if agent_id in self.agent_registry:
             raise ValueError(
-                f"Agent '{agent_id}' is already registered. "
-                f"Cannot register duplicate agent IDs."
+                f"Agent '{agent_id}' is already registered. Cannot register duplicate agent IDs."
             )
 
         self.agent_registry[agent_id] = agent
@@ -276,8 +277,7 @@ class VibeKernel:
         # Check 1: Agent registered in agent_registry
         if agent_id not in self.agent_registry:
             raise ValueError(
-                f"Agent '{agent_id}' not registered. "
-                f"Available: {list(self.agent_registry.keys())}"
+                f"Agent '{agent_id}' not registered. Available: {list(self.agent_registry.keys())}"
             )
 
         # Check 2: Agent has manifest (only check after boot)
@@ -298,8 +298,6 @@ class VibeKernel:
                 )
 
         logger.debug(f"KERNEL: Delegation validation passed for {agent_id}")
-
-
 
     def submit(self, task: Task) -> str:
         """
@@ -401,7 +399,7 @@ class VibeKernel:
         # Look up the agent in the registry
         if agent_id not in self.agent_registry:
             error_msg = (
-                f"Agent '{agent_id}' not found. " f"Available: {list(self.agent_registry.keys())}"
+                f"Agent '{agent_id}' not found. Available: {list(self.agent_registry.keys())}"
             )
             logger.error(f"KERNEL: {error_msg} (task={task.id})")
             # Record the failure before raising
@@ -426,9 +424,7 @@ class VibeKernel:
             # Convert AgentResponse to dict for ledger storage if needed
             from vibe_core.agent_protocol import AgentResponse
 
-            result_for_ledger = (
-                result.to_dict() if isinstance(result, AgentResponse) else result
-            )
+            result_for_ledger = result.to_dict() if isinstance(result, AgentResponse) else result
 
             # Record successful completion
             self.ledger.record_completion(task, result_for_ledger)
@@ -563,7 +559,9 @@ class VibeKernel:
             logger.warning(f"KERNEL: Task {task_id} not found in ledger")
             return None
 
-        logger.debug(f"KERNEL: Retrieved task {task_id} from ledger (status={record.get('status')})")
+        logger.debug(
+            f"KERNEL: Retrieved task {task_id} from ledger (status={record.get('status')})"
+        )
         return record
 
     def get_task_output(self, task_id: str) -> dict | None:
