@@ -69,9 +69,9 @@ from vibe_core.tools import (  # noqa: E402
     ToolRegistry,
     WriteFileTool,
 )
+from vibe_core.tools.inspect_result import InspectResultTool  # noqa: E402
 from vibe_core.tools.list_directory import ListDirectoryTool  # noqa: E402
 from vibe_core.tools.search_file import SearchFileTool  # noqa: E402
-from vibe_core.tools.inspect_result import InspectResultTool  # noqa: E402
 
 # Setup logging
 logging.basicConfig(
@@ -536,13 +536,8 @@ def display_snapshot(kernel: VibeKernel, json_format: bool = False, write_file: 
     """
     introspector = SystemIntrospector(kernel)
 
-    if json_format:
-        # JSON output
-        snapshot_dict = introspector.to_dict()
-        output = introspector.to_json()
-    else:
-        # Markdown output (default)
-        output = introspector.generate_snapshot()
+    # Generate snapshot in requested format
+    output = introspector.to_json() if json_format else introspector.generate_snapshot()
 
     print(output)
 
